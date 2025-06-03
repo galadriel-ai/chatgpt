@@ -1,6 +1,8 @@
-import { Stack, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { useAuth } from '@/context/AuthContext'
 import { useEffect, useState } from 'react'
+import { Drawer } from 'expo-router/drawer'
+import ChatDrawerContent from '@/components/drawer/ChatDrawerContent'
 
 export default function MainLayout() {
   const { user } = useAuth()
@@ -21,5 +23,13 @@ export default function MainLayout() {
     }
   }, [mounted, user])
 
-  return <Stack screenOptions={{ headerShown: false }} />
+  return (
+    <Drawer
+      screenOptions={{ headerShown: false }}
+      drawerContent={props => <ChatDrawerContent {...props} />}
+    >
+      {/*<Drawer.Screen name="index" options={{drawerLabel: 'Home'}}/>*/}
+      {/* You can add more items here later */}
+    </Drawer>
+  )
 }
