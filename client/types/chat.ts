@@ -1,9 +1,8 @@
 // TODO:
 export type Message = {
   id: string
-  chatId: string
-  senderId: string
-  text: string
+  role: 'user' | 'assistant'
+  content: string
   timestamp: number
 }
 

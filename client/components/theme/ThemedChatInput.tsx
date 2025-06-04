@@ -6,7 +6,7 @@ import { UpArrowIcon } from '@/components/icons/Icons'
 import { useState } from 'react'
 
 export type ThemedTextInputProps = TextInputProps & {
-  onMessage: (message: string) => boolean
+  onMessage: (message: string) => Promise<boolean>
   className?: string
 }
 
@@ -26,9 +26,9 @@ export function ThemedChatInput({
 
   const [inputValue, setInputValue] = useState<string>('')
 
-  const onSubmitClick = () => {
+  const onSubmitClick = async () => {
     if (inputValue) {
-      if (onMessage(inputValue)) {
+      if (await onMessage(inputValue)) {
         setInputValue('')
       } else {
         // TODO error?
