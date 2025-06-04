@@ -1,6 +1,8 @@
-import { View, Text, Button } from 'react-native'
+import { Button } from 'react-native'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'expo-router'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { ThemedText } from '@/components/theme/ThemedText'
 
 export default function LoginScreen() {
   const { login } = useAuth()
@@ -12,9 +14,9 @@ export default function LoginScreen() {
   }
 
   return (
-    <View>
-      <Text>Login</Text>
+    <ThemedView>
+      <ThemedText>Login</ThemedText>
       <Button title="Login" onPress={handleLogin} />
-    </View>
+    </ThemedView>
   )
 }
