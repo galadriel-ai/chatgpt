@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "useAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -33,7 +34,12 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "@react-native-google-signin/google-signin",
+      {
+        "iosUrlScheme": "com.googleusercontent.apps.251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k"
+      }
     ],
     "experiments": {
       "typedRoutes": true,
