@@ -7,14 +7,15 @@ export const Colors = {
   light: {
     text: '#000',
     background: '#fff',
+    backgroundSecondary: '#FCFCFC',
     border: '#E4E3E1',
     light: '#8E8E93',
   },
   dark: {
     text: '#ECEDEE',
-    background: '#151718',
-    // TODO:
-    border: '#ECEDEE',
+    background: '#010101',
+    backgroundSecondary: '#1E1E1E',
+    border: '#1E1E1E',
     light: '#8E8E93',
   },
 }

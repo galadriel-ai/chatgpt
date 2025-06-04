@@ -10,20 +10,25 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const router = useRouter()
 
   return (
-    <DrawerContentScrollView {...props}>
-      <ThemedView className="p-4">
-        {chats.map(chat => (
-          <Pressable
-            key={chat.id}
-            onPress={() => {
-              setActiveChat(chat)
-              router.push(`/(main)/chat/${chat.id}`)
-            }}
-            className="mb-2"
-          >
-            <ThemedText className="text-base">{chat.title ?? 'Untitled Chat'}</ThemedText>
-          </Pressable>
-        ))}
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+      <ThemedView className="h-full flex-1 justify-between">
+        <ThemedView className="p-4">
+          {chats.map(chat => (
+            <Pressable
+              key={chat.id}
+              onPress={() => {
+                setActiveChat(chat)
+                router.push(`/(main)/chat/${chat.id}`)
+              }}
+              className="mb-2"
+            >
+              <ThemedText className="text-base">{chat.title ?? 'Untitled Chat'}</ThemedText>
+            </Pressable>
+          ))}
+        </ThemedView>
+        <ThemedView className="w-full p-4">
+          <ThemedText>User Name</ThemedText>
+        </ThemedView>
       </ThemedView>
     </DrawerContentScrollView>
   )

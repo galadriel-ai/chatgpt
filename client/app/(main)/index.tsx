@@ -11,7 +11,7 @@ export default function HomeScreen() {
   }, [chats])
 
   return (
-    <ThemedView className="flex-1 pt-12">
+    <ThemedView className="flex-1 px-2 pb-10 pt-12">
       <ChatWrapper />
     </ThemedView>
   )
