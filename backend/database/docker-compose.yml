@@ -1,0 +1,17 @@
+version: "3"
+services:
+  db:
+    env_file:
+      - .env
+    image: "pgvector/pgvector:0.8.0-pg16"
+    container_name: "chatgpt_db_postgres"
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - dbdata-chatgpt-postgres:/var/lib/postgresql/data
+volumes:
+  dbdata-chatgpt-postgres:
