@@ -10,7 +10,7 @@ async def search_web(query: str, client: serpapi.Client) -> str:
             q=query,
             hl="en",
             gl="us",
-            google_domain="google.com"
+            google_domain="google.com",
         )
 
         results_dict = results.as_dict()
