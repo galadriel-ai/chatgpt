@@ -14,7 +14,6 @@ async def execute(
         chats=[
             UserChat(
                 id=str(c.id),
-                user_id=str(c.user_id),
                 title=c.title,
             )
             for c in chats

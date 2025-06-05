@@ -74,7 +74,8 @@ SELECT
     model,
     created_at
 FROM message
-WHERE chat_id = :chat_id;
+WHERE chat_id = :chat_id
+ORDER BY id;
 """
 
 
