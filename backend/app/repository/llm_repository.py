@@ -81,7 +81,7 @@ class LlmRepository:
                                     == SEARCH_TOOL_DEFINITION["function"]["name"]
                                 ):
                                     logger.info(f"Searching web for: {args['query']}")
-                                    result = search_web(
+                                    result = await search_web(
                                         args["query"], self.search_client
                                     )
                                     logger.info(f"Search result: {result}")

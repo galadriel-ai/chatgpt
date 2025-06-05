@@ -1,10 +1,16 @@
 import serpapi
+import asyncio
 
 
-def search_web(query: str, client: serpapi.Client) -> str:
+async def search_web(query: str, client: serpapi.Client) -> str:
     try:
-        results = client.search(
-            engine="google_light", q=query, hl="en", gl="us", google_domain="google.com"
+        results = await asyncio.to_thread(
+            client.search,
+            engine="google_light",
+            q=query,
+            hl="en",
+            gl="us",
+            google_domain="google.com"
         )
 
         results_dict = results.as_dict()
