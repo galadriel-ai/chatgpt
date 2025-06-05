@@ -28,7 +28,7 @@ async def execute(
     chat_input: ChatInput,
     user: User,
     llm_repository: LlmRepository,
-    chat_repository: ChatRepository
+    chat_repository: ChatRepository,
 ) -> AsyncGenerator[ChatOutputChunk, None]:
     chat = await _get_chat(chat_input, user, chat_repository)
     if not chat:

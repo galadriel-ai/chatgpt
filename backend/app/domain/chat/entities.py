@@ -22,7 +22,6 @@ class ChatInput:
 
 
 class ChatOutputChunk(ABC):
-
     @abstractmethod
     def to_serializable_dict(self) -> Dict:
         pass

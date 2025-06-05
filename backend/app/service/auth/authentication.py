@@ -16,5 +16,7 @@ async def validate_session_token(
     # TODO: dummy implementation
     user = await user_repository.get_by_id(uuid7())
     if not user:
-        raise error_responses.InvalidCredentialsAPIError(message_extra="User not found.")
+        raise error_responses.InvalidCredentialsAPIError(
+            message_extra="User not found."
+        )
     return user

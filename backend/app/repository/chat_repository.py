@@ -121,11 +121,13 @@ class ChatRepository:
         async with self._session_provider_read.get() as session:
             rows = await session.execute(sqlalchemy.text(SQL_GET_BY_USER), data)
             for row in rows:
-                chats.append(Chat(
-                    id=row.id,
-                    user_id=row.user_profile_id,
-                    title=row.title,
-                ))
+                chats.append(
+                    Chat(
+                        id=row.id,
+                        user_id=row.user_profile_id,
+                        title=row.title,
+                    )
+                )
         return chats
 
     async def insert_messages(self, messages: List[Message]) -> None:

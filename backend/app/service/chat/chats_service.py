@@ -11,9 +11,12 @@ async def execute(
 ) -> ChatsResponse:
     chats = await get_chats_use_case.execute(user, chat_repository)
     return ChatsResponse(
-        chats=[UserChat(
-            id=str(c.id),
-            user_id=str(c.user_id),
-            title=c.title,
-        ) for c in chats]
+        chats=[
+            UserChat(
+                id=str(c.id),
+                user_id=str(c.user_id),
+                title=c.title,
+            )
+            for c in chats
+        ]
     )

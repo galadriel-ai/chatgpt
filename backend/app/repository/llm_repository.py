@@ -32,10 +32,7 @@ class LlmRepository:
         # Need to handle context length?
         response = await self.client.chat.completions.create(
             model=model,
-            messages=[{
-                "role": m.role,
-                "content": m.content
-            } for m in messages],
+            messages=[{"role": m.role, "content": m.content} for m in messages],
             temperature=temperature,
             max_tokens=max_tokens,
             response_format=response_format,
