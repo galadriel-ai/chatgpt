@@ -32,7 +32,7 @@ class LlmRepository:
         self,
         messages: List[Message],
         model: str,
-        enable_search: bool = True,
+        is_search_enabled: bool = True,
         temperature: float = 0.2,
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
@@ -53,7 +53,7 @@ class LlmRepository:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 response_format=response_format,
-                tools=[SEARCH_TOOL_DEFINITION] if enable_search else None,
+                tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
                 stream=True,
             )
 

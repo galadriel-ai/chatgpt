@@ -18,7 +18,7 @@ class Chat:
 class ChatInput:
     chat_id: Optional[UUID]
     model: Optional[str]
-    enable_search: Optional[bool]
+    is_search_enabled: Optional[bool]
     content: str
 
 

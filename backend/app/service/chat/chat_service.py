@@ -28,7 +28,7 @@ async def execute(
         chat_id=chat_id,
         model=request.model,
         content=request.content,
-        enable_search=request.enable_search,
+        is_search_enabled=request.is_search_enabled,
     )
 
     async for chunk in chat_use_case.execute(
