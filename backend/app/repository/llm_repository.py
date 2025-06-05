@@ -1,4 +1,5 @@
 from typing import AsyncGenerator, Optional
+from typing import List
 import json
 
 from app import api_logger
@@ -7,18 +8,24 @@ from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
 
+from app.domain.chat.entities import Message
+
 logger = api_logger.get()
 
 
 class LlmRepository:
-    def __init__(self, api_key: str, llm_model: str, search_api_key: str):
+    api_key: str
+    client: AsyncOpenAI
+
+    def __init__(
+        self,
+        api_key: str,
+        search_api_key: str
+    ):
         if not api_key:
             raise ValueError("API key must be set")
-        if not llm_model:
-            raise ValueError("LLM model must be set")
         if not search_api_key:
             raise ValueError("Search API key must be set")
-        self.llm_model = llm_model
         self.client = AsyncOpenAI(
             base_url="https://api.fireworks.ai/inference/v1",
             api_key=api_key,
@@ -27,21 +34,18 @@ class LlmRepository:
 
     async def completion(
         self,
-        prompt: str,
+        messages: List[Message],
+        model: str,
         search: bool,
         temperature: float = 0.2,
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[str, None]:
-        messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ]
-
+        # Need to handle context length?
         while True:
             stream: AsyncStream = await self.client.chat.completions.create(
-                model=self.llm_model,
-                messages=messages,
+                model=model,
+                messages=[{"role": m.role, "content": m.content} for m in messages],
                 temperature=temperature,
                 max_tokens=max_tokens,
                 response_format=response_format,

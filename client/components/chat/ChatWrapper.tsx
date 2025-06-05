@@ -33,12 +33,12 @@ export function ChatWrapper() {
     })
 
     try {
-      const res = await fetch(`${API_BASE_URL}/${chatId}`, {
+      const res = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ content: message }),
       })
 
       if (!res.body) throw new Error('No response body for stream')
@@ -68,10 +68,12 @@ export function ChatWrapper() {
         if (done) break
 
         const chunk = decoder.decode(value)
-        content += chunk
-
-        // Update the last message incrementally
-        updateLastMessage(content)
+        try {
+          const parsed_chunk = JSON.parse(chunk)
+          content += parsed_chunk.content
+          // Update the last message incrementally
+          updateLastMessage(content)
+        } catch {}
       }
 
       return true

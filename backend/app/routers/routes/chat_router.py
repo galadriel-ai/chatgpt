@@ -1,13 +1,16 @@
 from fastapi import APIRouter
 from fastapi import Body
-from fastapi import Path
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from app.dependencies import get_llm_repository
-from app.service.chat import chat_service
-from app.service.chat.entities import ChatRequest
+from app import dependencies
+from app.domain.users.entities import User
+from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
+from app.service.auth import authentication
+from app.service.chat import chat_service
+from app.service.chat import chats_service
+from app.service.chat.entities import ChatRequest
 
 TAG = "Chat"
 router = APIRouter()
@@ -16,14 +19,15 @@ router.title = "Chat router"
 
 
 @router.post(
-    "/{chat_id}",
+    "/chat",
     summary="Send a message to the chat and stream the response.",
     tags=[TAG],
 )
 async def chat(
-    chat_id: str = Path(..., description="The ID of the chat."),
     request: ChatRequest = Body(..., description="Input and parameters for the chat."),
-    llm_repository: LlmRepository = Depends(get_llm_repository),
+    user: User = Depends(authentication.validate_session_token),
+    llm_repository: LlmRepository = Depends(dependencies.get_llm_repository),
+    chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
 ):
     headers = {
         "X-Content-Type-Options": "nosniff",
@@ -32,10 +36,26 @@ async def chat(
 
     return StreamingResponse(
         chat_service.execute(
-            chat_id,
             request,
+            user,
             llm_repository,
+            chat_repository,
         ),
         headers=headers,
         media_type="text/event-stream",
+    )
+
+
+@router.get(
+    "/",
+    summary="Get user chats",
+    tags=[TAG],
+)
+async def get_chats(
+    user: User = Depends(authentication.validate_session_token),
+    chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+):
+    return await chats_service.execute(
+        user,
+        chat_repository,
     )
