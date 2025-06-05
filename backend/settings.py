@@ -46,3 +46,4 @@ if not LLM_API_KEY:
 SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 if not SERPAPI_API_KEY:
     raise RuntimeError("SERPAPI_API_KEY is not set")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.fireworks.ai/inference/v1")

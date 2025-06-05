@@ -56,7 +56,9 @@ async def execute(
         content="",
         model=model,
     )
-    async for chunk in llm_repository.completion(llm_input_messages, model):
+    async for chunk in llm_repository.completion(
+        llm_input_messages, model, chat_input.enable_search
+    ):
         llm_message.content += chunk
         yield ChunkOutput(
             content=chunk,

@@ -58,6 +58,8 @@ class ChunkOutput(ChatOutputChunk):
 class Message:
     id: UUID
     chat_id: UUID
-    role: Literal["system", "user", "assistant"]
+    role: Literal["system", "user", "assistant", "tool"]
     content: str
-    model: Optional[str]
+    model: Optional[str] = None
+    tool_call_id: Optional[str] = None
+    name: Optional[str] = None
