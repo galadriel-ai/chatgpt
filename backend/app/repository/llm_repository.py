@@ -1,50 +1,93 @@
 from typing import AsyncGenerator, Optional
+import json
 
 from app import api_logger
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, AsyncStream
+from app.domain.llm_tools.search import search_web
+from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
+import serpapi
 
 logger = api_logger.get()
 
 
 class LlmRepository:
-    api_key: str
-    llm_model: str
-    client: AsyncOpenAI
-
-    def __init__(
-        self,
-        api_key: str,
-        llm_model: str,
-    ):
+    def __init__(self, api_key: str, llm_model: str, search_api_key: str):
         if not api_key:
             raise ValueError("API key must be set")
         if not llm_model:
             raise ValueError("LLM model must be set")
+        if not search_api_key:
+            raise ValueError("Search API key must be set")
         self.llm_model = llm_model
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(
+            base_url="https://api.fireworks.ai/inference/v1",
+            api_key=api_key,
+        )
+        self.search_client = serpapi.Client(api_key=search_api_key)
 
     async def completion(
         self,
         prompt: str,
+        search: bool,
         temperature: float = 0.2,
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[str, None]:
-        response = await self.client.chat.completions.create(
-            model=self.llm_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a helpful assistant.",
-                },
-                {"role": "user", "content": prompt},
-            ],
-            temperature=temperature,
-            max_tokens=max_tokens,
-            response_format=response_format,
-            stream=True,
-        )
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt},
+        ]
 
-        async for chunk in response:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+        while True:
+            stream: AsyncStream = await self.client.chat.completions.create(
+                model=self.llm_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format=response_format,
+                tools=[SEARCH_TOOL_DEFINITION] if search else None,
+                stream=True,
+            )
+
+            final_tool_calls = {}
+
+            async for chunk in stream:
+                choice = chunk.choices[0]
+                if choice.delta.tool_calls:
+                    for tc in choice.delta.tool_calls:
+                        if tc.id not in final_tool_calls:
+                            final_tool_calls[tc.id] = {
+                                "id": tc.id,
+                                "name": tc.function.name if tc.function else None,
+                                "arguments": "",
+                            }
+
+                        if tc.function and tc.function.arguments:
+                            final_tool_calls[tc.id]["arguments"] += (
+                                tc.function.arguments
+                            )
+                            try:
+                                args = json.loads(final_tool_calls[tc.id]["arguments"])
+                                if final_tool_calls[tc.id]["name"] == "search_web":
+                                    logger.info(f"Searching web for: {args['query']}")
+                                    result = search_web(
+                                        args["query"], self.search_client
+                                    )
+                                    messages.append(
+                                        {
+                                            "role": "tool",
+                                            "tool_call_id": tc.id,
+                                            "name": "search_web",
+                                            "content": result,
+                                        }
+                                    )
+                            except json.JSONDecodeError:
+                                continue
+                    continue
+
+                if choice.delta.content is not None:
+                    yield choice.delta.content
+
+            if final_tool_calls:
+                continue
+            break
