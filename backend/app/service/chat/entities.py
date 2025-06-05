@@ -1,4 +1,5 @@
 from typing import List
+from typing import Literal
 from typing import Optional
 
 from pydantic import BaseModel
@@ -17,9 +18,19 @@ class ChatRequest(BaseModel):
 
 class UserChat(BaseModel):
     id: str
-    user_id: str
     title: str
+
+
+class ChatMessage(BaseModel):
+    id: str
+    role: Literal["system", "user", "assistant"]
+    content: str
+    model: Optional[str]
 
 
 class ChatsResponse(BaseModel):
     chats: List[UserChat]
+
+
+class ChatDetailsResponse(UserChat):
+    messages: List[ChatMessage]
