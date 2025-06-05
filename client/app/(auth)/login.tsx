@@ -1,17 +1,54 @@
-import { Button, StyleSheet, View } from 'react-native'
+import { Button, StyleSheet, View, TouchableOpacity } from 'react-native'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'expo-router'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedText } from '@/components/theme/ThemedText'
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
+import { useEffect } from 'react'
 
 export default function LoginScreen() {
   const { login } = useAuth()
   const router = useRouter()
 
+  useEffect(() => {
+    // Configure Google Sign In when the component mounts
+    GoogleSignin.configure({
+      // Add your web client ID here
+      webClientId: '251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k.apps.googleusercontent.com',
+      iosClientId: '251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k.apps.googleusercontent.com',
+    })
+  }, [])
+
   const handleLogin = () => {
     login({ name: 'User' })
     router.replace('/(main)')
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices()
+      const userInfo = await GoogleSignin.signIn()
+
+      if (userInfo) {
+        login({
+          name: userInfo.user.name || 'Google User',
+          email: userInfo.user.email,
+          googleId: userInfo.user.id,
+        })
+        router.replace('/(main)')
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('User cancelled the sign in flow')
+      } else if (error.code === statusCodes.IN_PROGRESS) {
+        console.log('Sign in is in progress')
+      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.log('Play services not available')
+      } else {
+        console.error('Google Sign In Error:', error)
+      }
+    }
   }
 
   const handleAppleLogin = async () => {
@@ -48,6 +85,10 @@ export default function LoginScreen() {
       <View style={styles.buttonContainer}>
         <Button title="Guest Login" onPress={handleLogin} />
 
+        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+          <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
+        </TouchableOpacity>
+
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
@@ -79,5 +120,18 @@ const styles = StyleSheet.create({
   appleButton: {
     width: '100%',
     height: 44,
+  },
+  googleButton: {
+    width: '100%',
+    height: 44,
+    backgroundColor: '#4285F4',
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 })

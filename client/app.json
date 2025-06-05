@@ -10,14 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "useAppleSignIn": true
+      "useAppleSignIn": true,
+      "bundleIdentifier": "com.anonymous.xnative"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.xnative"
     },
     "web": {
       "bundler": "metro",
@@ -36,10 +38,12 @@
         }
       ],
       "expo-apple-authentication",
-      "@react-native-google-signin/google-signin",
-      {
-        "iosUrlScheme": "com.googleusercontent.apps.251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k"
-      }
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
