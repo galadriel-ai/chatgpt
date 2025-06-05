@@ -1,6 +1,5 @@
-import {API_BASE_URL} from '@env'
-import {Chat, ChatDetails, Message} from "@/types/chat";
-
+import { API_BASE_URL } from '@env'
+import { Chat, ChatDetails, Message } from '@/types/chat'
 
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
@@ -26,13 +25,13 @@ async function getChats(): Promise<Chat[]> {
 
 async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   interface ApiResponse {
-    id: string,
-    title: string,
+    id: string
+    title: string
     // Works as long as we dont need some special mapping here
     messages: {
-      id: string,
-      role: "system" | "user" | "assistant",
-      content: string,
+      id: string
+      role: 'system' | 'user' | 'assistant'
+      content: string
     }[]
   }
 
@@ -68,4 +67,4 @@ const api = {
   getChatDetails,
 }
 
-export {api}
+export { api }

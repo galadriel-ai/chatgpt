@@ -1,7 +1,7 @@
-import {createContext, ReactNode, useContext, useEffect, useState} from 'react'
-import {Chat, ChatDetails} from '@/types/chat'
-import {useAuth} from '@/context/AuthContext'
-import {api} from "@/lib/api";
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
+import { Chat, ChatDetails } from '@/types/chat'
+import { useAuth } from '@/context/AuthContext'
+import { api } from '@/lib/api'
 
 type ChatProviderProps = {
   children: ReactNode
@@ -18,8 +18,8 @@ type ChatContextType = {
 
 const ChatContext = createContext<ChatContextType | null>(null)
 
-export const ChatProvider = ({children}: ChatProviderProps) => {
-  const {user} = useAuth()
+export const ChatProvider = ({ children }: ChatProviderProps) => {
+  const { user } = useAuth()
 
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
@@ -42,14 +42,16 @@ export const ChatProvider = ({children}: ChatProviderProps) => {
   }
 
   return (
-    <ChatContext.Provider value={{
-      chats,
-      selectedChat,
-      setSelectedChat,
-      activeChat,
-      setActiveChat,
-      sendMessage
-    }}>
+    <ChatContext.Provider
+      value={{
+        chats,
+        selectedChat,
+        setSelectedChat,
+        activeChat,
+        setActiveChat,
+        sendMessage,
+      }}
+    >
       {children}
     </ChatContext.Provider>
   )

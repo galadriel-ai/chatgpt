@@ -10,8 +10,7 @@ async def execute(
     chat_repository: ChatRepository,
 ) -> ChatDetailsResponse:
     chat_details = await get_chat_details_use_case.execute(
-        parse_uuid.parse(chat_id),
-        chat_repository
+        parse_uuid.parse(chat_id), chat_repository
     )
 
     return ChatDetailsResponse(
@@ -23,6 +22,7 @@ async def execute(
                 role=m.role,
                 content=m.content,
                 model=m.model,
-            ) for m in chat_details.messages
+            )
+            for m in chat_details.messages
         ],
     )
