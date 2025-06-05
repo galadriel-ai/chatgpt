@@ -25,7 +25,10 @@ async def execute(
             return
 
     chat_input = ChatInput(
-        chat_id=chat_id, model=request.model, content=request.content, request.search
+        chat_id=chat_id,
+        model=request.model,
+        content=request.content,
+        enable_search=request.enable_search,
     )
 
     async for chunk in chat_use_case.execute(

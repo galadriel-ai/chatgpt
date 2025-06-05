@@ -17,11 +17,7 @@ class LlmRepository:
     api_key: str
     client: AsyncOpenAI
 
-    def __init__(
-        self,
-        api_key: str,
-        search_api_key: str
-    ):
+    def __init__(self, api_key: str, search_api_key: str):
         if not api_key:
             raise ValueError("API key must be set")
         if not search_api_key:
@@ -36,7 +32,7 @@ class LlmRepository:
         self,
         messages: List[Message],
         model: str,
-        search: bool,
+        enable_search: bool = True,
         temperature: float = 0.2,
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
@@ -49,7 +45,7 @@ class LlmRepository:
                 temperature=temperature,
                 max_tokens=max_tokens,
                 response_format=response_format,
-                tools=[SEARCH_TOOL_DEFINITION] if search else None,
+                tools=[SEARCH_TOOL_DEFINITION] if enable_search else None,
                 stream=True,
             )
 
