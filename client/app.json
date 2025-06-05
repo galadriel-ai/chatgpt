@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "useAppleSignIn": true,
       "bundleIdentifier": "com.galadriel.chatgpt"
     },
     "android": {
@@ -17,7 +18,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.galadriel.chatgpt"
     },
     "web": {
       "bundler": "metro",
@@ -33,6 +35,13 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k"
         }
       ]
     ],
