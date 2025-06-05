@@ -1,9 +1,22 @@
+from typing import List
+from typing import Optional
+
 from pydantic import BaseModel
+
+from pydantic import Field
 
 
 class ChatRequest(BaseModel):
-    message: str
+    chat_id: Optional[str] = Field(description="chat id", default=None)
+    model: Optional[str] = Field(description="model id", default=None)
+    content: str = Field(description="content")
 
 
-class ChatResponse(BaseModel):
-    message: str
+class UserChat(BaseModel):
+    id: str
+    user_id: str
+    title: str
+
+
+class ChatsResponse(BaseModel):
+    chats: List[UserChat]
