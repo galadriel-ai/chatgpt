@@ -52,6 +52,20 @@ class NotFoundAPIError(APIErrorResponse):
         )
 
 
+class ValidationTypeError(APIErrorResponse):
+    def __init__(self, message: str):
+        self.message = message
+
+    def to_status_code(self) -> int:
+        return status.HTTP_422_UNPROCESSABLE_ENTITY
+
+    def to_code(self) -> str:
+        return "unprocessable_entity"
+
+    def to_message(self) -> str:
+        return self.message
+
+
 class InternalServerAPIError(APIErrorResponse):
     """Raised when an internal server error occurs"""
 
