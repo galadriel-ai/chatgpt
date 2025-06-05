@@ -29,9 +29,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>native</string>
-          <string>com.anonymous.xnative</string>
-          <string>com.googleusercontent.apps.251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k</string>
+          <string>${GOOGLE_IOS_URL_SCHEME}</string>
         </array>
       </dict>
     </array>

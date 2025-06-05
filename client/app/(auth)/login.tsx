@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/theme/ThemedText'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { useAuth } from '@/context/AuthContext'
+import { GOOGLE_CLIENT_ID } from '@env'
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useRouter } from 'expo-router'
@@ -15,8 +16,8 @@ export default function LoginScreen() {
     // Configure Google Sign In when the component mounts
     GoogleSignin.configure({
       // Add your web client ID here
-      webClientId: '251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k.apps.googleusercontent.com',
-      iosClientId: '251250634163-np6qc6c39rr2v9cvfltu409hg63bf28k.apps.googleusercontent.com',
+      webClientId: GOOGLE_CLIENT_ID,
+      iosClientId: GOOGLE_CLIENT_ID,
     })
   }, [])
 
