@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi import Body
+from fastapi import Path
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
@@ -8,6 +9,7 @@ from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.service.auth import authentication
+from app.service.chat import chat_details_service
 from app.service.chat import chat_service
 from app.service.chat import chats_service
 from app.service.chat.entities import ChatRequest
@@ -57,5 +59,21 @@ async def get_chats(
 ):
     return await chats_service.execute(
         user,
+        chat_repository,
+    )
+
+
+@router.get(
+    "/chat/{chat_id}",
+    summary="Get chat details",
+    tags=[TAG],
+)
+async def get_chats(
+    chat_id: str = Path(description="Chat ID"),
+    _: User = Depends(authentication.validate_session_token),
+    chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+):
+    return await chat_details_service.execute(
+        chat_id,
         chat_repository,
     )

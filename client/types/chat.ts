@@ -1,14 +1,15 @@
 // TODO:
 export type Message = {
   id: string
-  role: 'user' | 'assistant'
+  role: 'system' | 'user' | 'assistant'
   content: string
-  timestamp: number
 }
 
-export type Chat = {
+export interface Chat {
   id: string
   title: string
-  messages: Message[] // or messageIds if normalized
-  lastUpdated: number
+}
+
+export interface ChatDetails extends Chat {
+  messages: Message[]
 }

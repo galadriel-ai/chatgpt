@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Dict
+from typing import List
 from typing import Literal
 from typing import Optional
 from uuid import UUID
@@ -60,3 +61,8 @@ class Message:
     role: Literal["system", "user", "assistant"]
     content: str
     model: Optional[str]
+
+
+@dataclass
+class ChatDetails(Chat):
+    messages: List[Message]

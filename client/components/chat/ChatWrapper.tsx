@@ -1,20 +1,36 @@
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
-import { ThemedView } from '@/components/theme/ThemedView'
-import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
-import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { SideBarIcon } from '@/components/icons/Icons'
-import { API_BASE_URL } from '@env'
-import { useChat } from '@/context/ChatContext'
-import { ThemedText } from '@/components/theme/ThemedText'
+import {KeyboardAvoidingView, Platform, ScrollView, View} from 'react-native'
+import {ThemedView} from '@/components/theme/ThemedView'
+import {ThemedChatInput} from '@/components/theme/ThemedChatInput'
+import {DrawerActions, useNavigation} from '@react-navigation/native'
+import {RoleAssistantIcon, RoleUserIcon, SideBarIcon} from '@/components/icons/Icons'
+import {API_BASE_URL} from '@env'
+import {useChat} from '@/context/ChatContext'
+import {ThemedText} from '@/components/theme/ThemedText'
+import {useEffect} from "react";
+import {Chat, Message} from "@/types/chat";
+import {api} from "@/lib/api";
 
 export function ChatWrapper() {
   const navigation = useNavigation()
 
-  const { activeChat, setActiveChat } = useChat()
+  const {selectedChat, activeChat, setActiveChat} = useChat()
+
+  useEffect(() => {
+    if (selectedChat && !activeChat) {
+      getChatDetails(selectedChat)
+    }
+  }, [selectedChat])
+
+  const getChatDetails = async (chat: Chat): Promise<void> => {
+    const chatDetails = await api.getChatDetails(chat.id)
+    if (chatDetails) {
+      setActiveChat(chatDetails)
+    }
+  }
 
   const onMessage = async (message: string): Promise<boolean> => {
-    const chatId = activeChat?.id
-    if (!chatId) return false
+    // TODO: handle new chats somehow
+    // if (!activeChat) return false
 
     setActiveChat(chat => {
       if (!chat) return null
@@ -24,7 +40,6 @@ export function ChatWrapper() {
         id: `${Date.now()}`,
         role: 'user',
         content: message,
-        timestamp: Date.now(),
       })
       return {
         ...chat,
@@ -38,7 +53,10 @@ export function ChatWrapper() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: message }),
+        body: JSON.stringify({
+          chat_id: activeChat?.id || null,
+          content: message
+        }),
       })
 
       if (!res.body) throw new Error('No response body for stream')
@@ -46,12 +64,10 @@ export function ChatWrapper() {
       setActiveChat(chat => {
         if (!chat) return null
         const messages = chat.messages
-        // TODO: handle nicely somehow
         chat.messages.push({
           id: `${Date.now()}`,
           role: 'assistant',
           content: '',
-          timestamp: Date.now(),
         })
         return {
           ...chat,
@@ -64,16 +80,19 @@ export function ChatWrapper() {
       let content = ''
 
       while (true) {
-        const { done, value } = await reader.read()
+        const {done, value} = await reader.read()
         if (done) break
 
         const chunk = decoder.decode(value)
         try {
           const parsed_chunk = JSON.parse(chunk)
-          content += parsed_chunk.content
-          // Update the last message incrementally
-          updateLastMessage(content)
-        } catch {}
+          if (parsed_chunk.content) {
+            content += parsed_chunk.content
+            // Update the last message incrementally
+            updateLastMessage(content)
+          }
+        } catch {
+        }
       }
 
       return true
@@ -102,22 +121,25 @@ export function ChatWrapper() {
   return (
     <ThemedView className="flex-1 px-2">
       <ThemedView className="flex flex-row pt-8">
-        <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
+        <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())}/>
       </ThemedView>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={10}
       >
         <ThemedView className="flex-1">
           <ScrollView
-            contentContainerStyle={{ padding: 16 }}
-            style={{ flex: 1 }}
+            contentContainerStyle={{padding: 16}}
+            style={{flex: 1}}
             keyboardShouldPersistTaps="handled"
           >
             {activeChat?.messages.map((m, i) => (
-              <ThemedView key={`msg-${i}`}>
-                <ThemedText>{m.content}</ThemedText>
+              <ThemedView
+                key={`msg-${i}`}
+                className="w-full"
+              >
+                <ChatMessage message={m}/>
               </ThemedView>
             ))}
           </ScrollView>
@@ -126,10 +148,41 @@ export function ChatWrapper() {
             onMessage={onMessage}
             placeholder="Message"
             className="px-4 py-2"
-            style={{ fontSize: 16 }}
+            style={{fontSize: 16}}
           />
         </ThemedView>
       </KeyboardAvoidingView>
+    </ThemedView>
+  )
+}
+
+function ChatMessage({message}: { message: Message }) {
+  if (message.role === 'system') return null
+
+  const role = message.role === 'user' ?
+    'You' : 'Your Sidekik'
+
+  return (
+    <ThemedView
+      className="flex flex-row gap-4 pt-6"
+    >
+      <ThemedView
+        className="w-8 flex flex-col items-center"
+      >
+        {message.role === 'user' ?
+          <RoleUserIcon/>
+          :
+          <RoleAssistantIcon/>
+        }
+      </ThemedView>
+      <ThemedView
+        className="flex flex-col gap-1 flex-1"
+      >
+        <ThemedText className="font-bold">{role}</ThemedText>
+        <ThemedText>
+          {message.content}
+        </ThemedText>
+      </ThemedView>
     </ThemedView>
   )
 }
