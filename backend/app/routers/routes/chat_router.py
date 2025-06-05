@@ -68,7 +68,7 @@ async def get_chats(
     summary="Get chat details",
     tags=[TAG],
 )
-async def get_chats(
+async def get_chat_details(
     chat_id: str = Path(description="Chat ID"),
     _: User = Depends(authentication.validate_session_token),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
