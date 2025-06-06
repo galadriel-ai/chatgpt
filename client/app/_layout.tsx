@@ -1,12 +1,12 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
-import { Stack } from 'expo-router'
-import 'react-native-reanimated'
-import { Platform, View } from 'react-native'
-import { useColorScheme } from '@/hooks/useColorScheme'
 import { ThemedView } from '@/components/theme/ThemedView'
-import '../global.css'
 import { AuthProvider } from '@/context/AuthContext'
 import { ChatProvider } from '@/context/ChatContext'
+import { useColorScheme } from '@/hooks/useColorScheme'
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { Stack } from 'expo-router'
+import { Platform, View } from 'react-native'
+import 'react-native-reanimated'
+import '../global.css'
 
 export default function RootLayout() {
   const colorScheme = useColorScheme()
