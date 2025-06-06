@@ -1,13 +1,11 @@
 from typing import AsyncGenerator, Optional
 from typing import List
-import json
 
 from app import api_logger
 from openai import AsyncOpenAI, AsyncStream
-from app.domain.llm_tools.search import search_web
+from app.domain.chat.entities import Message, ChunkOutput, ToolOutput
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
-from app.domain.chat.entities import Message, ChunkOutput, ToolOutput
 
 logger = api_logger.get()
 
@@ -36,75 +34,34 @@ class LlmRepository:
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
-        # Need to handle context length?
-        while True:
-            stream: AsyncStream = await self.client.chat.completions.create(
-                model=model,
-                messages=[
-                    {
-                        "role": m.role,
-                        "content": m.content,
-                        "tool_call_id": m.tool_call_id,
-                        "name": m.name,
-                    }
-                    for m in messages
-                ],
-                temperature=temperature,
-                max_tokens=max_tokens,
-                response_format=response_format,
-                tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
-                stream=True,
-            )
+        stream: AsyncStream = await self.client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": m.role,
+                    "content": m.content,
+                    "tool_call_id": m.tool_call_id,
+                    "name": m.name,
+                }
+                for m in messages
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format,
+            tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
+            stream=True,
+        )
 
-            final_tool_calls = {}
-
-            async for chunk in stream:
-                choice = chunk.choices[0]
-                if choice.delta.tool_calls:
-                    for tc in choice.delta.tool_calls:
-                        if tc.id not in final_tool_calls:
-                            final_tool_calls[tc.id] = {
-                                "id": tc.id,
-                                "name": tc.function.name if tc.function else None,
-                                "arguments": "",
-                            }
-
-                        if tc.function and tc.function.arguments:
-                            final_tool_calls[tc.id]["arguments"] += (
-                                tc.function.arguments
-                            )
-                            try:
-                                args = json.loads(final_tool_calls[tc.id]["arguments"])
-                                if (
-                                    final_tool_calls[tc.id]["name"]
-                                    == SEARCH_TOOL_DEFINITION["function"]["name"]
-                                ):
-                                    # Send initial ToolOutput before search
-                                    yield ToolOutput(
-                                        tool_call_id=tc.id,
-                                        name=tc.function.name,
-                                        arguments=tc.function.arguments,
-                                        result=None,
-                                    )
-                                    logger.info(f"Searching web for: {args['query']}")
-                                    result = await search_web(
-                                        args["query"], self.search_client
-                                    )
-                                    logger.info(f"Search result: {result}")
-                                    # Send ToolOutput with search result
-                                    yield ToolOutput(
-                                        tool_call_id=tc.id,
-                                        name=tc.function.name,
-                                        arguments=tc.function.arguments,
-                                        result=result,
-                                    )
-                            except json.JSONDecodeError:
-                                continue
-                    continue
-
-                if choice.delta.content is not None:
-                    yield ChunkOutput(content=choice.delta.content)
-
-            if final_tool_calls:
-                continue
-            break
+        async for chunk in stream:
+            choice = chunk.choices[0]
+            if choice.delta.tool_calls:
+                for tc in choice.delta.tool_calls:
+                    if tc.function:
+                        yield ToolOutput(
+                            tool_call_id=tc.id,
+                            name=tc.function.name,
+                            arguments=tc.function.arguments,
+                            result=None,
+                        )
+            if choice.delta.content is not None:
+                yield ChunkOutput(content=choice.delta.content)

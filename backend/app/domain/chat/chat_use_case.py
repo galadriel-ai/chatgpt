@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import AsyncGenerator
 from typing import List
 from typing import Optional
+import json
 
 from uuid_extensions import uuid7
 
@@ -18,6 +19,11 @@ from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
+from app.domain.llm_tools.search import search_web
+from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
+from app import api_logger
+
+logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
 
@@ -58,23 +64,60 @@ async def execute(
         model=model,
     )
 
-    async for chunk in llm_repository.completion(
-        llm_input_messages, model, chat_input.is_search_enabled
-    ):
-        if isinstance(chunk, ChunkOutput):
-            llm_message.content += chunk.content
-            yield chunk
-        elif isinstance(chunk, ToolOutput):
-            tool_message = Message(
-                id=uuid7(),
-                chat_id=chat.id,
-                role="tool",
-                content=chunk.result,
-                tool_call_id=chunk.tool_call_id,
-                name=chunk.name,
-            )
-            new_messages.append(tool_message)
-            llm_input_messages.append(tool_message)
+    while True:
+        final_tool_calls = {}
+        async for chunk in llm_repository.completion(
+            llm_input_messages, model, chat_input.is_search_enabled
+        ):
+            if isinstance(chunk, ChunkOutput):
+                llm_message.content += chunk.content
+                yield chunk
+            elif isinstance(chunk, ToolOutput):
+                if chunk.tool_call_id not in final_tool_calls:
+                    final_tool_calls[chunk.tool_call_id] = {
+                        "id": chunk.tool_call_id,
+                        "name": chunk.name,
+                        "arguments": "",
+                    }
+
+                if chunk.arguments:
+                    final_tool_calls[chunk.tool_call_id]["arguments"] += chunk.arguments
+                    try:
+                        args = json.loads(
+                            final_tool_calls[chunk.tool_call_id]["arguments"]
+                        )
+                        if (
+                            final_tool_calls[chunk.tool_call_id]["name"]
+                            == SEARCH_TOOL_DEFINITION["function"]["name"]
+                        ):
+                            # yield initial tool call before search (to show user that we are searching)
+                            yield chunk
+                            logger.info(f"Searching web for: {args['query']}")
+                            result = await search_web(
+                                args["query"], llm_repository.search_client
+                            )
+                            tool_message = Message(
+                                id=uuid7(),
+                                chat_id=chat.id,
+                                role="tool",
+                                content=result,
+                                tool_call_id=chunk.tool_call_id,
+                                name=chunk.name,
+                            )
+                            new_messages.append(tool_message)
+                            llm_input_messages.append(tool_message)
+                            # finally yield the tool output with the result
+                            yield ToolOutput(
+                                tool_call_id=chunk.tool_call_id,
+                                name=chunk.name,
+                                arguments=chunk.arguments,
+                                result=result,
+                            )
+                    except json.JSONDecodeError:
+                        continue
+
+        if not final_tool_calls:
+            break
 
     new_messages.append(llm_message)
     await chat_repository.insert_messages(new_messages)
