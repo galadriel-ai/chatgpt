@@ -8,6 +8,7 @@ psycopg==3.2.9
 psycopg-binary==3.2.9
 gunicorn==23.0.0
 uuid7==0.1.0
+python-multipart==0.0.20
 
 ruff==0.11.12
 pytest==8.4.0

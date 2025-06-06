@@ -40,3 +40,6 @@ DB_PORT_READ = os.getenv("DB_PORT_READ", "5435")
 # AI configurations
 LLM_MODEL = os.getenv("LLM_MODEL")
 LLM_API_KEY = os.getenv("LLM_API_KEY")
+
+
+STORAGE_FOLDER = os.getenv("STORAGE_FOLDER", "storage")

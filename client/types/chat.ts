@@ -3,6 +3,7 @@ export type Message = {
   id: string
   role: 'system' | 'user' | 'assistant'
   content: string
+  attachmentIds?: string[] // Only store file IDs
 }
 
 export interface Chat {

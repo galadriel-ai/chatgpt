@@ -1,12 +1,16 @@
+import React, { useState } from 'react'
 import { TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { UpArrowIcon } from '@/components/icons/Icons'
-import { useState } from 'react'
+import { UpArrowIcon, PlusIcon } from '@/components/icons/Icons'
+import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
+import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
+import { useMediaAttachments, AttachmentFile } from '@/hooks/useMediaAttachments'
+import { useFileUpload } from '@/hooks/useFileUpload'
 
 export type ThemedTextInputProps = TextInputProps & {
-  onMessage: (message: string) => Promise<boolean>
+  onMessage: (message: string, attachments?: AttachmentFile[]) => Promise<boolean>
   className?: string
 }
 
@@ -25,36 +29,124 @@ export function ThemedChatInput({
   const combinedClassName = `${defaultClasses} ${className || ''}`.trim()
 
   const [inputValue, setInputValue] = useState<string>('')
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState<boolean>(false)
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([])
+  
+  const { pickFiles, takePhoto, pickPhotos, isLoading } = useMediaAttachments()
+  const { uploadFile } = useFileUpload()
+
+  const startUpload = async (file: AttachmentFile) => {
+    try {
+      const fileId = await uploadFile(
+        { uri: file.uri, name: file.name, type: file.type, size: file.size },
+        (progress) => {
+          setAttachments(prev => prev.map(att => 
+            att.id === file.id ? { ...att, progress } : att
+          ))
+        }
+      )
+
+      if (fileId) {
+        setAttachments(prev => prev.map(att => 
+          att.id === file.id ? { ...att, progress: 100, uploadedFileId: fileId } : att
+        ))
+      } else {
+        setAttachments(prev => prev.map(att => 
+          att.id === file.id ? { ...att, error: 'Upload failed' } : att
+        ))
+      }
+    } catch (error) {
+      setAttachments(prev => prev.map(att => 
+        att.id === file.id ? { ...att, error: 'Upload failed' } : att
+      ))
+    }
+  }
 
   const onSubmitClick = async () => {
-    if (inputValue) {
-      if (await onMessage(inputValue)) {
+    const uploadedAttachments = attachments.filter(att => att.uploadedFileId && !att.error)
+    if (inputValue.trim() || uploadedAttachments.length > 0) {
+      if (await onMessage(inputValue, uploadedAttachments)) {
         setInputValue('')
+        setAttachments([])
       } else {
         // TODO error?
       }
     }
   }
 
+  const onPlusClick = () => {
+    setShowAttachmentMenu(true)
+  }
+
+  const onSelectFiles = async () => {
+    const files = await pickFiles()
+    if (files.length > 0) {
+      setAttachments(prev => [...prev, ...files])
+      // Start uploading immediately
+      files.forEach(startUpload)
+    }
+  }
+
+  const onSelectCamera = async () => {
+    const photo = await takePhoto()
+    if (photo) {
+      setAttachments(prev => [...prev, photo])
+      // Start uploading immediately
+      startUpload(photo)
+    }
+  }
+
+  const onSelectPhotos = async () => {
+    const photos = await pickPhotos()
+    if (photos.length > 0) {
+      setAttachments(prev => [...prev, ...photos])
+      // Start uploading immediately
+      photos.forEach(startUpload)
+    }
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
+
   return (
-    <ThemedView
-      className="flex flex-col gap-2 rounded-2xl px-2 py-2"
-      style={[{ backgroundColor, borderColor, borderWidth: 1 }]}
-    >
-      <TextInput
-        value={inputValue}
-        onChangeText={setInputValue}
-        className={combinedClassName}
-        style={[{ color }, style]}
-        placeholderTextColor={placeholderColor}
-        {...otherProps}
+    <>
+      <ThemedView className="flex flex-col gap-2">
+        <AttachmentPreview 
+          attachments={attachments} 
+          onRemove={removeAttachment} 
+        />
+        
+        <ThemedView
+          className="flex flex-col gap-2 rounded-2xl px-2 py-2"
+          style={[{ backgroundColor, borderColor, borderWidth: 1 }]}
+        >
+          <TextInput
+            value={inputValue}
+            onChangeText={setInputValue}
+            className={combinedClassName}
+            style={[{ color }, style]}
+            placeholderTextColor={placeholderColor}
+            {...otherProps}
+          />
+          <View className="flex flex-row justify-between">
+            <View className="flex flex-row gap-4">
+              <PlusIcon onClick={onPlusClick} />
+            </View>
+            <View className="flex flex-row gap-4">
+              <UpArrowIcon onClick={onSubmitClick} />
+            </View>
+          </View>
+        </ThemedView>
+      </ThemedView>
+      
+      <AttachmentMenu
+        visible={showAttachmentMenu}
+        onClose={() => setShowAttachmentMenu(false)}
+        onSelectFiles={onSelectFiles}
+        onSelectCamera={onSelectCamera}
+        onSelectPhotos={onSelectPhotos}
       />
-      <View className="flex flex-row justify-between">
-        <View className="flex flex-row gap-4"></View>
-        <View className="flex flex-row gap-4">
-          <UpArrowIcon onClick={onSubmitClick} />
-        </View>
-      </View>
-    </ThemedView>
+    </>
   )
 }

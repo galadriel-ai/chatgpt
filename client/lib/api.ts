@@ -62,9 +62,51 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   }
 }
 
+async function uploadFile(
+  file: { uri: string; name: string; type: string; size?: number },
+  onProgress: (progress: number) => void
+): Promise<string | null> {
+  try {
+    console.log('Uploading file:', file)
+
+    const formData = new FormData()
+    
+    // For React Native, we can directly append the file object with uri
+    // FormData in RN handles file URIs properly without needing to fetch/blob
+    formData.append('file', {
+      uri: file.uri,
+      type: file.type,
+      name: file.name,
+    } as any)
+
+    console.log('FormData with file URI created')
+
+    const uploadResponse = await fetch(`${API_BASE_URL}/files`, {
+      method: 'POST',
+      body: formData,
+      // Don't set Content-Type - let browser/RN set it with boundary
+    })
+
+    if (uploadResponse.ok) {
+      const result = await uploadResponse.json()
+      onProgress(100) // Set progress to 100% on completion
+      return result.file_id
+    } else {
+      const errorText = await uploadResponse.text()
+      console.log('Upload failed with status:', uploadResponse.status)
+      console.log('Response text:', errorText)
+      throw new Error(`Upload failed with status ${uploadResponse.status}: ${errorText}`)
+    }
+  } catch (error) {
+    console.error('Upload error:', error)
+    return null
+  }
+}
+
 const api = {
   getChats,
   getChatDetails,
+  uploadFile,
 }
 
 export { api }

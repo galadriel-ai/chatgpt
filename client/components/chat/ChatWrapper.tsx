@@ -9,6 +9,8 @@ import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api } from '@/lib/api'
+import { AttachmentFile } from '@/hooks/useMediaAttachments'
+import { MessageAttachments } from '@/components/chat/MessageAttachments'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -28,9 +30,12 @@ export function ChatWrapper() {
     }
   }
 
-  const onMessage = async (message: string): Promise<boolean> => {
+  const onMessage = async (message: string, attachments?: AttachmentFile[]): Promise<boolean> => {
     // TODO: handle new chats somehow
     // if (!activeChat) return false
+
+    // Extract file IDs from uploaded attachments
+    const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
 
     setActiveChat(chat => {
       if (!chat) return null
@@ -40,6 +45,7 @@ export function ChatWrapper() {
         id: `${Date.now()}`,
         role: 'user',
         content: message,
+        attachmentIds,
       })
       return {
         ...chat,
@@ -56,6 +62,7 @@ export function ChatWrapper() {
         body: JSON.stringify({
           chat_id: activeChat?.id || null,
           content: message,
+          attachment_ids: attachmentIds,
         }),
       })
 
@@ -164,7 +171,14 @@ function ChatMessage({ message }: { message: Message }) {
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
-        <ThemedText>{message.content}</ThemedText>
+        {message.content && <ThemedText>{message.content}</ThemedText>}
+        {message.attachmentIds && message.attachmentIds.length > 0 && (
+          <ThemedView className="mt-2">
+            <ThemedText className="text-sm opacity-70">
+              📎 {message.attachmentIds.length} attachment{message.attachmentIds.length > 1 ? 's' : ''}
+            </ThemedText>
+          </ThemedView>
+        )}
       </ThemedView>
     </ThemedView>
   )

@@ -61,6 +61,93 @@ export function RoleUserIcon() {
   )
 }
 
+export function PlusIcon({ onClick }: { onClick: () => void }) {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Pressable onPress={onClick}>
+      <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <Path
+          d="M10 4V16M4 10H16"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </Pressable>
+  )
+}
+
+export function FolderIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
+export function CameraIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
+export function PhotoIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 8H15.01M3 6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V6Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3 16L8 11C8.928 10.107 10.072 10.107 11 11L16 16"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M14 14L15 13C15.928 12.107 17.072 12.107 18 13L21 16"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
 export function RoleAssistantIcon() {
   return (
     <Svg width="32" height="32" viewBox="0 0 150 139">
