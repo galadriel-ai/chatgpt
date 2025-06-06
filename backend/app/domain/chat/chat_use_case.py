@@ -14,6 +14,8 @@ from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import ToolMessage
+from app.domain.chat.entities import ToolCallMessage
+from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolOutput
 from app.domain.users.entities import User
@@ -93,8 +95,23 @@ async def execute(
                             final_tool_calls[chunk.tool_call_id]["name"]
                             == SEARCH_TOOL_DEFINITION["function"]["name"]
                         ):
-                            # yield initial tool call before search (to show user that we are searching)
-                            yield chunk
+                            # Create and persist the assistant's tool call message
+                            tool_call = ToolCall(
+                                id=chunk.tool_call_id,
+                                function={
+                                    "name": SEARCH_TOOL_DEFINITION["function"]["name"],
+                                    "arguments": final_tool_calls[chunk.tool_call_id]["arguments"]
+                                }
+                            )
+                            tool_call_message = ToolCallMessage(
+                                id=uuid7(),
+                                chat_id=chat.id,
+                                tool_calls=[tool_call]
+                            )
+                            yield tool_call_message
+                            new_messages.append(tool_call_message)
+                            llm_input_messages.append(tool_call_message)
+                            
                             logger.info(f"Searching web for: {args['query']}")
                             result = await search_web(
                                 args["query"], llm_repository.search_client
@@ -105,7 +122,7 @@ async def execute(
                                 role="tool",
                                 content=result,
                                 tool_call_id=chunk.tool_call_id,
-                                name=chunk.name,
+                                name=SEARCH_TOOL_DEFINITION["function"]["name"],
                             )
                             new_messages.append(tool_message)
                             llm_input_messages.append(tool_message)

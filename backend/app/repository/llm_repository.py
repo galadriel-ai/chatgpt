@@ -34,6 +34,7 @@ class LlmRepository:
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
+        logger.info(f"Messages: {[m.to_serializable_dict() for m in messages]}")
         stream: AsyncStream = await self.client.chat.completions.create(
             model=model,
             messages=[m.to_serializable_dict() for m in messages],

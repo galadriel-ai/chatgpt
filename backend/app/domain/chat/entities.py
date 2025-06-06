@@ -90,7 +90,7 @@ class Message:
 class ToolMessage:
     id: UUID
     chat_id: UUID
-    role: Literal["system", "user", "assistant", "tool"]
+    role: Literal["assistant", "tool"]
     content: str
     tool_call_id: str
     name: str
@@ -102,6 +102,37 @@ class ToolMessage:
             "content": self.content,
             "tool_call_id": self.tool_call_id,
             "name": self.name,
+        }
+
+
+@dataclass
+class ToolCall:
+    id: str
+    function: Dict[str, str]
+    type: Literal["function"] = "function"
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "function": self.function,
+        }
+
+
+@dataclass
+class ToolCallMessage:
+    id: UUID
+    chat_id: UUID
+    tool_calls: List[ToolCall]
+    role: Literal["assistant"] = "assistant"
+    content: Optional[str] = None
+    model: Optional[str] = None
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "role": self.role,
+            "content": self.content,
+            "tool_calls": [tc.to_serializable_dict() for tc in self.tool_calls],
         }
 
 
