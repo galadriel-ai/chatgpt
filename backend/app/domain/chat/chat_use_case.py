@@ -13,6 +13,7 @@ from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
+from app.domain.chat.entities import ToolMessage
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolOutput
 from app.domain.users.entities import User
@@ -53,7 +54,9 @@ async def execute(
     messages = await _get_existing_messages(chat_input, chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
 
-    llm_input_messages = [deepcopy(m) for m in messages]
+    # Keep only the last 5 messages for now (plus any new messages)
+    recent_messages = messages[-5:] if messages else []
+    llm_input_messages = [deepcopy(m) for m in recent_messages]
     llm_input_messages.extend([deepcopy(m) for m in new_messages])
 
     llm_message = Message(
@@ -96,7 +99,7 @@ async def execute(
                             result = await search_web(
                                 args["query"], llm_repository.search_client
                             )
-                            tool_message = Message(
+                            tool_message = ToolMessage(
                                 id=uuid7(),
                                 chat_id=chat.id,
                                 role="tool",

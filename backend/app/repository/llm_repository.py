@@ -36,15 +36,7 @@ class LlmRepository:
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         stream: AsyncStream = await self.client.chat.completions.create(
             model=model,
-            messages=[
-                {
-                    "role": m.role,
-                    "content": m.content,
-                    "tool_call_id": m.tool_call_id,
-                    "name": m.name,
-                }
-                for m in messages
-            ],
+            messages=[m.to_serializable_dict() for m in messages],
             temperature=temperature,
             max_tokens=max_tokens,
             response_format=response_format,

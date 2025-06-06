@@ -78,8 +78,31 @@ class Message:
     role: Literal["system", "user", "assistant", "tool"]
     content: str
     model: Optional[str] = None
-    tool_call_id: Optional[str] = None
-    name: Optional[str] = None
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "role": self.role,
+            "content": self.content,
+        }
+
+
+@dataclass
+class ToolMessage:
+    id: UUID
+    chat_id: UUID
+    role: Literal["system", "user", "assistant", "tool"]
+    content: str
+    tool_call_id: str
+    name: str
+    model: Optional[str] = None
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "role": self.role,
+            "content": self.content,
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+        }
 
 
 @dataclass
