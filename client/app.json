@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "native",
-    "slug": "native",
+    "name": "Sidekik",
+    "slug": "sidekik",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "native",
+    "scheme": "sidekik",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -57,6 +57,13 @@
     "experiments": {
       "typedRoutes": true,
       "baseUrl": "/"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6c3b04ef-d6dc-4bd0-ab0a-5a702ffd0b9f"
+      }
+    },
+    "owner": "h4n0"
   }
 }
