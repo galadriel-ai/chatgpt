@@ -27,4 +27,4 @@ async def upload_file(
     user: User = Depends(authentication.validate_session_token),
     file_repository: FileRepository = Depends(dependencies.get_file_repository),
 ):
-   return await upload_file_service.execute(user, file, file_repository)
+    return await upload_file_service.execute(user, file, file_repository)

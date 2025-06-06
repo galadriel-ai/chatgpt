@@ -13,6 +13,7 @@ export interface AttachmentFile {
   progress: number
   uploadedFileId?: string
   error?: string
+  abortController?: AbortController
 }
 
 export function useMediaAttachments() {

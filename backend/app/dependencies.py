@@ -9,7 +9,8 @@ from app.repository.user_repository import UserRepository
 
 def get_file_repository() -> FileRepository:
     return FileRepository(
-        settings.STORAGE_FOLDER,
+        get_session_provider(),
+        get_session_provider_read(),
     )
 
 

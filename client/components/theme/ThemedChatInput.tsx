@@ -36,6 +36,13 @@ export function ThemedChatInput({
   const { uploadFile } = useFileUpload()
 
   const startUpload = async (file: AttachmentFile) => {
+    const abortController = new AbortController()
+    
+    // Add abort controller to the file
+    setAttachments(prev => prev.map(att => 
+      att.id === file.id ? { ...att, abortController } : att
+    ))
+
     try {
       const fileId = await uploadFile(
         { uri: file.uri, name: file.name, type: file.type, size: file.size },
@@ -43,7 +50,8 @@ export function ThemedChatInput({
           setAttachments(prev => prev.map(att => 
             att.id === file.id ? { ...att, progress } : att
           ))
-        }
+        },
+        abortController.signal
       )
 
       if (fileId) {
@@ -56,9 +64,15 @@ export function ThemedChatInput({
         ))
       }
     } catch (error) {
-      setAttachments(prev => prev.map(att => 
-        att.id === file.id ? { ...att, error: 'Upload failed' } : att
-      ))
+      // Check if it was aborted
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Remove the attachment if it was cancelled
+        setAttachments(prev => prev.filter(att => att.id !== file.id))
+      } else {
+        setAttachments(prev => prev.map(att => 
+          att.id === file.id ? { ...att, error: 'Upload failed' } : att
+        ))
+      }
     }
   }
 
@@ -106,7 +120,14 @@ export function ThemedChatInput({
   }
 
   const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index))
+    setAttachments(prev => {
+      const attachment = prev[index]
+      // Cancel upload if in progress
+      if (attachment.abortController && attachment.progress < 100) {
+        attachment.abortController.abort()
+      }
+      return prev.filter((_, i) => i !== index)
+    })
   }
 
   return (

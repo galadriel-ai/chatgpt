@@ -64,27 +64,40 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
 
 async function uploadFile(
   file: { uri: string; name: string; type: string; size?: number },
-  onProgress: (progress: number) => void
+  onProgress: (progress: number) => void,
+  abortSignal?: AbortSignal
 ): Promise<string | null> {
   try {
     console.log('Uploading file:', file)
 
     const formData = new FormData()
     
-    // For React Native, we can directly append the file object with uri
-    // FormData in RN handles file URIs properly without needing to fetch/blob
-    formData.append('file', {
-      uri: file.uri,
-      type: file.type,
-      name: file.name,
-    } as any)
+    // Check if we're in web environment or React Native
+    // @ts-ignore - Platform is available in React Native
+    const isWeb = typeof window !== 'undefined' && !window.ReactNativeWebView
+    
+    if (isWeb) {
+      // Web environment: need to fetch the file and create a proper blob
+      const response = await fetch(file.uri)
+      const blob = await response.blob()
+      formData.append('file', blob, file.name)
+    } else {
+      // React Native environment: use the object structure
+      const fileToUpload = {
+        uri: file.uri,
+        type: file.type,
+        name: file.name,
+      } as any
+      formData.append('file', fileToUpload, file.name)
+    }
 
     console.log('FormData with file URI created')
 
     const uploadResponse = await fetch(`${API_BASE_URL}/files`, {
       method: 'POST',
       body: formData,
-      // Don't set Content-Type - let browser/RN set it with boundary
+      signal: abortSignal,
+      // Let React Native set Content-Type with proper boundary
     })
 
     if (uploadResponse.ok) {
@@ -99,6 +112,10 @@ async function uploadFile(
     }
   } catch (error) {
     console.error('Upload error:', error)
+    // Re-throw AbortError so it can be handled properly upstream
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error
+    }
     return null
   }
 }

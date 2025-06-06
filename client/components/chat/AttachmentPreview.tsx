@@ -82,15 +82,13 @@ export function AttachmentPreview({ attachments, onRemove }: AttachmentPreviewPr
               </View>
             )}
             
-                          {/* Remove button - only show when upload is complete or failed */}
-              {(attachment.progress >= 100 || attachment.error) && (
-                <Pressable
-                  onPress={() => onRemove(index)}
-                  className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full justify-center items-center"
-                >
-                  <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>×</Text>
-                </Pressable>
-              )}
+                          {/* Remove/Cancel button - always show */}
+              <Pressable
+                onPress={() => onRemove(index)}
+                className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full justify-center items-center"
+              >
+                <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>×</Text>
+              </Pressable>
           </View>
         ))}
       </ScrollView>

@@ -1,29 +1,46 @@
-from uuid_extensions import uuid7
+from fastapi import UploadFile
 
-from fastapi import UploadFile, File
-
+from app.domain.files.entities import FileInput
+from app.domain.files import save_file_use_case
 from app.domain.users.entities import User
 from app.service.files.entities import FileUploadResponse
 from app.repository.file_repository import FileRepository
 
 
-async def execute(user: User, file: UploadFile, file_repository: FileRepository) -> FileUploadResponse:    
+async def execute(
+    user: User, file: UploadFile, file_repository: FileRepository
+) -> FileUploadResponse:
     print(f"Received file upload:")
     print(f"  filename: {file.filename}")
     print(f"  content_type: {file.content_type}")
-    print(f"  size: {file.size}")
-    print(f"  file object type: {type(file)}")
-    print(f"  file headers: {file.headers if hasattr(file, 'headers') else 'No headers'}")
+    print(f"  user.uid: {user.uid}")
+    print(f"  user.uid type: {type(user.uid)}")
     
-    file_id = str(uuid7())
-    full_data = await file.read()
-    file_size = len(full_data)
+    # Validate required fields
+    if not file.filename:
+        raise ValueError("Filename is required")
+    if not file.content_type:
+        raise ValueError("Content type is required")
     
-    await file_repository.save_file(str(user.uid), file.filename, full_data)
-
-    return FileUploadResponse(
-        file_id=file_id,
-        filename=file.filename,
+    content = await file.read()
+    print(f"  content length: {len(content)}")
+    
+    input = FileInput(
+        user_id=user.uid,
+        file_name=file.filename,
         content_type=file.content_type,
-        size=file_size,
+        content=content,
+    )
+    
+    print("FileInput created successfully")
+    
+    file_result = await save_file_use_case.execute(input, file_repository)
+    
+    print(f"File saved with uid: {file_result.uid}")
+    
+    return FileUploadResponse(
+        file_id=str(file_result.uid),
+        filename=file_result.filename,
+        content_type=file_result.content_type,
+        size=file_result.size,
     )

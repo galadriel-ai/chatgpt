@@ -9,14 +9,16 @@ export interface UploadingFile {
   progress: number // 0-100
   uploadedFileId?: string // server file ID after upload
   error?: string
+  abortController?: AbortController
 }
 
 export function useFileUpload() {
   const uploadFile = async (
     file: { uri: string; name: string; type: string; size?: number },
-    onProgress: (progress: number) => void
+    onProgress: (progress: number) => void,
+    abortSignal?: AbortSignal
   ): Promise<string | null> => {
-    return api.uploadFile(file, onProgress)
+    return api.uploadFile(file, onProgress, abortSignal)
   }
 
   return { uploadFile }
