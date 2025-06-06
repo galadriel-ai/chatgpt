@@ -1,6 +1,11 @@
-# Welcome to your Expo app 👋
+# Welcome to Sidekik 
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+
+## Prerequisites
+- Xcode 16+
+- iOS Emulator 
+  - `xcodebuild -downloadPlatform iOS`
 
 ## Get started
 
@@ -11,23 +16,27 @@ cp template.env .env
 npm install
 ```
 
-2. Start the app
+2. Setup Xcode signing certificate
+First run this command under `client`
+```bash
+xed ios
+```
+And then follow this guide:
+https://github.com/expo/fyi/blob/main/setup-xcode-signing.md
+
+
+3. (Optional) Prebuild the project
+The expo prebuild generates native ios/android code in the corresponding folders. It's not necessary to prebuild the project unless you add/remove react native libs, or change settings in `app.json`
+
+If you want to prebuild the project, run this command:
 
 ```bash
-npx expo start
+npm run prebuild
 ```
 
-## Run on simulator
-
-Requires installing simulator etc
-https://docs.expo.dev/get-started/set-up-your-environment/?platform=ios&device=simulated
-
+4. Build the project on the ios emulator
+```bash
+npm run ios
 ```
-# Can not boot and it will use some default verison
-xcrun simctl boot "iPhone 15 Pro"
-npm run start
-# press i
+Run this command and you will see the app is loaded on the iPhone emulator.
 
-# close simulator if needed
-killall Simulator
-```
