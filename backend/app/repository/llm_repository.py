@@ -7,8 +7,7 @@ from openai import AsyncOpenAI, AsyncStream
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
-from uuid_extensions import uuid7
-from app.domain.chat.entities import Message
+from app.domain.chat.entities import Message, ChunkOutput, ToolOutput
 
 logger = api_logger.get()
 
@@ -36,7 +35,7 @@ class LlmRepository:
         temperature: float = 0.2,
         max_tokens: int = 350,
         response_format: Optional[dict] = None,
-    ) -> AsyncGenerator[str, None]:
+    ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         # Need to handle context length?
         while True:
             stream: AsyncStream = await self.client.chat.completions.create(
@@ -80,27 +79,31 @@ class LlmRepository:
                                     final_tool_calls[tc.id]["name"]
                                     == SEARCH_TOOL_DEFINITION["function"]["name"]
                                 ):
+                                    # Send initial ToolOutput before search
+                                    yield ToolOutput(
+                                        tool_call_id=tc.id,
+                                        name=tc.function.name,
+                                        arguments=tc.function.arguments,
+                                        result=None,
+                                    )
                                     logger.info(f"Searching web for: {args['query']}")
                                     result = await search_web(
                                         args["query"], self.search_client
                                     )
                                     logger.info(f"Search result: {result}")
-                                    messages.append(
-                                        Message(
-                                            id=uuid7(),
-                                            chat_id=messages[0].chat_id,
-                                            role="tool",
-                                            content=result,
-                                            tool_call_id=tc.id,
-                                            name="search_web",
-                                        )
+                                    # Send ToolOutput with search result
+                                    yield ToolOutput(
+                                        tool_call_id=tc.id,
+                                        name=tc.function.name,
+                                        arguments=tc.function.arguments,
+                                        result=result,
                                     )
                             except json.JSONDecodeError:
                                 continue
                     continue
 
                 if choice.delta.content is not None:
-                    yield choice.delta.content
+                    yield ChunkOutput(content=choice.delta.content)
 
             if final_tool_calls:
                 continue

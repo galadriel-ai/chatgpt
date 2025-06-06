@@ -56,6 +56,22 @@ class ChunkOutput(ChatOutputChunk):
 
 
 @dataclass
+class ToolOutput(ChatOutputChunk):
+    tool_call_id: str
+    name: str
+    arguments: str
+    result: str
+
+    def to_serializable_dict(self):
+        return {
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+            "arguments": self.arguments,
+            "result": self.result,
+        }
+
+
+@dataclass
 class Message:
     id: UUID
     chat_id: UUID

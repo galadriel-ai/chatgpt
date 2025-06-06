@@ -13,6 +13,7 @@ from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
+from app.domain.chat.entities import ToolOutput
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
@@ -56,13 +57,25 @@ async def execute(
         content="",
         model=model,
     )
+
     async for chunk in llm_repository.completion(
         llm_input_messages, model, chat_input.is_search_enabled
     ):
-        llm_message.content += chunk
-        yield ChunkOutput(
-            content=chunk,
-        )
+        if isinstance(chunk, ChunkOutput):
+            llm_message.content += chunk.content
+            yield chunk
+        elif isinstance(chunk, ToolOutput):
+            tool_message = Message(
+                id=uuid7(),
+                chat_id=chat.id,
+                role="tool",
+                content=chunk.result,
+                tool_call_id=chunk.tool_call_id,
+                name=chunk.name,
+            )
+            new_messages.append(tool_message)
+            llm_input_messages.append(tool_message)
+
     new_messages.append(llm_message)
     await chat_repository.insert_messages(new_messages)
 
