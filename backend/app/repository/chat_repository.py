@@ -3,6 +3,7 @@ from typing import Optional
 from uuid import UUID
 
 import sqlalchemy
+from uuid_extensions import uuid7
 
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import Message
@@ -86,8 +87,14 @@ class ChatRepository:
         self._session_provider = session_provider
         self._session_provider_read = session_provider_read
 
-    async def insert(self, chat: Chat) -> None:
+    async def insert(self, user_id: UUID, title: str) -> Chat:
         utc_now = utcnow()
+        chat = Chat(
+            id=uuid7(),
+            user_id=user_id,
+            title=title,
+            created_at=utc_now,
+        )
         data = {
             "id": chat.id,
             "user_id": chat.user_id,
@@ -98,6 +105,7 @@ class ChatRepository:
         async with self._session_provider.get() as session:
             await session.execute(sqlalchemy.text(SQL_INSERT), data)
             await session.commit()
+        return chat
 
     async def get(self, chat_id: UUID) -> Optional[Chat]:
         data = {
