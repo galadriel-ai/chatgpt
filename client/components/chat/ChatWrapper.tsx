@@ -40,7 +40,6 @@ export function ChatWrapper() {
 
     // Extract file IDs from uploaded attachments
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
-
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
@@ -84,6 +83,7 @@ export function ChatWrapper() {
         {
           chatId: activeChat?.id || null,
           message,
+          attachmentIds,
         },
         onChunk,
         () => {

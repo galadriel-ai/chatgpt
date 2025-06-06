@@ -24,8 +24,14 @@ async def execute(
             yield json.dumps({"error": e.to_message()})
             return
 
+    uuid_attachment_ids = [
+        parse_uuid.parse(attachment_id) for attachment_id in request.attachment_ids
+    ]
     chat_input = ChatInput(
-        chat_id=chat_id, model=request.model, content=request.content
+        chat_id=chat_id,
+        model=request.model,
+        content=request.content,
+        attachment_ids=uuid_attachment_ids,
     )
 
     async for chunk in chat_use_case.execute(

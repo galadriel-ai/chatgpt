@@ -1,6 +1,4 @@
 from fastapi import APIRouter
-from fastapi import Body
-from fastapi import Path
 from fastapi import Depends
 from fastapi import UploadFile
 from fastapi import File

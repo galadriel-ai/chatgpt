@@ -55,6 +55,7 @@ async def execute(
         role="assistant",
         content="",
         model=model,
+        attachment_ids=[],
     )
     async for chunk in llm_repository.completion(llm_input_messages, model):
         llm_message.content += chunk
@@ -88,6 +89,7 @@ async def _get_new_messages(
             role="user",
             content=chat_input.content,
             model=None,
+            attachment_ids=chat_input.attachment_ids,
         )
     )
     return new_messages

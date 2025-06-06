@@ -34,6 +34,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
       id: string
       role: 'system' | 'user' | 'assistant'
       content: string
+      attachment_ids: string[]
     }[]
   }
 
@@ -56,6 +57,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
           id: m.id,
           role: m.role,
           content: m.content,
+          attachmentIds: m.attachment_ids,
         }
       }),
     }
@@ -67,6 +69,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
 interface ChatInput {
   chatId: string | null
   message: string
+  attachmentIds?: string[]
 }
 
 export interface ChatChunk {
@@ -119,6 +122,7 @@ const streamChatResponse = (
     JSON.stringify({
       chat_id: chatInput.chatId,
       content: chatInput.message,
+      attachment_ids: chatInput.attachmentIds,
     })
   )
 }

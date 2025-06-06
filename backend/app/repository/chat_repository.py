@@ -52,6 +52,7 @@ INSERT INTO message (
     role,
     content,
     model,
+    attachment_ids,
     created_at,
     last_updated_at
 ) VALUES (
@@ -60,6 +61,7 @@ INSERT INTO message (
     :role,
     :content,
     :model,
+    :attachment_ids,
     :created_at,
     :last_updated_at
 );
@@ -72,6 +74,7 @@ SELECT
     role,
     content,
     model,
+    attachment_ids,
     created_at
 FROM message
 WHERE chat_id = :chat_id
@@ -142,6 +145,7 @@ class ChatRepository:
                     "role": message.role,
                     "content": message.content,
                     "model": message.model,
+                    "attachment_ids": message.attachment_ids,
                     "created_at": utc_now,
                     "last_updated_at": utc_now,
                 }
@@ -163,6 +167,7 @@ class ChatRepository:
                         role=row.role,
                         content=row.content,
                         model=row.model,
+                        attachment_ids=row.attachment_ids,
                     )
                 )
         return messages

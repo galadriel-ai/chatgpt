@@ -20,6 +20,7 @@ class ChatInput:
     chat_id: Optional[UUID]
     model: Optional[str]
     content: str
+    attachment_ids: List[UUID]
 
 
 class ChatOutputChunk(ABC):
@@ -61,6 +62,7 @@ class Message:
     role: Literal["system", "user", "assistant"]
     content: str
     model: Optional[str]
+    attachment_ids: List[UUID]
 
 
 @dataclass
