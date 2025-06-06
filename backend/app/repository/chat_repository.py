@@ -111,6 +111,7 @@ class ChatRepository:
                     id=row.id,
                     user_id=row.user_profile_id,
                     title=row.title,
+                    created_at=row.created_at,
                 )
         return None
 
@@ -127,6 +128,7 @@ class ChatRepository:
                         id=row.id,
                         user_id=row.user_profile_id,
                         title=row.title,
+                        created_at=row.created_at,
                     )
                 )
         return chats

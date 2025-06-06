@@ -111,6 +111,7 @@ async def _create_chat(
         user_id=user.uid,
         # Probably want a nicer title
         title=chat_input.content[:MAX_TITLE_LENGTH],
+    #     TODO:
     )
     await chat_repository.insert(chat)
     return chat
