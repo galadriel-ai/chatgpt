@@ -72,40 +72,6 @@ class ToolOutput(ChatOutputChunk):
 
 
 @dataclass
-class Message:
-    id: UUID
-    chat_id: UUID
-    role: Literal["system", "user", "assistant", "tool"]
-    content: str
-    model: Optional[str] = None
-
-    def to_serializable_dict(self) -> Dict:
-        return {
-            "role": self.role,
-            "content": self.content,
-        }
-
-
-@dataclass
-class ToolMessage:
-    id: UUID
-    chat_id: UUID
-    role: Literal["assistant", "tool"]
-    content: str
-    tool_call_id: str
-    name: str
-    model: Optional[str] = None
-
-    def to_serializable_dict(self) -> Dict:
-        return {
-            "role": self.role,
-            "content": self.content,
-            "tool_call_id": self.tool_call_id,
-            "name": self.name,
-        }
-
-
-@dataclass
 class ToolCall:
     id: str
     function: Dict[str, str]
@@ -120,20 +86,28 @@ class ToolCall:
 
 
 @dataclass
-class ToolCallMessage:
+class Message:
     id: UUID
     chat_id: UUID
-    tool_calls: List[ToolCall]
-    role: Literal["assistant"] = "assistant"
+    role: Literal["system", "user", "assistant", "tool"]
     content: Optional[str] = None
     model: Optional[str] = None
+    tool_call_id: Optional[str] = None
+    tool_name: Optional[str] = None
+    tool_calls: Optional[List[ToolCall]] = None
 
-    def to_serializable_dict(self) -> Dict:
-        return {
+    def to_llm_reaady_dict(self) -> Dict:
+        result = {
             "role": self.role,
             "content": self.content,
-            "tool_calls": [tc.to_serializable_dict() for tc in self.tool_calls],
         }
+        if self.tool_call_id is not None:
+            result["tool_call_id"] = self.tool_call_id
+        if self.tool_name is not None:
+            result["name"] = self.tool_name
+        if self.tool_calls is not None:
+            result["tool_calls"] = [tc.to_serializable_dict() for tc in self.tool_calls]
+        return result
 
 
 @dataclass

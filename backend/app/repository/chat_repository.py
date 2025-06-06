@@ -1,11 +1,13 @@
 from typing import List
 from typing import Optional
 from uuid import UUID
+import json
 
 import sqlalchemy
 
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import Message
+from app.domain.chat.entities import ToolCall
 from app.repository.connection import SessionProvider
 from app.repository.utils import utcnow
 
@@ -52,6 +54,10 @@ INSERT INTO message (
     role,
     content,
     model,
+    tool_call_id,
+    tool_name,
+    tool_calls,
+    sequence_number,
     created_at,
     last_updated_at
 ) VALUES (
@@ -60,6 +66,10 @@ INSERT INTO message (
     :role,
     :content,
     :model,
+    :tool_call_id,
+    :tool_name,
+    :tool_calls,
+    :sequence_number,
     :created_at,
     :last_updated_at
 );
@@ -72,10 +82,14 @@ SELECT
     role,
     content,
     model,
+    tool_call_id,
+    tool_name,
+    tool_calls,
+    sequence_number,
     created_at
 FROM message
 WHERE chat_id = :chat_id
-ORDER BY id;
+ORDER BY sequence_number;
 """
 
 
@@ -134,14 +148,32 @@ class ChatRepository:
     async def insert_messages(self, messages: List[Message]) -> None:
         utc_now = utcnow()
 
+        # Get the current max sequence number for this chat
         async with self._session_provider.get() as session:
-            for message in messages:
+            result = await session.execute(
+                sqlalchemy.text(
+                    "SELECT COALESCE(MAX(sequence_number), 0) FROM message WHERE chat_id = :chat_id"
+                ),
+                {"chat_id": messages[0].chat_id},
+            )
+            current_max = result.scalar() or 0
+
+        async with self._session_provider.get() as session:
+            for i, message in enumerate(messages, start=1):
                 data = {
                     "id": message.id,
                     "chat_id": message.chat_id,
                     "role": message.role,
                     "content": message.content,
                     "model": message.model,
+                    "tool_call_id": message.tool_call_id,
+                    "tool_name": message.tool_name,
+                    "tool_calls": json.dumps(
+                        [tc.to_serializable_dict() for tc in message.tool_calls]
+                    )
+                    if message.tool_calls
+                    else None,
+                    "sequence_number": current_max + i,
                     "created_at": utc_now,
                     "last_updated_at": utc_now,
                 }
@@ -156,6 +188,13 @@ class ChatRepository:
         async with self._session_provider_read.get() as session:
             rows = await session.execute(sqlalchemy.text(SQL_GET_MESSAGES), data)
             for row in rows:
+                tool_calls = None
+                if row.tool_calls:
+                    tool_calls_data = json.loads(row.tool_calls)
+                    tool_calls = [
+                        ToolCall(id=tc["id"], function=tc["function"])
+                        for tc in tool_calls_data
+                    ]
                 messages.append(
                     Message(
                         id=row.id,
@@ -163,6 +202,9 @@ class ChatRepository:
                         role=row.role,
                         content=row.content,
                         model=row.model,
+                        tool_call_id=row.tool_call_id,
+                        tool_name=row.tool_name,
+                        tool_calls=tool_calls,
                     )
                 )
         return messages

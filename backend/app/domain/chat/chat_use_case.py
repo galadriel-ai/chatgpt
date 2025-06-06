@@ -13,8 +13,6 @@ from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
-from app.domain.chat.entities import ToolMessage
-from app.domain.chat.entities import ToolCallMessage
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolOutput
@@ -56,9 +54,7 @@ async def execute(
     messages = await _get_existing_messages(chat_input, chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
 
-    # Keep only the last 5 messages for now (plus any new messages)
-    recent_messages = messages[-5:] if messages else []
-    llm_input_messages = [deepcopy(m) for m in recent_messages]
+    llm_input_messages = [deepcopy(m) for m in messages]
     llm_input_messages.extend([deepcopy(m) for m in new_messages])
 
     llm_message = Message(
@@ -100,29 +96,32 @@ async def execute(
                                 id=chunk.tool_call_id,
                                 function={
                                     "name": SEARCH_TOOL_DEFINITION["function"]["name"],
-                                    "arguments": final_tool_calls[chunk.tool_call_id]["arguments"]
-                                }
+                                    "arguments": final_tool_calls[chunk.tool_call_id][
+                                        "arguments"
+                                    ],
+                                },
                             )
-                            tool_call_message = ToolCallMessage(
+                            tool_call_message = Message(
                                 id=uuid7(),
                                 chat_id=chat.id,
-                                tool_calls=[tool_call]
+                                role="assistant",
+                                tool_calls=[tool_call],
                             )
-                            yield tool_call_message
+                            yield chunk  # yield the tool call message to show user that we are searching
                             new_messages.append(tool_call_message)
                             llm_input_messages.append(tool_call_message)
-                            
+
                             logger.info(f"Searching web for: {args['query']}")
                             result = await search_web(
                                 args["query"], llm_repository.search_client
                             )
-                            tool_message = ToolMessage(
+                            tool_message = Message(
                                 id=uuid7(),
                                 chat_id=chat.id,
                                 role="tool",
                                 content=result,
                                 tool_call_id=chunk.tool_call_id,
-                                name=SEARCH_TOOL_DEFINITION["function"]["name"],
+                                tool_name=SEARCH_TOOL_DEFINITION["function"]["name"],
                             )
                             new_messages.append(tool_message)
                             llm_input_messages.append(tool_message)
