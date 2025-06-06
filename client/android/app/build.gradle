@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.xnative'
+    namespace 'com.galadriel.chatgpt'
     defaultConfig {
-        applicationId 'com.anonymous.xnative'
+        applicationId 'com.galadriel.chatgpt'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
