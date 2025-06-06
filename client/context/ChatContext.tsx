@@ -13,7 +13,7 @@ type ChatContextType = {
   setSelectedChat: React.Dispatch<React.SetStateAction<Chat | null>>
   activeChat: ChatDetails | null
   setActiveChat: React.Dispatch<React.SetStateAction<ChatDetails | null>>
-  sendMessage: (chatId: string, text: string) => void
+  addChat: (chat: Chat) => void
 }
 
 const ChatContext = createContext<ChatContextType | null>(null)
@@ -36,9 +36,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     setChats(newChats)
   }
 
-  const sendMessage = (chatId: string, text: string) => {
-    // update in-memory
-    // persist to storage/API
+  const addChat = (chat: Chat) => {
+    setChats(prev => [...prev, chat])
   }
 
   return (
@@ -49,7 +48,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         setSelectedChat,
         activeChat,
         setActiveChat,
-        sendMessage,
+        addChat,
       }}
     >
       {children}

@@ -44,7 +44,7 @@ async def chat(
             chat_repository,
         ),
         headers=headers,
-        media_type="text/event-stream",
+        media_type="text/plain",
     )
 
 

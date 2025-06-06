@@ -1,7 +1,7 @@
-import { useRouter } from 'expo-router'
-import { useAuth } from '@/context/AuthContext'
-import { useEffect, useState } from 'react'
-import { Drawer } from 'expo-router/drawer'
+import {useRouter} from 'expo-router'
+import {useAuth} from '@/context/AuthContext'
+import {useEffect, useState} from 'react'
+import {Drawer} from 'expo-router/drawer'
 import ChatDrawerContent from '@/components/drawer/ChatDrawerContent'
 
 export default function MainLayout() {
