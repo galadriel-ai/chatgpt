@@ -1,5 +1,5 @@
 import { API_BASE_URL } from '@env'
-import { Chat, ChatDetails, Message } from '@/types/chat'
+import { Chat, ChatDetails } from '@/types/chat'
 
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
@@ -18,7 +18,9 @@ async function getChats(): Promise<Chat[]> {
     if (!response.ok) return []
     const responseJson: ApiResponse = await response.json()
     return responseJson.chats
-  } catch {
+  } catch (e) {
+    console.log('e')
+    console.log(e)
     return []
   }
 }
@@ -62,9 +64,69 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   }
 }
 
+interface ChatInput {
+  chatId: string | null
+  message: string
+}
+
+export interface ChatChunk {
+  chat_id?: string
+  content?: string
+  error?: string
+}
+
+const streamChatResponse = (
+  chatInput: ChatInput,
+  onChunk: (chunk: ChatChunk) => void,
+  onDone?: () => void,
+  onError?: (err: any) => void
+) => {
+  const xhr = new XMLHttpRequest()
+  let lastLength = 0
+
+  xhr.open('POST', `${API_BASE_URL}/chat`, true)
+  xhr.setRequestHeader('Content-Type', 'application/json')
+
+  xhr.onreadystatechange = () => {
+    if (xhr.readyState === xhr.LOADING || xhr.readyState === xhr.DONE) {
+      const newText = xhr.responseText.substring(lastLength)
+      lastLength = xhr.responseText.length
+
+      // Handle newline-delimited JSON chunks
+      newText.split('\n').forEach(line => {
+        const trimmed = line.trim()
+        if (!trimmed) return
+
+        try {
+          const parsed: ChatChunk = JSON.parse(trimmed)
+          onChunk(parsed)
+        } catch (err) {
+          console.warn('Failed to parse chunk:', trimmed)
+        }
+      })
+    }
+
+    if (xhr.readyState === xhr.DONE) {
+      onDone?.()
+    }
+  }
+
+  xhr.onerror = () => {
+    onError?.(new Error('Stream error'))
+  }
+
+  xhr.send(
+    JSON.stringify({
+      chat_id: chatInput.chatId,
+      content: chatInput.message,
+    })
+  )
+}
+
 const api = {
   getChats,
   getChatDetails,
+  streamChatResponse,
 }
 
 export { api }
