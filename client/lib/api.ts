@@ -1,20 +1,160 @@
-import { API_BASE_URL } from '@env'
 import { Chat, ChatDetails } from '@/types/chat'
+import { API_BASE_URL } from '@env'
 
-async function getChats(): Promise<Chat[]> {
+// Authentication API functions
+export interface AuthResponse {
+  message: string
+  user: {
+    uid: string
+    name?: string
+    email?: string
+    profile_picture?: string
+    auth_provider: 'google' | 'apple' | 'local'
+    is_email_verified: boolean
+    created_at?: string
+    last_login_at?: string
+  }
+  access_token: string
+  refresh_token: string
+}
+
+export interface GoogleAuthData {
+  id_token: string
+  name: string
+  email: string
+  google_id: string
+  profile_picture?: string
+}
+
+export interface AppleAuthData {
+  identity_token: string
+  authorization_code: string
+  name?: string
+  email?: string
+  apple_id: string
+}
+
+async function authenticateWithGoogle(authData: GoogleAuthData): Promise<AuthResponse | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(authData),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Google auth error:', errorData)
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Google auth request failed:', error)
+    return null
+  }
+}
+
+async function authenticateWithApple(authData: AppleAuthData): Promise<AuthResponse | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/apple`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(authData),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Apple auth error:', errorData)
+      return null
+    }
+
+    return await response.json()
+  } catch (error) {
+    console.error('Apple auth request failed:', error)
+    return null
+  }
+}
+
+async function refreshToken(refreshToken: string): Promise<{ access_token: string } | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+
+    if (!response.ok) return null
+    return await response.json()
+  } catch (error) {
+    console.error('Token refresh failed:', error)
+    return null
+  }
+}
+
+async function logout(accessToken: string, refreshToken?: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error('Logout failed:', error)
+    return false
+  }
+}
+
+async function getCurrentUser(accessToken: string): Promise<AuthResponse['user'] | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.user
+  } catch (error) {
+    console.error('Get current user failed:', error)
+    return null
+  }
+}
+
+// Existing chat functions with authentication
+async function getChats(accessToken?: string): Promise<Chat[]> {
   interface ApiResponse {
     chats: Chat[]
   }
 
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+    }
+
     const response = await fetch(`${API_BASE_URL}/`, {
       method: 'GET',
-      // TODO: how does user auth work?
-      // credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     })
+    
     if (!response.ok) return []
     const responseJson: ApiResponse = await response.json()
     return responseJson.chats
@@ -25,11 +165,10 @@ async function getChats(): Promise<Chat[]> {
   }
 }
 
-async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
+async function getChatDetails(chatId: string, accessToken?: string): Promise<ChatDetails | null> {
   interface ApiResponse {
     id: string
     title: string
-    // Works as long as we dont need some special mapping here
     messages: {
       id: string
       role: 'system' | 'user' | 'assistant'
@@ -38,14 +177,19 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   }
 
   try {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+    }
+
     const response = await fetch(`${API_BASE_URL}/chat/${chatId}`, {
       method: 'GET',
-      // TODO: how does user auth work?
-      // credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     })
+    
     if (!response.ok) return null
     const responseJson: ApiResponse = await response.json()
     return {
@@ -124,6 +268,13 @@ const streamChatResponse = (
 }
 
 const api = {
+  // Authentication
+  authenticateWithGoogle,
+  authenticateWithApple,
+  refreshToken,
+  logout,
+  getCurrentUser,
+  // Chat
   getChats,
   getChatDetails,
   streamChatResponse,

@@ -9,6 +9,13 @@ psycopg-binary==3.2.9
 gunicorn==23.0.0
 uuid7==0.1.0
 
+# Authentication dependencies
+google-auth==2.29.0
+google-auth-oauthlib==1.2.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+pydantic-settings==2.2.1
+
 ruff==0.11.12
 pytest==8.4.0
 pytest-asyncio==1.0.0

@@ -1,58 +1,84 @@
 import { ThemedText } from '@/components/theme/ThemedText'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { useAuth } from '@/context/AuthContext'
+import { api } from '@/lib/api'
 import { GOOGLE_CLIENT_ID } from '@env'
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import { useRouter } from 'expo-router'
-import { useEffect } from 'react'
-import { Button, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { useEffect, useState } from 'react'
+import { ActivityIndicator, Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native'
 
 export default function LoginScreen() {
   const { login } = useAuth()
   const router = useRouter()
+  const [loading, setLoading] = useState({ google: false, apple: false, guest: false })
 
   useEffect(() => {
     // Configure Google Sign In when the component mounts
     GoogleSignin.configure({
-      // Add your web client ID here
       webClientId: GOOGLE_CLIENT_ID,
       iosClientId: GOOGLE_CLIENT_ID,
     })
   }, [])
 
   const handleLogin = () => {
-    login({ name: 'User' })
+    setLoading(prev => ({ ...prev, guest: true }))
+    // For guest login, we'll just use local context for now
+    login({ name: 'Guest User' })
     router.replace('/(main)')
+    setLoading(prev => ({ ...prev, guest: false }))
   }
 
   const handleGoogleLogin = async () => {
+    setLoading(prev => ({ ...prev, google: true }))
+    
     try {
       await GoogleSignin.hasPlayServices()
       const userInfo = await GoogleSignin.signIn()
 
-      if (userInfo) {
-        login({
+      if (userInfo && userInfo.idToken) {
+        // Call backend authentication with correct field names
+        const authResponse = await api.authenticateWithGoogle({
+          id_token: userInfo.idToken,
           name: userInfo.user.name || 'Google User',
           email: userInfo.user.email,
-          googleId: userInfo.user.id,
+          google_id: userInfo.user.id,
+          profile_picture: userInfo.user.photo || undefined,
         })
-        router.replace('/(main)')
+
+        if (authResponse) {
+          // Store tokens and user data in context
+          login({
+            ...authResponse.user,
+            accessToken: authResponse.access_token,
+            refreshToken: authResponse.refresh_token,
+          })
+          router.replace('/(main)')
+        } else {
+          Alert.alert('Authentication Failed', 'Unable to authenticate with Google. Please try again.')
+        }
       }
     } catch (error: any) {
+      console.error('Google Sign In Error:', error)
+      
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('User cancelled the sign in flow')
       } else if (error.code === statusCodes.IN_PROGRESS) {
         console.log('Sign in is in progress')
       } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log('Play services not available')
+        Alert.alert('Error', 'Google Play Services not available')
       } else {
-        console.error('Google Sign In Error:', error)
+        Alert.alert('Authentication Error', 'Failed to sign in with Google. Please try again.')
       }
+    } finally {
+      setLoading(prev => ({ ...prev, google: false }))
     }
   }
 
   const handleAppleLogin = async () => {
+    setLoading(prev => ({ ...prev, apple: true }))
+    
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -61,21 +87,40 @@ export default function LoginScreen() {
         ],
       })
 
-      // Use the Apple credential to login
-      login({
-        name: credential.fullName?.givenName || 'Apple User',
-        email: credential.email,
-        appleId: credential.user,
-      })
-      router.replace('/(main)')
+      if (credential.identityToken && credential.authorizationCode) {
+        // Call backend authentication with correct field names
+        const authResponse = await api.authenticateWithApple({
+          identity_token: credential.identityToken,
+          authorization_code: credential.authorizationCode,
+          name: credential.fullName ? 
+            `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim() : 
+            undefined,
+          email: credential.email || undefined,
+          apple_id: credential.user,
+        })
+
+        if (authResponse) {
+          // Store tokens and user data in context
+          login({
+            ...authResponse.user,
+            accessToken: authResponse.access_token,
+            refreshToken: authResponse.refresh_token,
+          })
+          router.replace('/(main)')
+        } else {
+          Alert.alert('Authentication Failed', 'Unable to authenticate with Apple. Please try again.')
+        }
+      }
     } catch (e: any) {
+      console.error('Apple Sign In Error:', e)
+      
       if (e.code === 'ERR_REQUEST_CANCELED') {
-        // User canceled the sign-in flow
         console.log('User canceled Apple Sign In')
       } else {
-        // Handle other errors
-        console.error('Apple Sign In Error:', e)
+        Alert.alert('Authentication Error', 'Failed to sign in with Apple. Please try again.')
       }
+    } finally {
+      setLoading(prev => ({ ...prev, apple: false }))
     }
   }
 
@@ -84,18 +129,30 @@ export default function LoginScreen() {
       <ThemedText style={styles.title}>Login</ThemedText>
 
       <View style={styles.buttonContainer}>
-        <Button title="Guest Login" onPress={handleLogin} />
+        <Button 
+          title={loading.guest ? "Signing in..." : "Guest Login"} 
+          onPress={handleLogin}
+          disabled={loading.guest}
+        />
 
-        <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-          <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
+        <TouchableOpacity 
+          style={[styles.googleButton, loading.google && styles.disabledButton]} 
+          onPress={handleGoogleLogin}
+          disabled={loading.google}
+        >
+          {loading.google ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
+          )}
         </TouchableOpacity>
 
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
           buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
           cornerRadius={5}
-          style={styles.appleButton}
-          onPress={handleAppleLogin}
+          style={[styles.appleButton, loading.apple && styles.disabledButton]}
+          onPress={loading.apple ? () => {} : handleAppleLogin}
         />
       </View>
     </ThemedView>
@@ -134,5 +191,8 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 })
