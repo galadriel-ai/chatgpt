@@ -94,11 +94,11 @@ class Message:
     id: UUID
     chat_id: UUID
     role: Literal["system", "user", "assistant", "tool"]
+    attachment_ids: List[UUID]
     content: Optional[str] = None
     model: Optional[str] = None
     tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None
-    attachment_ids: List[UUID]
 
     def to_llm_reaady_dict(self) -> Dict:
         result = {
