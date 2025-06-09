@@ -19,6 +19,7 @@ class ChatRequest(BaseModel):
 class UserChat(BaseModel):
     id: str
     title: str
+    created_at: int
 
 
 class ChatMessage(BaseModel):

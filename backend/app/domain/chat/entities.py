@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ class Chat:
     id: UUID
     user_id: UUID
     title: str
+    created_at: datetime
 
 
 @dataclass

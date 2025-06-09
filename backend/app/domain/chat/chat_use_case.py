@@ -205,14 +205,7 @@ async def _create_chat(
     user: User,
     chat_repository: ChatRepository,
 ) -> Chat:
-    chat = Chat(
-        id=uuid7(),
-        user_id=user.uid,
-        # Probably want a nicer title
-        title=chat_input.content[:MAX_TITLE_LENGTH],
-    )
-    await chat_repository.insert(chat)
-    return chat
+    return await chat_repository.insert(user.uid, chat_input.content[:MAX_TITLE_LENGTH])
 
 
 async def _get_existing_messages(
