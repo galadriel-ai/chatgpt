@@ -166,8 +166,10 @@ class ChatRepository:
                     "role": message.role,
                     "content": message.content,
                     "model": message.model,
-                    "tool_call_id": message.tool_call_id,
-                    "tool_name": message.tool_name,
+                    "tool_call_id": message.tool_call.id if message.tool_call else None,
+                    "tool_name": message.tool_call.function["name"]
+                    if message.tool_call
+                    else None,
                     "tool_calls": json.dumps(
                         [tc.to_serializable_dict() for tc in message.tool_calls]
                     )
@@ -195,6 +197,13 @@ class ChatRepository:
                         ToolCall(id=tc["id"], function=tc["function"])
                         for tc in tool_calls_data
                     ]
+
+                tool_call = None
+                if row.tool_call_id and row.tool_name:
+                    tool_call = ToolCall(
+                        id=row.tool_call_id, function={"name": row.tool_name}
+                    )
+
                 messages.append(
                     Message(
                         id=row.id,
@@ -202,8 +211,7 @@ class ChatRepository:
                         role=row.role,
                         content=row.content,
                         model=row.model,
-                        tool_call_id=row.tool_call_id,
-                        tool_name=row.tool_name,
+                        tool_call=tool_call,
                         tool_calls=tool_calls,
                     )
                 )
