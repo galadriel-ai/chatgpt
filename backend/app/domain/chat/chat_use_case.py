@@ -67,73 +67,101 @@ async def execute(
 
     while True:
         final_tool_calls = {}
-        async for chunk in llm_repository.completion(
-            llm_input_messages, model, chat_input.is_search_enabled
-        ):
-            if isinstance(chunk, ChunkOutput):
-                llm_message.content += chunk.content
-                yield chunk
-            elif isinstance(chunk, ToolOutput):
-                if chunk.tool_call_id not in final_tool_calls:
-                    final_tool_calls[chunk.tool_call_id] = {
-                        "id": chunk.tool_call_id,
-                        "name": chunk.name,
-                        "arguments": "",
-                    }
+        current_tool_call_id = None
 
-                if chunk.arguments:
-                    final_tool_calls[chunk.tool_call_id]["arguments"] += chunk.arguments
-                    try:
-                        args = json.loads(
-                            final_tool_calls[chunk.tool_call_id]["arguments"]
-                        )
-                        if (
-                            final_tool_calls[chunk.tool_call_id]["name"]
-                            == SEARCH_TOOL_DEFINITION["function"]["name"]
-                        ):
-                            # Create and persist the assistant's tool call message
-                            tool_call = ToolCall(
-                                id=chunk.tool_call_id,
-                                function={
-                                    "name": SEARCH_TOOL_DEFINITION["function"]["name"],
-                                    "arguments": final_tool_calls[chunk.tool_call_id][
-                                        "arguments"
-                                    ],
-                                },
-                            )
-                            tool_call_message = Message(
-                                id=uuid7(),
-                                chat_id=chat.id,
-                                role="assistant",
-                                tool_calls=[tool_call],
-                            )
-                            yield chunk  # yield the tool call message to show user that we are searching
-                            new_messages.append(tool_call_message)
-                            llm_input_messages.append(tool_call_message)
+        try:
+            async for chunk in llm_repository.completion(
+                llm_input_messages, model, chat_input.is_search_enabled
+            ):
+                if isinstance(chunk, ChunkOutput):
+                    llm_message.content += chunk.content
+                    yield chunk
+                elif isinstance(chunk, ToolOutput):
+                    if chunk.tool_call_id:
+                        current_tool_call_id = chunk.tool_call_id
 
-                            logger.info(f"Searching web for: {args['query']}")
-                            result = await search_web(
-                                args["query"], llm_repository.search_client
-                            )
-                            tool_message = Message(
-                                id=uuid7(),
-                                chat_id=chat.id,
-                                role="tool",
-                                content=result,
-                                tool_call_id=chunk.tool_call_id,
-                                tool_name=SEARCH_TOOL_DEFINITION["function"]["name"],
-                            )
-                            new_messages.append(tool_message)
-                            llm_input_messages.append(tool_message)
-                            # finally yield the tool output with the result
-                            yield ToolOutput(
-                                tool_call_id=chunk.tool_call_id,
-                                name=chunk.name,
-                                arguments=chunk.arguments,
-                                result=result,
-                            )
-                    except json.JSONDecodeError:
+                    tool_call_id = chunk.tool_call_id or current_tool_call_id
+                    if not tool_call_id:
+                        logger.warning("Received tool output without tool_call_id")
                         continue
+
+                    if tool_call_id not in final_tool_calls:
+                        final_tool_calls[tool_call_id] = {
+                            "id": tool_call_id,
+                            "name": chunk.name,
+                            "arguments": "",
+                        }
+
+                    if chunk.arguments:
+                        final_tool_calls[tool_call_id]["arguments"] += chunk.arguments
+                        try:
+                            args = json.loads(
+                                final_tool_calls[tool_call_id]["arguments"]
+                            )
+                            if (
+                                final_tool_calls[tool_call_id]["name"]
+                                == SEARCH_TOOL_DEFINITION["function"]["name"]
+                            ):
+                                # Create and persist the assistant's tool call message
+                                tool_call = ToolCall(
+                                    id=tool_call_id,
+                                    function={
+                                        "name": SEARCH_TOOL_DEFINITION["function"][
+                                            "name"
+                                        ],
+                                        "arguments": final_tool_calls[tool_call_id][
+                                            "arguments"
+                                        ],
+                                    },
+                                )
+                                tool_call_message = Message(
+                                    id=uuid7(),
+                                    chat_id=chat.id,
+                                    role="assistant",
+                                    tool_calls=[tool_call],
+                                    tool_call_id=tool_call_id,
+                                    tool_name=SEARCH_TOOL_DEFINITION["function"][
+                                        "name"
+                                    ],
+                                )
+                                yield chunk  # yield the tool call message to show user that we are searching
+                                new_messages.append(tool_call_message)
+                                llm_input_messages.append(tool_call_message)
+
+                                logger.info(f"Searching web for: {args['query']}")
+                                try:
+                                    result = await search_web(
+                                        args["query"], llm_repository.search_client
+                                    )
+                                    tool_message = Message(
+                                        id=uuid7(),
+                                        chat_id=chat.id,
+                                        role="tool",
+                                        content=result,
+                                        tool_call_id=tool_call_id,
+                                        tool_name=SEARCH_TOOL_DEFINITION["function"][
+                                            "name"
+                                        ],
+                                    )
+                                    new_messages.append(tool_message)
+                                    llm_input_messages.append(tool_message)
+                                    # finally yield the tool output with the result
+                                    yield ToolOutput(
+                                        tool_call_id=tool_call_id,
+                                        name=chunk.name,
+                                        arguments=chunk.arguments,
+                                        result=result,
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Search failed: {str(e)}")
+                                    yield ErrorChunk(error=str(e))
+                                    break
+                        except json.JSONDecodeError:
+                            continue
+        except Exception as e:
+            logger.error(f"LLM completion failed: {str(e)}")
+            yield ErrorChunk(error=str(e))
+            break
 
         if not final_tool_calls:
             break
