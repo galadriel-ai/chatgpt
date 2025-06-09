@@ -15,6 +15,7 @@ async def execute(
             UserChat(
                 id=str(c.id),
                 title=c.title,
+                created_at=int(c.created_at.timestamp()),
             )
             for c in chats
         ]

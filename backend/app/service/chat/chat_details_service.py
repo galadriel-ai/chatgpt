@@ -16,6 +16,7 @@ async def execute(
     return ChatDetailsResponse(
         id=str(chat_details.id),
         title=chat_details.title,
+        created_at=int(chat_details.created_at.timestamp()),
         messages=[
             ChatMessage(
                 id=str(m.id),

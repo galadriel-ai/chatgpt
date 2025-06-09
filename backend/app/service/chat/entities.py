@@ -10,12 +10,16 @@ from pydantic import Field
 class ChatRequest(BaseModel):
     chat_id: Optional[str] = Field(description="chat id", default=None)
     model: Optional[str] = Field(description="model id", default=None)
+    is_search_enabled: Optional[bool] = Field(
+        description="enable search tool", default=True
+    )
     content: str = Field(description="content")
 
 
 class UserChat(BaseModel):
     id: str
     title: str
+    created_at: int
 
 
 class ChatMessage(BaseModel):

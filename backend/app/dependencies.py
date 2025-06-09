@@ -9,6 +9,8 @@ from app.repository.user_repository import UserRepository
 def get_llm_repository() -> LlmRepository:
     return LlmRepository(
         settings.LLM_API_KEY,
+        settings.SERPAPI_API_KEY,
+        settings.LLM_BASE_URL,
     )
 
 
