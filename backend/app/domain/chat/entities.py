@@ -92,8 +92,7 @@ class Message:
     role: Literal["system", "user", "assistant", "tool"]
     content: Optional[str] = None
     model: Optional[str] = None
-    tool_call_id: Optional[str] = None
-    tool_name: Optional[str] = None
+    tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None
 
     def to_llm_reaady_dict(self) -> Dict:
@@ -101,10 +100,9 @@ class Message:
             "role": self.role,
             "content": self.content,
         }
-        if self.tool_call_id is not None:
-            result["tool_call_id"] = self.tool_call_id
-        if self.tool_name is not None:
-            result["name"] = self.tool_name
+        if self.tool_call is not None:
+            result["tool_call_id"] = self.tool_call.id
+            result["name"] = self.tool_call.function["name"]
         if self.tool_calls is not None:
             result["tool_calls"] = [tc.to_serializable_dict() for tc in self.tool_calls]
         return result

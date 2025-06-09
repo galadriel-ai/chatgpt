@@ -119,10 +119,7 @@ async def execute(
                                     chat_id=chat.id,
                                     role="assistant",
                                     tool_calls=[tool_call],
-                                    tool_call_id=tool_call_id,
-                                    tool_name=SEARCH_TOOL_DEFINITION["function"][
-                                        "name"
-                                    ],
+                                    tool_call=tool_call,
                                 )
                                 yield chunk  # yield the tool call message to show user that we are searching
                                 new_messages.append(tool_call_message)
@@ -138,10 +135,7 @@ async def execute(
                                         chat_id=chat.id,
                                         role="tool",
                                         content=result,
-                                        tool_call_id=tool_call_id,
-                                        tool_name=SEARCH_TOOL_DEFINITION["function"][
-                                            "name"
-                                        ],
+                                        tool_call=tool_call,
                                     )
                                     new_messages.append(tool_message)
                                     llm_input_messages.append(tool_message)
