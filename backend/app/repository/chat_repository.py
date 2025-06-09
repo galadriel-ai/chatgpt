@@ -4,6 +4,7 @@ from uuid import UUID
 import json
 
 import sqlalchemy
+from uuid_extensions import uuid7
 
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import Message
@@ -54,6 +55,7 @@ INSERT INTO message (
     role,
     content,
     model,
+    attachment_ids,
     tool_call_id,
     tool_name,
     tool_calls,
@@ -66,6 +68,7 @@ INSERT INTO message (
     :role,
     :content,
     :model,
+    :attachment_ids,
     :tool_call_id,
     :tool_name,
     :tool_calls,
@@ -86,6 +89,7 @@ SELECT
     tool_name,
     tool_calls,
     sequence_number,
+    attachment_ids,
     created_at
 FROM message
 WHERE chat_id = :chat_id
@@ -100,8 +104,14 @@ class ChatRepository:
         self._session_provider = session_provider
         self._session_provider_read = session_provider_read
 
-    async def insert(self, chat: Chat) -> None:
+    async def insert(self, user_id: UUID, title: str) -> Chat:
         utc_now = utcnow()
+        chat = Chat(
+            id=uuid7(),
+            user_id=user_id,
+            title=title,
+            created_at=utc_now,
+        )
         data = {
             "id": chat.id,
             "user_id": chat.user_id,
@@ -112,6 +122,7 @@ class ChatRepository:
         async with self._session_provider.get() as session:
             await session.execute(sqlalchemy.text(SQL_INSERT), data)
             await session.commit()
+        return chat
 
     async def get(self, chat_id: UUID) -> Optional[Chat]:
         data = {
@@ -125,6 +136,7 @@ class ChatRepository:
                     id=row.id,
                     user_id=row.user_profile_id,
                     title=row.title,
+                    created_at=row.created_at,
                 )
         return None
 
@@ -141,6 +153,7 @@ class ChatRepository:
                         id=row.id,
                         user_id=row.user_profile_id,
                         title=row.title,
+                        created_at=row.created_at,
                     )
                 )
         return chats
@@ -176,6 +189,7 @@ class ChatRepository:
                     if message.tool_calls
                     else None,
                     "sequence_number": current_max + i,
+                    "attachment_ids": message.attachment_ids,
                     "created_at": utc_now,
                     "last_updated_at": utc_now,
                 }
@@ -213,6 +227,7 @@ class ChatRepository:
                         model=row.model,
                         tool_call=tool_call,
                         tool_calls=tool_calls,
+                        attachment_ids=row.attachment_ids,
                     )
                 )
         return messages

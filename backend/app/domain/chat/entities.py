@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -13,6 +14,7 @@ class Chat:
     id: UUID
     user_id: UUID
     title: str
+    created_at: datetime
 
 
 @dataclass
@@ -21,6 +23,7 @@ class ChatInput:
     model: Optional[str]
     is_search_enabled: Optional[bool]
     content: str
+    attachment_ids: List[UUID]
 
 
 class ChatOutputChunk(ABC):
@@ -94,6 +97,7 @@ class Message:
     model: Optional[str] = None
     tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None
+    attachment_ids: List[UUID]
 
     def to_llm_reaady_dict(self) -> Dict:
         result = {

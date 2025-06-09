@@ -16,12 +16,14 @@ async def execute(
     return ChatDetailsResponse(
         id=str(chat_details.id),
         title=chat_details.title,
+        created_at=int(chat_details.created_at.timestamp()),
         messages=[
             ChatMessage(
                 id=str(m.id),
                 role=m.role,
                 content=m.content,
                 model=m.model,
+                attachment_ids=[str(a) for a in m.attachment_ids],
             )
             for m in chat_details.messages
         ],

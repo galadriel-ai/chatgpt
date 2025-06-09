@@ -37,7 +37,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   }
 
   const addChat = (chat: Chat) => {
-    setChats(prev => [...prev, chat])
+    setChats(prev => [chat, ...prev])
   }
 
   return (
@@ -58,6 +58,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
 export const useChat = () => {
   const context = useContext(ChatContext)
-  if (!context) throw new Error('useChat must be used within ChatProvider')
+  if (!context) {
+    throw new Error('useChat must be used within ChatProvider')
+  }
   return context
 }

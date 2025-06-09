@@ -8,6 +8,9 @@ import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect, useState } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
+import { AttachmentFile } from '@/hooks/useMediaAttachments'
+import { MessageAttachments } from '@/components/chat/MessageAttachments'
+
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -32,13 +35,17 @@ export function ChatWrapper() {
     }
   }
 
-  const onMessage = async (message: string): Promise<boolean> => {
+  const onMessage = async (message: string, attachments?: AttachmentFile[]): Promise<boolean> => {
     // If it's a new chat, need to "cache" new messages, and create a new activeChat once chat_id is streamed in response
+
+    // Extract file IDs from uploaded attachments
+    const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
       role: 'user',
       content: message,
+      attachmentIds: attachmentIds,
     }
     newMessages.push(inputMessage)
     addMessage(inputMessage)
@@ -59,6 +66,7 @@ export function ChatWrapper() {
           const newChat: Chat = {
             id: chunk.chat_id,
             title: inputMessage.content.slice(0, 30),
+            createdAt: Math.round(Date.now() / 1000),
           }
           setActiveChat({
             ...newChat,
@@ -76,6 +84,7 @@ export function ChatWrapper() {
         {
           chatId: activeChat?.id || null,
           message,
+          attachmentIds,
         },
         onChunk,
         () => {
@@ -176,6 +185,13 @@ function ChatMessage({ message }: { message: Message }) {
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
         <ThemedText>{message.content}</ThemedText>
+        {message.attachmentIds && message.attachmentIds.length > 0 && (
+          <ThemedView className="mt-2">
+            <ThemedText className="text-sm opacity-70">
+              📎 {message.attachmentIds.length} attachment{message.attachmentIds.length > 1 ? 's' : ''}
+            </ThemedText>
+          </ThemedView>
+        )}
       </ThemedView>
     </ThemedView>
   )
