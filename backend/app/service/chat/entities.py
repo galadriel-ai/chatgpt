@@ -9,7 +9,14 @@ from pydantic import Field
 
 class ChatRequest(BaseModel):
     chat_id: Optional[str] = Field(description="chat id", default=None)
-    model: Optional[str] = Field(description="model id", default=None)
+    model: Optional[
+        Literal[
+            "accounts/fireworks/models/deepseek-v3-0324",
+            "accounts/fireworks/models/deepseek-r1-0528",
+        ]
+    ] = Field(
+        description="model id", default="accounts/fireworks/models/deepseek-v3-0324"
+    )
     is_search_enabled: Optional[bool] = Field(
         description="enable search tool", default=True
     )

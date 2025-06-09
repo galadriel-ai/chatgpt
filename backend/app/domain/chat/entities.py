@@ -111,3 +111,14 @@ class Message:
 @dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+
+
+@dataclass
+class Model:
+    id: Literal[
+        "accounts/fireworks/models/deepseek-v3-0324",
+        "accounts/fireworks/models/deepseek-r1-0528",
+    ]
+    is_search_enabled: Optional[bool] = True
+    temperature: Optional[float] = 0.2
+    max_tokens: Optional[int] = 128000

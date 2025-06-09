@@ -6,7 +6,6 @@ import json
 
 from uuid_extensions import uuid7
 
-import settings
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
@@ -16,6 +15,7 @@ from app.domain.chat.entities import Message
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolOutput
+from app.domain.chat.entities import Model
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
@@ -28,7 +28,6 @@ logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
 
-DEFAULT_MODEL = settings.LLM_MODEL
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 
@@ -49,7 +48,7 @@ async def execute(
     )
 
     # TODO: validate model
-    model = chat_input.model or DEFAULT_MODEL
+    model = Model(id=chat_input.model)
 
     messages = await _get_existing_messages(chat_input, chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
@@ -62,7 +61,7 @@ async def execute(
         chat_id=chat.id,
         role="assistant",
         content="",
-        model=model,
+        model=model.id,
     )
 
     while True:
