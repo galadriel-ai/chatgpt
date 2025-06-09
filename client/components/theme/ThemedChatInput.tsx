@@ -3,14 +3,15 @@ import { TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { UpArrowIcon, PlusIcon } from '@/components/icons/Icons'
+import { UpArrowIcon, PlusIcon, ThinkButton } from '@/components/icons/Icons'
 import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
 import { useMediaAttachments, AttachmentFile } from '@/hooks/useMediaAttachments'
 import { useFileUpload } from '@/hooks/useFileUpload'
+import { useChat } from '@/context/ChatContext'
 
 export type ThemedTextInputProps = TextInputProps & {
-  onMessage: (message: string, attachments?: AttachmentFile[]) => Promise<boolean>
+  onMessage: (message: string, attachments?: AttachmentFile[], thinkModel?: boolean) => Promise<boolean>
   className?: string
 }
 
@@ -34,6 +35,7 @@ export function ThemedChatInput({
   
   const { pickFiles, takePhoto, pickPhotos, isLoading } = useMediaAttachments()
   const { uploadFile } = useFileUpload()
+  const { thinkModel, setThinkModel } = useChat()
 
   const startUpload = async (file: AttachmentFile) => {
     const abortController = new AbortController()
@@ -79,7 +81,7 @@ export function ThemedChatInput({
   const onSubmitClick = async () => {
     const uploadedAttachments = attachments.filter(att => att.uploadedFileId && !att.error)
     if (inputValue.trim() || uploadedAttachments.length > 0) {
-      if (await onMessage(inputValue, uploadedAttachments)) {
+      if (await onMessage(inputValue, uploadedAttachments, thinkModel)) {
         setInputValue('')
         setAttachments([])
       } else {
@@ -90,6 +92,10 @@ export function ThemedChatInput({
 
   const onPlusClick = () => {
     setShowAttachmentMenu(true)
+  }
+
+  const onThinkClick = () => {
+    setThinkModel(!thinkModel)
   }
 
   const onSelectFiles = async () => {
@@ -153,6 +159,7 @@ export function ThemedChatInput({
           <View className="flex flex-row justify-between">
             <View className="flex flex-row gap-4">
               <PlusIcon onClick={onPlusClick} />
+              <ThinkButton isActive={thinkModel} onClick={onThinkClick} />
             </View>
             <View className="flex flex-row gap-4">
               <UpArrowIcon onClick={onSubmitClick} />
