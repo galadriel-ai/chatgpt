@@ -16,6 +16,7 @@ from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolOutput
 from app.domain.chat.entities import Model
+from app.domain.chat.entities import ModelId
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
@@ -48,7 +49,9 @@ async def execute(
     )
 
     # TODO: validate model
-    model = Model(id=chat_input.model)
+    model = Model(
+        id=ModelId.THINK_MODEL if chat_input.think_model else ModelId.DEFAULT_MODEL
+    )
 
     messages = await _get_existing_messages(chat_input, chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)

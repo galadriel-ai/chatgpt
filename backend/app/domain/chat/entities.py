@@ -2,6 +2,7 @@ import datetime
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import Dict
 from typing import List
 from typing import Literal
@@ -20,7 +21,7 @@ class Chat:
 @dataclass
 class ChatInput:
     chat_id: Optional[UUID]
-    model: Optional[str]
+    think_model: Optional[bool]
     is_search_enabled: Optional[bool]
     content: str
     attachment_ids: List[UUID]
@@ -117,12 +118,14 @@ class ChatDetails(Chat):
     messages: List[Message]
 
 
+class ModelId(Enum):
+    THINK_MODEL = "accounts/fireworks/models/deepseek-v3-0324"
+    DEFAULT_MODEL = "accounts/fireworks/models/deepseek-r1-0528"
+
+
 @dataclass
 class Model:
-    id: Literal[
-        "accounts/fireworks/models/deepseek-v3-0324",
-        "accounts/fireworks/models/deepseek-r1-0528",
-    ]
+    id: ModelId
     is_search_enabled: Optional[bool] = True
     temperature: Optional[float] = 0.2
     max_tokens: Optional[int] = 128000
