@@ -118,14 +118,14 @@ class ChatDetails(Chat):
     messages: List[Message]
 
 
-class ModelId(Enum):
-    THINK_MODEL = "accounts/fireworks/models/deepseek-v3-0324"
-    DEFAULT_MODEL = "accounts/fireworks/models/deepseek-r1-0528"
+class ModelId(str, Enum):
+    DEFAULT_MODEL = "accounts/fireworks/models/deepseek-v3-0324"
+    THINK_MODEL = "accounts/fireworks/models/deepseek-r1-0528"
 
 
 @dataclass
 class Model:
-    id: ModelId
+    id: Literal[ModelId.THINK_MODEL, ModelId.DEFAULT_MODEL]
     is_search_enabled: Optional[bool] = True
     temperature: Optional[float] = 0.2
     max_tokens: Optional[int] = 128000
