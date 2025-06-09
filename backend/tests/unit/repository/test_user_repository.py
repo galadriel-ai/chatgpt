@@ -1,6 +1,10 @@
+import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+os.environ["SERPAPI_API_KEY"] = "dummy_serpapi_key"
+os.environ["LLM_API_KEY"] = "dummy_llm_key"
 
 from app.repository.user_repository import UserRepository
 from app.domain.users.entities import User

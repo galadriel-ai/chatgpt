@@ -2,6 +2,7 @@ from copy import deepcopy
 from typing import AsyncGenerator
 from typing import List
 from typing import Optional
+import json
 
 from uuid_extensions import uuid7
 
@@ -12,11 +13,18 @@ from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
+from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
+from app.domain.chat.entities import ToolOutput
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
+from app.domain.llm_tools.search import search_web
+from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
+from app import api_logger
+
+logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
 
@@ -57,11 +65,102 @@ async def execute(
         model=model,
         attachment_ids=[],
     )
-    async for chunk in llm_repository.completion(llm_input_messages, model):
-        llm_message.content += chunk
-        yield ChunkOutput(
-            content=chunk,
-        )
+
+    while True:
+        final_tool_calls = {}
+        current_tool_call_id = None
+
+        try:
+            async for chunk in llm_repository.completion(
+                llm_input_messages, model, chat_input.is_search_enabled
+            ):
+                if isinstance(chunk, ChunkOutput):
+                    llm_message.content += chunk.content
+                    yield chunk
+                elif isinstance(chunk, ToolOutput):
+                    if chunk.tool_call_id:
+                        current_tool_call_id = chunk.tool_call_id
+
+                    tool_call_id = chunk.tool_call_id or current_tool_call_id
+                    if not tool_call_id:
+                        logger.warning("Received tool output without tool_call_id")
+                        continue
+
+                    if tool_call_id not in final_tool_calls:
+                        final_tool_calls[tool_call_id] = {
+                            "id": tool_call_id,
+                            "name": chunk.name,
+                            "arguments": "",
+                        }
+
+                    if chunk.arguments:
+                        final_tool_calls[tool_call_id]["arguments"] += chunk.arguments
+                        try:
+                            args = json.loads(
+                                final_tool_calls[tool_call_id]["arguments"]
+                            )
+                            if (
+                                final_tool_calls[tool_call_id]["name"]
+                                == SEARCH_TOOL_DEFINITION["function"]["name"]
+                            ):
+                                # Create and persist the assistant's tool call message
+                                tool_call = ToolCall(
+                                    id=tool_call_id,
+                                    function={
+                                        "name": SEARCH_TOOL_DEFINITION["function"][
+                                            "name"
+                                        ],
+                                        "arguments": final_tool_calls[tool_call_id][
+                                            "arguments"
+                                        ],
+                                    },
+                                )
+                                tool_call_message = Message(
+                                    id=uuid7(),
+                                    chat_id=chat.id,
+                                    role="assistant",
+                                    tool_calls=[tool_call],
+                                    tool_call=tool_call,
+                                )
+                                yield chunk  # yield the tool call message to show user that we are searching
+                                new_messages.append(tool_call_message)
+                                llm_input_messages.append(tool_call_message)
+
+                                logger.info(f"Searching web for: {args['query']}")
+                                try:
+                                    result = await search_web(
+                                        args["query"], llm_repository.search_client
+                                    )
+                                    tool_message = Message(
+                                        id=uuid7(),
+                                        chat_id=chat.id,
+                                        role="tool",
+                                        content=result,
+                                        tool_call=tool_call,
+                                    )
+                                    new_messages.append(tool_message)
+                                    llm_input_messages.append(tool_message)
+                                    # finally yield the tool output with the result
+                                    yield ToolOutput(
+                                        tool_call_id=tool_call_id,
+                                        name=chunk.name,
+                                        arguments=chunk.arguments,
+                                        result=result,
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Search failed: {str(e)}")
+                                    yield ErrorChunk(error=str(e))
+                                    break
+                        except json.JSONDecodeError:
+                            continue
+        except Exception as e:
+            logger.error(f"LLM completion failed: {str(e)}")
+            yield ErrorChunk(error=str(e))
+            break
+
+        if not final_tool_calls:
+            break
+
     new_messages.append(llm_message)
     await chat_repository.insert_messages(new_messages)
 
@@ -108,14 +207,7 @@ async def _create_chat(
     user: User,
     chat_repository: ChatRepository,
 ) -> Chat:
-    chat = Chat(
-        id=uuid7(),
-        user_id=user.uid,
-        # Probably want a nicer title
-        title=chat_input.content[:MAX_TITLE_LENGTH],
-    )
-    await chat_repository.insert(chat)
-    return chat
+    return await chat_repository.insert(user.uid, chat_input.content[:MAX_TITLE_LENGTH])
 
 
 async def _get_existing_messages(

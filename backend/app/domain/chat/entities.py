@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -13,12 +14,14 @@ class Chat:
     id: UUID
     user_id: UUID
     title: str
+    created_at: datetime
 
 
 @dataclass
 class ChatInput:
     chat_id: Optional[UUID]
     model: Optional[str]
+    is_search_enabled: Optional[bool]
     content: str
     attachment_ids: List[UUID]
 
@@ -56,13 +59,57 @@ class ChunkOutput(ChatOutputChunk):
 
 
 @dataclass
+class ToolOutput(ChatOutputChunk):
+    tool_call_id: str
+    name: str
+    arguments: str
+    result: str
+
+    def to_serializable_dict(self):
+        return {
+            "tool_call_id": self.tool_call_id,
+            "name": self.name,
+            "arguments": self.arguments,
+            "result": self.result,
+        }
+
+
+@dataclass
+class ToolCall:
+    id: str
+    function: Dict[str, str]
+    type: Literal["function"] = "function"
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "type": self.type,
+            "function": self.function,
+        }
+
+
+@dataclass
 class Message:
     id: UUID
     chat_id: UUID
-    role: Literal["system", "user", "assistant"]
-    content: str
-    model: Optional[str]
+    role: Literal["system", "user", "assistant", "tool"]
+    content: Optional[str] = None
+    model: Optional[str] = None
+    tool_call: Optional[ToolCall] = None
+    tool_calls: Optional[List[ToolCall]] = None
     attachment_ids: List[UUID]
+
+    def to_llm_reaady_dict(self) -> Dict:
+        result = {
+            "role": self.role,
+            "content": self.content,
+        }
+        if self.tool_call is not None:
+            result["tool_call_id"] = self.tool_call.id
+            result["name"] = self.tool_call.function["name"]
+        if self.tool_calls is not None:
+            result["tool_calls"] = [tc.to_serializable_dict() for tc in self.tool_calls]
+        return result
 
 
 @dataclass

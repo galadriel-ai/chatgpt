@@ -17,5 +17,6 @@ async def execute(
         id=chat.id,
         user_id=chat.user_id,
         title=chat.title,
+        created_at=chat.created_at,
         messages=messages,
     )

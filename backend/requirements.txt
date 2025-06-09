@@ -13,3 +13,5 @@ python-multipart==0.0.20
 ruff==0.11.12
 pytest==8.4.0
 pytest-asyncio==1.0.0
+
+serpapi==0.1.5

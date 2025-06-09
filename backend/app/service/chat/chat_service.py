@@ -31,6 +31,7 @@ async def execute(
         chat_id=chat_id,
         model=request.model,
         content=request.content,
+        is_search_enabled=request.is_search_enabled,
         attachment_ids=uuid_attachment_ids,
     )
 

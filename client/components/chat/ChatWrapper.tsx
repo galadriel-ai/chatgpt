@@ -66,6 +66,7 @@ export function ChatWrapper() {
           const newChat: Chat = {
             id: chunk.chat_id,
             title: inputMessage.content.slice(0, 30),
+            createdAt: Math.round(Date.now() / 1000),
           }
           setActiveChat({
             ...newChat,

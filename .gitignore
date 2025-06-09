@@ -5,5 +5,6 @@ __pycache__
 *.log
 .env
 backend/storage
-client/android
-client/ios
+ios/
+android/
+project.pbxproj

@@ -29,6 +29,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   interface ApiResponse {
     id: string
     title: string
+    created_at: number
     // Works as long as we dont need some special mapping here
     messages: {
       id: string
@@ -52,6 +53,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
     return {
       id: responseJson.id,
       title: responseJson.title,
+      createdAt: responseJson.created_at,
       messages: responseJson.messages.map(m => {
         return {
           id: m.id,

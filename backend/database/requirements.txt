@@ -2,3 +2,7 @@ python-dotenv>=1.0.1
 uuid7==0.1.0
 alembic==1.13.2
 SQLAlchemy[asyncio]==2.0.36
+asyncpg==0.29.0
+psycopg==3.2.9
+psycopg-binary==3.2.9
+psycopg-pool==3.2.6

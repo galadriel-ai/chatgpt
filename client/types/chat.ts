@@ -9,6 +9,7 @@ export type Message = {
 export interface Chat {
   id: string
   title: string
+  createdAt: number
 }
 
 export interface ChatDetails extends Chat {
