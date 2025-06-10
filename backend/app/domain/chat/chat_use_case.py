@@ -179,6 +179,7 @@ async def _get_new_messages(
                 role="system",
                 content=DEFAULT_SYSTEM_MESSAGE,
                 model=None,
+                attachment_ids=[],
             )
         )
     new_messages.append(

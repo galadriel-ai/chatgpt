@@ -1,7 +1,7 @@
 """Adds File
 
-Revision ID: 000000000003
-Revises: 000000000002
+Revision ID: 000000000007
+Revises: 000000000006
 Create Date: 2025-06-06 14:44:10.731285
 
 """
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "000000000003"
-down_revision = "000000000002"
+revision = "000000000007"
+down_revision = "000000000006"
 branch_labels = None
 depends_on = None
 

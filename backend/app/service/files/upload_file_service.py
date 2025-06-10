@@ -1,8 +1,10 @@
 from fastapi import UploadFile
 
+import settings
 from app.domain.files.entities import FileInput
 from app.domain.files import save_file_use_case
 from app.domain.users.entities import User
+from app.service import error_responses
 from app.service.files.entities import FileUploadResponse
 from app.repository.file_repository import FileRepository
 
@@ -10,6 +12,10 @@ from app.repository.file_repository import FileRepository
 async def execute(
     user: User, file: UploadFile, file_repository: FileRepository
 ) -> FileUploadResponse:
+    if file.size > settings.STORAGE_MAX_FILE_SIZE:
+        raise error_responses.FileSizeTooLargeAPIError(
+            f"File size is too large. Maximum size is {settings.STORAGE_MAX_FILE_SIZE} bytes"
+        )
     content = await file.read()
     input = FileInput(
         user_id=user.uid,

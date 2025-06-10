@@ -1,7 +1,7 @@
 """Adds attachment array
 
-Revision ID: 000000000004
-Revises: 000000000003
+Revision ID: 000000000008
+Revises: 000000000007
 Create Date: 2025-06-06 17:01:45.460908
 
 """
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = "000000000004"
-down_revision = "000000000003"
+revision = "000000000008"
+down_revision = "000000000007"
 branch_labels = None
 depends_on = None
 
