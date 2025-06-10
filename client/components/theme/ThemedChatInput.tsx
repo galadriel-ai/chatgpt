@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TextInput, TextInputProps, View } from 'react-native'
+import { Alert, TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
@@ -8,6 +8,8 @@ import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
 import { AttachmentFile, useMediaAttachments } from '@/hooks/useMediaAttachments'
 import { useFileUpload } from '@/hooks/useFileUpload'
+
+const MAX_FILES_COUNT_PER_MESSAGE = 5
 
 export type ThemedTextInputProps = TextInputProps & {
   onMessage: (message: string, attachments?: AttachmentFile[]) => Promise<boolean>
@@ -88,13 +90,32 @@ export function ThemedChatInput({
     }
   }
 
+  function alertFileCount() {
+    Alert.alert(
+      'Maximum files exceeded',
+      `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
+    )
+  }
+
   const onPlusClick = () => {
-    setShowAttachmentMenu(true)
+    if (attachments.length < MAX_FILES_COUNT_PER_MESSAGE) {
+      setShowAttachmentMenu(true)
+    } else {
+      alertFileCount()
+    }
   }
 
   const onSelectFiles = async () => {
+    if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
+      alertFileCount()
+      return
+    }
     const files = await pickFiles()
     if (files.length > 0) {
+      if (attachments.length + files.length > MAX_FILES_COUNT_PER_MESSAGE) {
+        alertFileCount()
+        return
+      }
       setAttachments(prev => [...prev, ...files])
       // Start uploading immediately
       files.forEach(startUpload)
@@ -102,6 +123,10 @@ export function ThemedChatInput({
   }
 
   const onSelectCamera = async () => {
+    if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
+      alertFileCount()
+      return
+    }
     const photo = await takePhoto()
     if (photo) {
       setAttachments(prev => [...prev, photo])
@@ -111,8 +136,17 @@ export function ThemedChatInput({
   }
 
   const onSelectPhotos = async () => {
+    if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
+      alertFileCount()
+      return
+    }
     const photos = await pickPhotos()
     if (photos.length > 0) {
+      if (attachments.length + photos.length > MAX_FILES_COUNT_PER_MESSAGE) {
+        alertFileCount()
+        return
+      }
+
       setAttachments(prev => [...prev, ...photos])
       // Start uploading immediately
       photos.forEach(startUpload)
