@@ -5,7 +5,7 @@ import { DrawerActions, useNavigation } from '@react-navigation/native'
 import { RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
@@ -14,6 +14,7 @@ import { MessageAttachments } from '@/components/chat/MessageAttachments'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
+  const scrollViewRef = useRef<ScrollView>(null)
 
   const { selectedChat, activeChat, setActiveChat, addChat } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
@@ -27,6 +28,13 @@ export function ChatWrapper() {
   useEffect(() => {
     if (activeChat) setMessages(activeChat.messages)
   }, [activeChat])
+
+  const scrollToBottom = () => {
+    // Wait a tiny bit to make sure the message was rendered
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true })
+    }, 100)
+  }
 
   const getChatDetails = async (chat: Chat): Promise<void> => {
     const chatDetails = await api.getChatDetails(chat.id)
@@ -49,6 +57,7 @@ export function ChatWrapper() {
     }
     newMessages.push(inputMessage)
     addMessage(inputMessage)
+    scrollToBottom()
 
     try {
       const assistantMessage: Message = {
@@ -149,6 +158,7 @@ export function ChatWrapper() {
       >
         <ThemedView className="flex-1">
           <ScrollView
+            ref={scrollViewRef}
             contentContainerStyle={{ padding: 16 }}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
