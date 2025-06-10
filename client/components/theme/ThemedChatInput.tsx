@@ -90,32 +90,30 @@ export function ThemedChatInput({
     }
   }
 
+  function alertFileCount() {
+    Alert.alert(
+      'Maximum files exceeded',
+      `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
+    )
+  }
+
   const onPlusClick = () => {
     if (attachments.length < MAX_FILES_COUNT_PER_MESSAGE) {
       setShowAttachmentMenu(true)
     } else {
-      Alert.alert(
-        'Maximum files exceeded',
-        `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-      )
+      alertFileCount()
     }
   }
 
   const onSelectFiles = async () => {
     if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
-      Alert.alert(
-        'Maximum files exceeded',
-        `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-      )
+      alertFileCount()
       return
     }
     const files = await pickFiles()
     if (files.length > 0) {
       if (attachments.length + files.length > MAX_FILES_COUNT_PER_MESSAGE) {
-        Alert.alert(
-          'Maximum files exceeded',
-          `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-        )
+        alertFileCount()
         return
       }
       setAttachments(prev => [...prev, ...files])
@@ -126,10 +124,7 @@ export function ThemedChatInput({
 
   const onSelectCamera = async () => {
     if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
-      Alert.alert(
-        'Maximum files exceeded',
-        `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-      )
+      alertFileCount()
       return
     }
     const photo = await takePhoto()
@@ -142,19 +137,13 @@ export function ThemedChatInput({
 
   const onSelectPhotos = async () => {
     if (attachments.length >= MAX_FILES_COUNT_PER_MESSAGE) {
-      Alert.alert(
-        'Maximum files exceeded',
-        `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-      )
+      alertFileCount()
       return
     }
     const photos = await pickPhotos()
     if (photos.length > 0) {
       if (attachments.length + photos.length > MAX_FILES_COUNT_PER_MESSAGE) {
-        Alert.alert(
-          'Maximum files exceeded',
-          `The maximum number of files allowed is ${MAX_FILES_COUNT_PER_MESSAGE}, remove some to proceed.`
-        )
+        alertFileCount()
         return
       }
 
