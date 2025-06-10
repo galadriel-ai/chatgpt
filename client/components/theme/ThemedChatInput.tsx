@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { UpArrowIcon, PlusIcon } from '@/components/icons/Icons'
+import { PlusIcon, UpArrowIcon } from '@/components/icons/Icons'
 import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
-import { useMediaAttachments, AttachmentFile } from '@/hooks/useMediaAttachments'
+import { AttachmentFile, useMediaAttachments } from '@/hooks/useMediaAttachments'
 import { useFileUpload } from '@/hooks/useFileUpload'
 
 export type ThemedTextInputProps = TextInputProps & {
@@ -32,7 +32,7 @@ export function ThemedChatInput({
   const [showAttachmentMenu, setShowAttachmentMenu] = useState<boolean>(false)
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
 
-  const { pickFiles, takePhoto, pickPhotos, isLoading } = useMediaAttachments()
+  const { pickFiles, takePhoto, pickPhotos } = useMediaAttachments()
   const { uploadFile } = useFileUpload()
 
   const startUpload = async (file: AttachmentFile) => {
@@ -148,7 +148,10 @@ export function ThemedChatInput({
             {...otherProps}
           />
           <View className="flex flex-row justify-between">
-            <View className="flex flex-row gap-4">
+            <View
+              className="flex aspect-square flex-row items-center justify-center gap-4 rounded-full"
+              style={{ borderWidth: 1, borderColor }}
+            >
               <PlusIcon onClick={onPlusClick} />
             </View>
             <View className="flex flex-row gap-4">

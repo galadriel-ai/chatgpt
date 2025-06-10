@@ -62,7 +62,7 @@ export function RoleUserIcon() {
 }
 
 export function PlusIcon({ onClick }: { onClick: () => void }) {
-  const color = useThemeColor({}, 'text')
+  const color = useThemeColor({}, 'light')
 
   return (
     <Pressable onPress={onClick}>
