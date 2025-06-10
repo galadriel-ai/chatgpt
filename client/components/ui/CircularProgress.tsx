@@ -1,7 +1,12 @@
 import React, { useEffect } from 'react'
 import { View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming } from 'react-native-reanimated'
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated'
 import { useThemeColor } from '@/hooks/useThemeColor'
 
 interface CircularProgressProps {
@@ -10,25 +15,17 @@ interface CircularProgressProps {
   children?: React.ReactNode
 }
 
-export function CircularProgress({ 
-  size = 50, 
-  strokeWidth = 4,
-  children 
-}: CircularProgressProps) {
+export function CircularProgress({ size = 50, strokeWidth = 4, children }: CircularProgressProps) {
   const color = useThemeColor({}, 'text')
   const rotation = useSharedValue(0)
-  
+
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   // Show about 25% of the circle for the spinner effect
   const strokeDasharray = `${circumference * 0.25} ${circumference * 0.75}`
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 1000 }),
-      -1,
-      false
-    )
+    rotation.value = withRepeat(withTiming(360, { duration: 1000 }), -1, false)
   }, [rotation])
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -36,7 +33,7 @@ export function CircularProgress({
   }))
 
   return (
-    <View style={{ width: size, height: size }} className="relative justify-center items-center">
+    <View style={{ width: size, height: size }} className="relative items-center justify-center">
       <Animated.View style={animatedStyle}>
         <Svg width={size} height={size}>
           {/* Background circle */}
@@ -65,4 +62,4 @@ export function CircularProgress({
       {children}
     </View>
   )
-} 
+}

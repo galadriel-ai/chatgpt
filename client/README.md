@@ -43,3 +43,12 @@ npm run ios
 ```
 
 Run this command and you will see the app is loaded on the iPhone emulator.
+
+5. Code style/linting
+
+**Before PRs run these**
+
+```bash
+npm run format
+npm run lint
+```

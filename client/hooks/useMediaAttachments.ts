@@ -52,7 +52,7 @@ export function useMediaAttachments() {
   const takePhoto = async (): Promise<AttachmentFile | null> => {
     try {
       setIsLoading(true)
-      
+
       // Request camera permissions
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync()
       if (!cameraPermission.granted) {
@@ -90,7 +90,7 @@ export function useMediaAttachments() {
   const pickPhotos = async (): Promise<AttachmentFile[]> => {
     try {
       setIsLoading(true)
-      
+
       // Request media library permissions
       const mediaPermission = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (!mediaPermission.granted) {
@@ -130,4 +130,4 @@ export function useMediaAttachments() {
     pickPhotos,
     isLoading,
   }
-} 
+}

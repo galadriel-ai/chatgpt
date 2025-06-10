@@ -22,4 +22,4 @@ export function useFileUpload() {
   }
 
   return { uploadFile }
-} 
+}

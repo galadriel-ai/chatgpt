@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react'
 import { Modal, Pressable, View } from 'react-native'
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
   withSpring,
-  Easing
+  Easing,
 } from 'react-native-reanimated'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedText } from '@/components/theme/ThemedText'
@@ -29,7 +29,7 @@ export function AttachmentMenu({
 }: AttachmentMenuProps) {
   const backgroundColor = useThemeColor({}, 'backgroundSecondary')
   const borderColor = useThemeColor({}, 'border')
-  
+
   const [modalVisible, setModalVisible] = React.useState(false)
   const opacity = useSharedValue(0)
   const scale = useSharedValue(0.8)
@@ -40,7 +40,7 @@ export function AttachmentMenu({
     opacity.value = withTiming(0, { duration: 150, easing: Easing.in(Easing.quad) })
     scale.value = withTiming(0.1, { duration: 150, easing: Easing.in(Easing.quad) })
     translateY.value = withTiming(40, { duration: 150, easing: Easing.in(Easing.quad) })
-    
+
     // Use setTimeout instead of animation callback to avoid race conditions
     setTimeout(() => {
       setModalVisible(false)
@@ -65,24 +65,21 @@ export function AttachmentMenu({
   }))
 
   const menuAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: scale.value },
-      { translateY: translateY.value }
-    ],
+    transform: [{ scale: scale.value }, { translateY: translateY.value }],
     opacity: opacity.value,
   }))
 
-  const MenuItem = ({ 
-    icon, 
-    title, 
-    onPress 
-  }: { 
+  const MenuItem = ({
+    icon,
+    title,
+    onPress,
+  }: {
     icon: React.ReactNode
     title: string
-    onPress: () => void 
+    onPress: () => void
   }) => (
     <Pressable onPress={onPress}>
-      <ThemedView 
+      <ThemedView
         className="flex flex-row items-center justify-between px-4 py-3"
         style={{ borderBottomColor: borderColor, borderBottomWidth: 0.5 }}
       >
@@ -101,21 +98,18 @@ export function AttachmentMenu({
       animationType="none"
       onRequestClose={handleClose}
     >
-      <Animated.View 
-        className="flex-1" 
-        style={[
-          { backgroundColor: 'rgba(0, 0, 0, 0.3)' },
-          overlayAnimatedStyle
-        ]}
+      <Animated.View
+        className="flex-1"
+        style={[{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }, overlayAnimatedStyle]}
       >
         <Pressable className="flex-1" onPress={handleClose} />
-        <Animated.View 
-          className="absolute bottom-32 left-4" 
+        <Animated.View
+          className="absolute bottom-32 left-4"
           style={[{ width: 200 }, menuAnimatedStyle]}
         >
-          <ThemedView 
+          <ThemedView
             className="rounded-2xl shadow-lg"
-            style={{ 
+            style={{
               backgroundColor,
               borderColor,
               borderWidth: 1,
@@ -123,7 +117,7 @@ export function AttachmentMenu({
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
-              elevation: 8
+              elevation: 8,
             }}
           >
             <MenuItem
@@ -157,4 +151,4 @@ export function AttachmentMenu({
       </Animated.View>
     </Modal>
   )
-} 
+}

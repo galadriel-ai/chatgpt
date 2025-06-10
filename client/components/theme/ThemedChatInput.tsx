@@ -31,37 +31,37 @@ export function ThemedChatInput({
   const [inputValue, setInputValue] = useState<string>('')
   const [showAttachmentMenu, setShowAttachmentMenu] = useState<boolean>(false)
   const [attachments, setAttachments] = useState<AttachmentFile[]>([])
-  
+
   const { pickFiles, takePhoto, pickPhotos, isLoading } = useMediaAttachments()
   const { uploadFile } = useFileUpload()
 
   const startUpload = async (file: AttachmentFile) => {
     const abortController = new AbortController()
-    
+
     // Add abort controller to the file
-    setAttachments(prev => prev.map(att => 
-      att.id === file.id ? { ...att, abortController } : att
-    ))
+    setAttachments(prev =>
+      prev.map(att => (att.id === file.id ? { ...att, abortController } : att))
+    )
 
     try {
       const fileId = await uploadFile(
         { uri: file.uri, name: file.name, type: file.type, size: file.size },
-        (progress) => {
-          setAttachments(prev => prev.map(att => 
-            att.id === file.id ? { ...att, progress } : att
-          ))
+        progress => {
+          setAttachments(prev => prev.map(att => (att.id === file.id ? { ...att, progress } : att)))
         },
         abortController.signal
       )
 
       if (fileId) {
-        setAttachments(prev => prev.map(att => 
-          att.id === file.id ? { ...att, progress: 100, uploadedFileId: fileId } : att
-        ))
+        setAttachments(prev =>
+          prev.map(att =>
+            att.id === file.id ? { ...att, progress: 100, uploadedFileId: fileId } : att
+          )
+        )
       } else {
-        setAttachments(prev => prev.map(att => 
-          att.id === file.id ? { ...att, error: 'Upload failed' } : att
-        ))
+        setAttachments(prev =>
+          prev.map(att => (att.id === file.id ? { ...att, error: 'Upload failed' } : att))
+        )
       }
     } catch (error) {
       // Check if it was aborted
@@ -69,9 +69,9 @@ export function ThemedChatInput({
         // Remove the attachment if it was cancelled
         setAttachments(prev => prev.filter(att => att.id !== file.id))
       } else {
-        setAttachments(prev => prev.map(att => 
-          att.id === file.id ? { ...att, error: 'Upload failed' } : att
-        ))
+        setAttachments(prev =>
+          prev.map(att => (att.id === file.id ? { ...att, error: 'Upload failed' } : att))
+        )
       }
     }
   }
@@ -133,11 +133,8 @@ export function ThemedChatInput({
   return (
     <>
       <ThemedView className="flex flex-col gap-2">
-        <AttachmentPreview 
-          attachments={attachments} 
-          onRemove={removeAttachment} 
-        />
-        
+        <AttachmentPreview attachments={attachments} onRemove={removeAttachment} />
+
         <ThemedView
           className="flex flex-col gap-2 rounded-2xl px-2 py-2"
           style={[{ backgroundColor, borderColor, borderWidth: 1 }]}
@@ -160,7 +157,7 @@ export function ThemedChatInput({
           </View>
         </ThemedView>
       </ThemedView>
-      
+
       <AttachmentMenu
         visible={showAttachmentMenu}
         onClose={() => setShowAttachmentMenu(false)}

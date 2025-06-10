@@ -46,38 +46,32 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
         <Pressable
           key={index}
           className="overflow-hidden rounded-lg"
-          style={{ 
-            borderColor, 
+          style={{
+            borderColor,
             borderWidth: 1,
             backgroundColor,
           }}
         >
           {isImage(attachment.type) ? (
             <View className="relative">
-              <Image
-                source={{ uri: attachment.uri }}
-                className="w-full h-48"
-                resizeMode="cover"
-              />
+              <Image source={{ uri: attachment.uri }} className="h-48 w-full" resizeMode="cover" />
               <View className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-2">
-                <ThemedText className="text-white text-sm font-medium">
+                <ThemedText className="text-sm font-medium text-white">
                   {attachment.name}
                 </ThemedText>
               </View>
             </View>
           ) : (
-            <View className="flex-row items-center p-3 gap-3">
-              <View className="w-12 h-12 bg-blue-500 rounded-lg justify-center items-center">
-                <ThemedText className="text-2xl">
-                  {getFileIcon(attachment.type)}
-                </ThemedText>
+            <View className="flex-row items-center gap-3 p-3">
+              <View className="h-12 w-12 items-center justify-center rounded-lg bg-blue-500">
+                <ThemedText className="text-2xl">{getFileIcon(attachment.type)}</ThemedText>
               </View>
               <View className="flex-1">
-                <ThemedText className="font-medium text-sm" numberOfLines={2}>
+                <ThemedText className="text-sm font-medium" numberOfLines={2}>
                   {attachment.name}
                 </ThemedText>
                 {attachment.size && (
-                  <ThemedText className="text-xs opacity-60 mt-1">
+                  <ThemedText className="mt-1 text-xs opacity-60">
                     {formatFileSize(attachment.size)}
                   </ThemedText>
                 )}
@@ -88,4 +82,4 @@ export function MessageAttachments({ attachments }: MessageAttachmentsProps) {
       ))}
     </View>
   )
-} 
+}
