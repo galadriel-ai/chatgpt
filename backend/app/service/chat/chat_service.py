@@ -9,7 +9,7 @@ from app.service import error_responses
 from app.service.chat.entities import ChatRequest
 from app.service.utils import parse_uuid
 
-MAX_MESSAGE_LENGTH = 300_000
+MAX_MESSAGE_LENGTH = 30_000
 
 
 async def execute(

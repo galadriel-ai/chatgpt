@@ -31,7 +31,7 @@ class LlmRepository:
         model: str,
         is_search_enabled: bool = True,
         temperature: float = 0.2,
-        max_tokens: int = 350,
+        max_tokens: int = 10_000,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         stream: AsyncStream = await self.client.chat.completions.create(
