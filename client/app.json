@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Sidekik",
-    "slug": "sidekik",
+    "slug": "chatgpt",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -59,9 +59,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6c3b04ef-d6dc-4bd0-ab0a-5a702ffd0b9f"
+        "projectId": "b00a8d0d-419a-40ed-84f9-832771623fab"
       }
     },
-    "owner": "h4n0"
+    "owner": "galadriel-ai"
   }
 }

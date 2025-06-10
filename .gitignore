@@ -1,5 +1,6 @@
 .idea
 .venv
+backend/database/venv/
 __pycache__
 .DS_Store
 *.log
