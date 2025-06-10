@@ -79,13 +79,13 @@ export function AttachmentMenu({
     onPress: () => void
   }) => (
     <Pressable onPress={onPress}>
-      <ThemedView
+      <View
         className="flex flex-row items-center justify-between px-4 py-3"
         style={{ borderBottomColor: borderColor, borderBottomWidth: 0.5 }}
       >
         <ThemedText className="text-base">{title}</ThemedText>
         {icon}
-      </ThemedView>
+      </View>
     </Pressable>
   )
 
