@@ -9,6 +9,7 @@ from uuid_extensions import uuid7
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import ToolCall
+from app.repository import utils
 from app.repository.connection import SessionProvider
 from app.repository.utils import utcnow
 
@@ -94,6 +95,16 @@ SELECT
 FROM message
 WHERE chat_id = :chat_id
 ORDER BY sequence_number;
+"""
+
+SQL_GET_MESSAGE_COUNT_BY_USER = """
+SELECT 
+    COUNT(m.id) AS count
+FROM message m
+LEFT JOIN chat c ON m.chat_id = c.id
+WHERE 
+    c.user_profile_id = :user_id
+    AND m.id > :min_message_id;
 """
 
 
@@ -231,3 +242,16 @@ class ChatRepository:
                     )
                 )
         return messages
+
+    async def get_message_count_by_user(
+        self, user_id: UUID, hours_back: int = 24
+    ) -> int:
+        data = {"user_id": user_id, "min_message_id": utils.historic_uuid(hours_back)}
+        async with self._session_provider_read.get() as session:
+            result = await session.execute(
+                sqlalchemy.text(SQL_GET_MESSAGE_COUNT_BY_USER), data
+            )
+            row = result.first()
+            if row:
+                return row.count
+        return 0

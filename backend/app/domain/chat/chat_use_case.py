@@ -1,34 +1,36 @@
+import json
 from copy import deepcopy
 from typing import AsyncGenerator
 from typing import List
 from typing import Optional
-import json
 
 from uuid_extensions import uuid7
 
 import settings
+from app import api_logger
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
-from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import NewChatOutput
+from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
+from app.domain.llm_tools.search import search_web
+from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
+from app.domain.users import get_rate_limit_error_use_case
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
-from app.domain.llm_tools.search import search_web
-from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
-from app import api_logger
 
 logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
 
 DEFAULT_MODEL = settings.LLM_MODEL
+SUPPORTED_MODELS = [DEFAULT_MODEL]
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 
@@ -44,14 +46,24 @@ async def execute(
             error=error_responses.NotFoundAPIError("chat_id not found.").to_message()
         )
         return
+
+    model = chat_input.model or DEFAULT_MODEL
+    if model not in SUPPORTED_MODELS:
+        yield ErrorChunk(
+            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS)}."
+        )
+        return
+    if rate_limit_error := await get_rate_limit_error_use_case.execute(
+        user, chat_repository
+    ):
+        yield ErrorChunk(error=rate_limit_error)
+        return
+
     yield NewChatOutput(
         chat_id=chat.id,
     )
 
-    # TODO: validate model
-    model = chat_input.model or DEFAULT_MODEL
-
-    messages = await _get_existing_messages(chat_input, chat, chat_repository)
+    messages = await _get_existing_messages(chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
 
     llm_input_messages = [deepcopy(m) for m in messages]
@@ -212,7 +224,6 @@ async def _create_chat(
 
 
 async def _get_existing_messages(
-    chat_input: ChatInput,
     chat: Chat,
     chat_repository: ChatRepository,
 ) -> List[Message]:

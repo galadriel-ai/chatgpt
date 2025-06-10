@@ -1,8 +1,8 @@
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView } from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
+import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect, useState, useRef } from 'react'
@@ -11,17 +11,22 @@ import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
 import { MessageAttachments } from '@/components/chat/MessageAttachments'
 
+import { useRouter } from 'expo-router'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
+  const router = useRouter()
   const scrollViewRef = useRef<ScrollView>(null)
 
-  const { selectedChat, activeChat, setActiveChat, addChat } = useChat()
+  const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   useEffect(() => {
     if (selectedChat && !activeChat) {
       getChatDetails(selectedChat)
+    } else if (!selectedChat && !activeChat) {
+      setMessages([])
     }
   }, [selectedChat])
 
@@ -34,6 +39,12 @@ export function ChatWrapper() {
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true })
     }, 100)
+  }
+
+  const onNewChat = () => {
+    setSelectedChat(null)
+    setActiveChat(null)
+    router.push('/')
   }
 
   const getChatDetails = async (chat: Chat): Promise<void> => {
@@ -56,6 +67,12 @@ export function ChatWrapper() {
       attachmentIds: attachmentIds,
     }
     newMessages.push(inputMessage)
+
+    if (errorMessage) {
+      // Remove the user message that caused an error
+      popMessage()
+      setErrorMessage('')
+    }
     addMessage(inputMessage)
     scrollToBottom()
 
@@ -85,6 +102,9 @@ export function ChatWrapper() {
         } else if (chunk.content) {
           content += chunk.content
           updateLastMessage(content)
+        } else if (chunk.error) {
+          setErrorMessage(chunk.error)
+          popMessage()
         }
         // Whatever other chunks we get
       }
@@ -130,6 +150,15 @@ export function ChatWrapper() {
     }
   }
 
+  const popMessage = (): void => {
+    setMessages(messages => {
+      if (messages) {
+        messages.pop()
+      }
+      return messages
+    })
+  }
+
   const updateLastMessage = (newContent: string) => {
     setActiveChat(chat => {
       if (!chat) return null
@@ -148,8 +177,11 @@ export function ChatWrapper() {
 
   return (
     <ThemedView className="flex-1 px-2">
-      <ThemedView className="flex flex-row pt-8">
+      <ThemedView className="flex w-full flex-row items-center justify-between px-2 pt-8">
         <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
+        <Pressable onPress={onNewChat}>
+          <NewChatIcon />
+        </Pressable>
       </ThemedView>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -168,6 +200,12 @@ export function ChatWrapper() {
                 <ChatMessage message={m} />
               </ThemedView>
             ))}
+
+            {errorMessage && (
+              <ThemedView className="w-full">
+                <ErrorMessage error={errorMessage} />
+              </ThemedView>
+            )}
           </ScrollView>
 
           <ThemedChatInput
@@ -188,7 +226,7 @@ function ChatMessage({ message }: { message: Message }) {
   const role = message.role === 'user' ? 'You' : 'Your Sidekik'
 
   return (
-    <ThemedView className="flex flex-row gap-4 pt-6">
+    <ThemedView className="flex flex-row gap-4 py-3">
       <ThemedView className="flex w-8 flex-col items-center">
         {message.role === 'user' ? <RoleUserIcon /> : <RoleAssistantIcon />}
       </ThemedView>
@@ -202,6 +240,22 @@ function ChatMessage({ message }: { message: Message }) {
             </ThemedText>
           </ThemedView>
         )}
+      </ThemedView>
+    </ThemedView>
+  )
+}
+
+function ErrorMessage({ error }: { error: string }) {
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        <RoleAssistantIcon />
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">Your Sidekik</ThemedText>
+        <ThemedText lightColor={'#fc161a'} darkColor={'#fc161a'}>
+          Error: {error}
+        </ThemedText>
       </ThemedView>
     </ThemedView>
   )
