@@ -104,6 +104,7 @@ FROM message m
 LEFT JOIN chat c ON m.chat_id = c.id
 WHERE 
     c.user_profile_id = :user_id
+    AND m.role = 'user'
     AND m.id > :min_message_id;
 """
 
