@@ -63,6 +63,7 @@ async def execute(
         role="assistant",
         content="",
         model=model,
+        attachment_ids=[],
     )
 
     while True:
@@ -178,6 +179,7 @@ async def _get_new_messages(
                 role="system",
                 content=DEFAULT_SYSTEM_MESSAGE,
                 model=None,
+                attachment_ids=[],
             )
         )
     new_messages.append(
@@ -187,6 +189,7 @@ async def _get_new_messages(
             role="user",
             content=chat_input.content,
             model=None,
+            attachment_ids=chat_input.attachment_ids,
         )
     )
     return new_messages

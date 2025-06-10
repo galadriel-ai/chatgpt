@@ -55,6 +55,7 @@ INSERT INTO message (
     role,
     content,
     model,
+    attachment_ids,
     tool_call_id,
     tool_name,
     tool_calls,
@@ -67,6 +68,7 @@ INSERT INTO message (
     :role,
     :content,
     :model,
+    :attachment_ids,
     :tool_call_id,
     :tool_name,
     :tool_calls,
@@ -87,6 +89,7 @@ SELECT
     tool_name,
     tool_calls,
     sequence_number,
+    attachment_ids,
     created_at
 FROM message
 WHERE chat_id = :chat_id
@@ -186,6 +189,7 @@ class ChatRepository:
                     if message.tool_calls
                     else None,
                     "sequence_number": current_max + i,
+                    "attachment_ids": message.attachment_ids,
                     "created_at": utc_now,
                     "last_updated_at": utc_now,
                 }
@@ -223,6 +227,7 @@ class ChatRepository:
                         model=row.model,
                         tool_call=tool_call,
                         tool_calls=tool_calls,
+                        attachment_ids=row.attachment_ids,
                     )
                 )
         return messages

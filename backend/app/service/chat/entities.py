@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
         description="enable search tool", default=True
     )
     content: str = Field(description="content")
+    attachment_ids: List[str] = Field(description="attachment ids", default=[])
 
 
 class UserChat(BaseModel):
@@ -27,6 +28,7 @@ class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant"]
     content: str
     model: Optional[str]
+    attachment_ids: List[str]
 
 
 class ChatsResponse(BaseModel):

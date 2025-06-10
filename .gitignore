@@ -4,6 +4,7 @@ __pycache__
 .DS_Store
 *.log
 .env
+backend/storage
 ios/
 android/
 project.pbxproj
