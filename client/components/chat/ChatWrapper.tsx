@@ -33,10 +33,10 @@ export function ChatWrapper() {
     if (activeChat) setMessages(activeChat.messages)
   }, [activeChat])
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (animated = true) => {
     // Wait a tiny bit to make sure the message was rendered
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true })
+      scrollViewRef.current?.scrollToEnd({ animated })
     }, 100)
   }
 
@@ -50,6 +50,10 @@ export function ChatWrapper() {
     const chatDetails = await api.getChatDetails(chat.id)
     if (chatDetails) {
       setActiveChat(chatDetails)
+      // Wait for the chat to be rendered before scrolling
+      setTimeout(() => {
+        scrollToBottom(false)
+      }, 100)
     }
   }
 
