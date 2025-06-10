@@ -52,3 +52,15 @@ Run this command and you will see the app is loaded on the iPhone emulator.
 npm run format
 npm run lint
 ```
+
+To force metro bundler to update itself, for example when changing .env values
+
+```bash
+npx expo start --clear
+# Run again
+npm run ios
+
+# If doesnt work: (resets signer in xcode)
+npx expo prebuild --clean
+npm run ios
+```
