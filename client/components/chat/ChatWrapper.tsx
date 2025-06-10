@@ -5,11 +5,10 @@ import { DrawerActions, useNavigation } from '@react-navigation/native'
 import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
-import { MessageAttachments } from '@/components/chat/MessageAttachments'
 
 import { useRouter } from 'expo-router'
 
@@ -177,7 +176,7 @@ export function ChatWrapper() {
 
   return (
     <ThemedView className="flex-1 px-2">
-      <ThemedView className="flex w-full flex-row items-center justify-between px-2 pt-8">
+      <ThemedView className="flex w-full flex-row items-center justify-between px-2 pb-4 pt-8">
         <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
         <Pressable onPress={onNewChat}>
           <NewChatIcon />
@@ -236,7 +235,8 @@ function ChatMessage({ message }: { message: Message }) {
         {message.attachmentIds && message.attachmentIds.length > 0 && (
           <ThemedView className="mt-2">
             <ThemedText className="text-sm opacity-70">
-              📎 {message.attachmentIds.length} attachment{message.attachmentIds.length > 1 ? 's' : ''}
+              📎 {message.attachmentIds.length} attachment
+              {message.attachmentIds.length > 1 ? 's' : ''}
             </ThemedText>
           </ThemedView>
         )}

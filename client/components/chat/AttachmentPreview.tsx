@@ -28,8 +28,8 @@ export function AttachmentPreview({ attachments, onRemove }: AttachmentPreviewPr
 
   return (
     <ThemedView className="mb-2">
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         className="gap-2"
         contentContainerStyle={{ paddingHorizontal: 8, gap: 8 }}
@@ -37,61 +37,58 @@ export function AttachmentPreview({ attachments, onRemove }: AttachmentPreviewPr
         {attachments.map((attachment, index) => (
           <View
             key={index}
-            className="relative rounded-lg overflow-hidden"
-            style={{ 
-              borderColor, 
+            className="relative overflow-hidden rounded-lg"
+            style={{
+              borderColor,
               borderWidth: 1,
               backgroundColor,
               width: 80,
-              height: 60
+              height: 60,
             }}
           >
             {isImage(attachment.type) ? (
               <Image
                 source={{ uri: attachment.uri }}
-                className="w-full h-full"
+                className="h-full w-full"
                 resizeMode="cover"
               />
             ) : (
-              <ThemedView className="w-full h-full justify-center items-center p-2">
-                <ThemedText className="text-xs font-medium text-center" numberOfLines={2}>
+              <ThemedView className="h-full w-full items-center justify-center p-2">
+                <ThemedText className="text-center text-xs font-medium" numberOfLines={2}>
                   {attachment.name}
                 </ThemedText>
                 {attachment.size && (
-                  <ThemedText className="text-xs opacity-60 mt-1">
+                  <ThemedText className="mt-1 text-xs opacity-60">
                     {formatFileSize(attachment.size)}
                   </ThemedText>
                 )}
               </ThemedView>
             )}
-            
-                          {/* Upload progress overlay */}
-              {attachment.progress < 100 && !attachment.error && (
-                <View className="absolute inset-0 bg-black/50 justify-center items-center">
-                  <CircularProgress 
-                    size={40}
-                    strokeWidth={3}
-                  />
-                </View>
-              )}
-            
-            {/* Error overlay */}
-            {attachment.error && (
-              <View className="absolute inset-0 bg-red-500/70 justify-center items-center">
-                <ThemedText className="text-white text-xs font-bold">✕</ThemedText>
+
+            {/* Upload progress overlay */}
+            {attachment.progress < 100 && !attachment.error && (
+              <View className="absolute inset-0 items-center justify-center bg-black/50">
+                <CircularProgress size={40} strokeWidth={3} />
               </View>
             )}
-            
-                          {/* Remove/Cancel button - always show */}
-              <Pressable
-                onPress={() => onRemove(index)}
-                className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full justify-center items-center"
-              >
-                <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>×</Text>
-              </Pressable>
+
+            {/* Error overlay */}
+            {attachment.error && (
+              <View className="absolute inset-0 items-center justify-center bg-red-500/70">
+                <ThemedText className="text-xs font-bold text-white">✕</ThemedText>
+              </View>
+            )}
+
+            {/* Remove/Cancel button - always show */}
+            <Pressable
+              onPress={() => onRemove(index)}
+              className="absolute right-1 top-1 h-5 w-5 items-center justify-center rounded-full bg-white"
+            >
+              <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>×</Text>
+            </Pressable>
           </View>
         ))}
       </ScrollView>
     </ThemedView>
   )
-} 
+}
