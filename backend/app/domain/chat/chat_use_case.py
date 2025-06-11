@@ -17,12 +17,14 @@ from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
+from app.domain.files.entities import File
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
+from app.repository.file_repository import FileRepository
 from app.service import error_responses
 
 logger = api_logger.get()
@@ -39,6 +41,7 @@ async def execute(
     user: User,
     llm_repository: LlmRepository,
     chat_repository: ChatRepository,
+    file_repository: FileRepository,
 ) -> AsyncGenerator[ChatOutputChunk, None]:
     chat = await _get_chat(chat_input, user, chat_repository)
     if not chat:
@@ -46,6 +49,9 @@ async def execute(
             error=error_responses.NotFoundAPIError("chat_id not found.").to_message()
         )
         return
+
+    attachments = await _get_attachments(chat_input, file_repository)
+    print(attachments)
 
     model = chat_input.model or DEFAULT_MODEL
     if model not in SUPPORTED_MODELS:
@@ -228,3 +234,12 @@ async def _get_existing_messages(
     chat_repository: ChatRepository,
 ) -> List[Message]:
     return await chat_repository.get_messages(chat.id)
+
+
+async def _get_attachments(
+    chat_input: ChatInput,
+    file_repository: FileRepository,
+) -> List[File]:
+    if not chat_input.attachment_ids:
+        return []
+    return await file_repository.get_by_ids(chat_input.attachment_ids)
