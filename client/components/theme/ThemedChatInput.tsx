@@ -191,7 +191,7 @@ export function ThemedChatInput({
           />
           <View className="flex flex-row items-center justify-between">
             <View className="flex flex-row items-center gap-2">
-              <View className="rounded-full border" style={{ borderColor, borderWidth: 1 }}>
+              <View className="rounded-full border p-1" style={{ borderColor, borderWidth: 1 }}>
                 <PlusIcon onClick={onPlusClick} />
               </View>
               <ThinkButton isActive={thinkModel} onClick={onThinkClick} />
