@@ -49,12 +49,14 @@ async def execute(
         return
 
     model = ModelSpec(
-        id=Model.THINK_MODEL if chat_input.think_model else Model.DEFAULT_MODEL,
+        id=Model.THINK_MODEL.value
+        if chat_input.think_model
+        else Model.DEFAULT_MODEL.value,
         config=ModelConfig(),
     )
-    if model.id not in SUPPORTED_MODELS:
+    if model.id not in SUPPORTED_MODELS.values():
         yield ErrorChunk(
-            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS)}."
+            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS.values())}. But got {model.id}"
         )
         return
     if rate_limit_error := await get_rate_limit_error_use_case.execute(
