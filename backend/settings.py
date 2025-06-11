@@ -17,7 +17,7 @@ def is_test():
     return ENVIRONMENT == "test"
 
 
-APPLICATION_NAME = "DISTRIBUTED_INFERENCE"
+APPLICATION_NAME = os.getenv("APPLICATION_NAME", "CHATGPT")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1")
 API_PORT = int(os.getenv("API_PORT", 5000))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
