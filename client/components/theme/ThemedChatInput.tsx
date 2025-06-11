@@ -1,3 +1,4 @@
+import React from 'react'
 import { useState } from 'react'
 import { Alert, TextInput, TextInputProps, View } from 'react-native'
 
@@ -187,17 +188,14 @@ export function ThemedChatInput({
             placeholderTextColor={placeholderColor}
             {...otherProps}
           />
-          <View className="flex flex-row justify-between">
-            <View
-              className="flex aspect-square flex-row items-center justify-center gap-4 rounded-full"
-              style={{ borderWidth: 1, borderColor }}
-            >
-              <PlusIcon onClick={onPlusClick} />
+          <View className="flex flex-row items-center justify-between">
+            <View className="flex flex-row items-center gap-2">
+              <View className="rounded-full border" style={{ borderColor, borderWidth: 1 }}>
+                <PlusIcon onClick={onPlusClick} />
+              </View>
               <ThinkButton isActive={thinkModel} onClick={onThinkClick} />
             </View>
-            <View className="flex flex-row gap-4">
-              <UpArrowIcon onClick={onSubmitClick} />
-            </View>
+            <UpArrowIcon onClick={onSubmitClick} />
           </View>
         </ThemedView>
       </ThemedView>
