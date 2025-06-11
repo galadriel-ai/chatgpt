@@ -39,6 +39,7 @@ DB_PORT_READ = os.getenv("DB_PORT_READ", "5435")
 
 # AI configurations
 LLM_MODEL = os.getenv("LLM_MODEL", "accounts/fireworks/models/deepseek-v3-0324")
+VLM_MODEL = os.getenv("VLM_MODEL", "accounts/fireworks/models/qwen2p5-vl-32b-instruct")
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 if not LLM_API_KEY:
     raise RuntimeError("LLM_API_KEY is not set")

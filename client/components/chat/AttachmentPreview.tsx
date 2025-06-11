@@ -24,7 +24,10 @@ export function AttachmentPreview({ attachments, onRemove }: AttachmentPreviewPr
     return `${(size / (1024 * 1024)).toFixed(1)}MB`
   }
 
-  const isImage = (type: string) => type.startsWith('image/')
+  const isImage = (type: string) => {
+    const result = type.startsWith('image/') || type === 'image'
+    return result
+  }
 
   return (
     <ThemedView className="mb-2">

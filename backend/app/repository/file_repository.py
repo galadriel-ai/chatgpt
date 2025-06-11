@@ -76,7 +76,7 @@ SELECT
     created_at,
     last_updated_at
 FROM file
-WHERE id IN :ids;
+WHERE id = ANY(:ids);
 """
 
 SQL_DELETE = """
@@ -122,7 +122,7 @@ class FileRepository:
             row = result.first()
             if row:
                 return File(
-                    id=row.id,
+                    uid=row.id,
                     user_id=row.user_profile_id,
                     filename=row.filename,
                     full_path=row.full_path,
@@ -132,6 +132,9 @@ class FileRepository:
         return None
 
     async def get_by_ids(self, file_ids: List[UUID]) -> List[File]:
+        if not file_ids:
+            return []
+
         data = {
             "ids": file_ids,
         }
@@ -141,7 +144,7 @@ class FileRepository:
             for row in rows:
                 files.append(
                     File(
-                        id=row.id,
+                        uid=row.id,
                         user_id=row.user_profile_id,
                         filename=row.filename,
                         full_path=row.full_path,
@@ -161,7 +164,7 @@ class FileRepository:
             for row in rows:
                 files.append(
                     File(
-                        id=row.id,
+                        uid=row.id,
                         user_id=row.user_profile_id,
                         filename=row.filename,
                         full_path=row.full_path,

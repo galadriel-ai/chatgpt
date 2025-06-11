@@ -1,9 +1,11 @@
 from typing import AsyncGenerator, Optional
+from typing import Dict
 from typing import List
+
 
 from app import api_logger
 from openai import AsyncOpenAI, AsyncStream
-from app.domain.chat.entities import Message, ChunkOutput, ToolOutput
+from app.domain.chat.entities import ChunkOutput, ToolOutput
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
 
@@ -27,7 +29,7 @@ class LlmRepository:
 
     async def completion(
         self,
-        messages: List[Message],
+        messages: List[Dict],
         model: str,
         is_search_enabled: bool = True,
         temperature: float = 0.2,
@@ -36,7 +38,7 @@ class LlmRepository:
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         stream: AsyncStream = await self.client.chat.completions.create(
             model=model,
-            messages=[m.to_llm_reaady_dict() for m in messages],
+            messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
             response_format=response_format,

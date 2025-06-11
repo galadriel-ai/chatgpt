@@ -1,5 +1,7 @@
 import { API_BASE_URL } from '@env'
 import { Chat, ChatDetails } from '@/types/chat'
+import { Platform } from 'react-native'
+import * as FileSystem from 'expo-file-system'
 
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
@@ -135,41 +137,44 @@ async function uploadFile(
   abortSignal?: AbortSignal
 ): Promise<string | null> {
   try {
-    console.log('Uploading file:', file)
-
-    const formData = new FormData()
-
-    // Check if we're in web environment or React Native
-    // @ts-ignore - Platform is available in React Native
-    const isWeb = typeof window !== 'undefined' && !window.ReactNativeWebView
-
-    if (isWeb) {
-      // Web environment: need to fetch the file and create a proper blob
-      const response = await fetch(file.uri)
-      const blob = await response.blob()
-      formData.append('file', blob, file.name)
-    } else {
-      // React Native environment: use the object structure
-      const fileToUpload = {
-        uri: file.uri,
-        type: file.type,
-        name: file.name,
-      } as any
-      formData.append('file', fileToUpload, file.name)
+    // Validate file before upload
+    if (!file.uri) {
+      console.error('Upload failed: No file URI provided')
+      throw new Error('No file URI provided')
     }
 
-    console.log('FormData with file URI created')
+    // Use the official Expo FormData approach
+    const formData = new FormData()
+
+    // Create the file object as shown in Expo docs
+    const fileObject = {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    }
+
+    console.log('File object for FormData:', fileObject)
+
+    // Append to FormData (using 'file' as the field name to match server)
+    formData.append('file', fileObject as any)
+
+    console.log('Starting upload with correct headers...')
 
     const uploadResponse = await fetch(`${API_BASE_URL}/files`, {
       method: 'POST',
       body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
       signal: abortSignal,
-      // Let React Native set Content-Type with proper boundary
     })
+
+    console.log('Upload response status:', uploadResponse.status)
 
     if (uploadResponse.ok) {
       const result = await uploadResponse.json()
-      onProgress(100) // Set progress to 100% on completion
+      console.log('Upload successful, file ID:', result.file_id)
+      onProgress(100)
       return result.file_id
     } else {
       const errorText = await uploadResponse.text()

@@ -12,12 +12,13 @@ from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
+from app.domain.chat.entities import Image
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
-from app.domain.files.entities import File
+from app.domain.chat.utils import get_images
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
@@ -32,7 +33,7 @@ logger = api_logger.get()
 MAX_TITLE_LENGTH = 30
 
 DEFAULT_MODEL = settings.LLM_MODEL
-SUPPORTED_MODELS = [DEFAULT_MODEL]
+SUPPORTED_MODELS = [DEFAULT_MODEL, settings.VLM_MODEL]
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 
@@ -50,10 +51,8 @@ async def execute(
         )
         return
 
-    attachments = await _get_attachments(chat_input, file_repository)
-    print(attachments)
-
-    model = chat_input.model or DEFAULT_MODEL
+    images = await get_images(chat_input.attachment_ids, file_repository)
+    model = _determine_model(chat_input, images)
     if model not in SUPPORTED_MODELS:
         yield ErrorChunk(
             error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS)}."
@@ -84,13 +83,17 @@ async def execute(
         attachment_ids=[],
     )
 
+    messages_to_llm = [m.to_llm_ready_dict() for m in llm_input_messages[:-1]]
+    messages_to_llm.append(llm_input_messages[-1].to_llm_ready_dict_with_images(images))
+
     while True:
         final_tool_calls = {}
         current_tool_call_id = None
 
+        # all messages except the last one
         try:
             async for chunk in llm_repository.completion(
-                llm_input_messages, model, chat_input.is_search_enabled
+                messages_to_llm, model, chat_input.is_search_enabled
             ):
                 if isinstance(chunk, ChunkOutput):
                     llm_message.content += chunk.content
@@ -142,7 +145,9 @@ async def execute(
                                 )
                                 yield chunk  # yield the tool call message to show user that we are searching
                                 new_messages.append(tool_call_message)
-                                llm_input_messages.append(tool_call_message)
+                                messages_to_llm.append(
+                                    tool_call_message.to_llm_ready_dict()
+                                )
 
                                 logger.info(f"Searching web for: {args['query']}")
                                 try:
@@ -157,7 +162,9 @@ async def execute(
                                         tool_call=tool_call,
                                     )
                                     new_messages.append(tool_message)
-                                    llm_input_messages.append(tool_message)
+                                    messages_to_llm.append(
+                                        tool_message.to_llm_ready_dict()
+                                    )
                                     # finally yield the tool output with the result
                                     yield ToolOutput(
                                         tool_call_id=tool_call_id,
@@ -236,10 +243,7 @@ async def _get_existing_messages(
     return await chat_repository.get_messages(chat.id)
 
 
-async def _get_attachments(
-    chat_input: ChatInput,
-    file_repository: FileRepository,
-) -> List[File]:
-    if not chat_input.attachment_ids:
-        return []
-    return await file_repository.get_by_ids(chat_input.attachment_ids)
+def _determine_model(chat_input: ChatInput, images: List[Image]) -> str:
+    if images:
+        return settings.VLM_MODEL
+    return chat_input.model or DEFAULT_MODEL
