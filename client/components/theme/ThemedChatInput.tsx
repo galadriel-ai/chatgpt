@@ -4,7 +4,8 @@ import { Alert, TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { PlusIcon, UpArrowIcon, ThinkButton } from '@/components/icons/Icons'
+import { PlusIcon, UpArrowIcon } from '@/components/icons/Icons'
+import { ThinkButton } from '@/components/buttons/buttons'
 import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
 import { AttachmentFile, useMediaAttachments } from '@/hooks/useMediaAttachments'
@@ -190,7 +191,7 @@ export function ThemedChatInput({
           />
           <View className="flex flex-row items-center justify-between">
             <View className="flex flex-row items-center gap-2">
-              <View className="rounded-full border" style={{ borderColor, borderWidth: 1 }}>
+              <View className="rounded-full border p-1" style={{ borderColor, borderWidth: 1 }}>
                 <PlusIcon onClick={onPlusClick} />
               </View>
               <ThinkButton isActive={thinkModel} onClick={onThinkClick} />
