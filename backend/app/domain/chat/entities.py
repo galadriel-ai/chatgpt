@@ -120,6 +120,19 @@ class ChatDetails(Chat):
     messages: List[Message]
 
 
+@dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
+
+
 class Model(Enum):
     DEFAULT_MODEL = SUPPORTED_MODELS["default"]
     THINK_MODEL = SUPPORTED_MODELS["think"]

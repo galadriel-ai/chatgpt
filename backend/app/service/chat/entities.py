@@ -37,3 +37,18 @@ class ChatsResponse(BaseModel):
 
 class ChatDetailsResponse(UserChat):
     messages: List[ChatMessage]
+
+
+class ChatConfigurationRequest(BaseModel):
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+class UserChatConfiguration(BaseModel):
+    id: str
+    user_name: str
+    ai_name: str
+    description: str
+    role: str

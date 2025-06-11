@@ -1,15 +1,15 @@
-import Svg, { Path } from 'react-native-svg'
-import { useThemeColor } from '@/hooks/useThemeColor'
-import { Pressable, View, Text } from 'react-native'
+import Svg, {Path} from 'react-native-svg'
+import {useThemeColor} from '@/hooks/useThemeColor'
+import {Pressable, View, Text} from 'react-native'
 
-export function UpArrowIcon({ onClick }: { onClick: () => Promise<void> }) {
+export function UpArrowIcon({onClick}: { onClick: () => Promise<void> }) {
   // On purpose inverted
   const color = useThemeColor({}, 'background')
   const background = useThemeColor({}, 'text')
 
   return (
     <Pressable onPress={onClick}>
-      <View className="cursor-pointer rounded-full p-3" style={{ backgroundColor: background }}>
+      <View className="cursor-pointer rounded-full p-3" style={{backgroundColor: background}}>
         <Svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <Path
             d="M5.99984 12.6667V1M5.99984 1L1 5.83301M5.99984 1L11 5.83301"
@@ -25,7 +25,7 @@ export function UpArrowIcon({ onClick }: { onClick: () => Promise<void> }) {
   )
 }
 
-export function SideBarIcon({ onClick }: { onClick: () => void }) {
+export function SideBarIcon({onClick}: { onClick: () => void }) {
   const color = useThemeColor({}, 'text')
 
   return (
@@ -61,7 +61,7 @@ export function RoleUserIcon() {
   )
 }
 
-export function PlusIcon({ onClick }: { onClick: () => void }) {
+export function PlusIcon({onClick}: { onClick: () => void }) {
   const color = useThemeColor({}, 'light')
 
   return (
