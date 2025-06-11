@@ -1,6 +1,6 @@
 import Svg, { Path } from 'react-native-svg'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, Text } from 'react-native'
 
 export function UpArrowIcon({ onClick }: { onClick: () => Promise<void> }) {
   // On purpose inverted
@@ -61,6 +61,93 @@ export function RoleUserIcon() {
   )
 }
 
+export function PlusIcon({ onClick }: { onClick: () => void }) {
+  const color = useThemeColor({}, 'light')
+
+  return (
+    <Pressable onPress={onClick}>
+      <Svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <Path
+          d="M10 4V16M4 10H16"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </Pressable>
+  )
+}
+
+export function FolderIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 7V17C3 18.1046 3.89543 19 5 19H19C20.1046 19 21 18.1046 21 17V9C21 7.89543 20.1046 7 19 7H12L10 5H5C3.89543 5 3 5.89543 3 7Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
+export function CameraIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M23 19C23 20.1046 22.1046 21 21 21H3C1.89543 21 1 20.1046 1 19V8C1 6.89543 1.89543 6 3 6H7L9 3H15L17 6H21C22.1046 6 23 6.89543 23 8V19Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
+export function PhotoIcon() {
+  const color = useThemeColor({}, 'text')
+
+  return (
+    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M15 8H15.01M3 6C3 4.89543 3.89543 4 5 4H19C20.1046 4 21 4.89543 21 6V18C21 19.1046 20.1046 20 19 20H5C3.89543 20 3 19.1046 3 18V6Z"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M3 16L8 11C8.928 10.107 10.072 10.107 11 11L16 16"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M14 14L15 13C15.928 12.107 17.072 12.107 18 13L21 16"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  )
+}
+
 export function RoleAssistantIcon() {
   return (
     <Svg width="32" height="32" viewBox="0 0 150 139">
@@ -88,6 +175,30 @@ export function RoleAssistantIcon() {
         d="M0 0 C0.33 0.66 0.66 1.32 1 2 C1.66 2.33 2.32 2.66 3 3 C0.03 5.475 0.03 5.475 -3 8 C-1.125 2.25 -1.125 2.25 0 0 Z "
         fill="#D0CAFF"
         transform="translate(40,53)"
+      />
+    </Svg>
+  )
+}
+
+export function NewChatIcon() {
+  const color = useThemeColor(
+    {
+      light: '#3C3C3C',
+      dark: '#FFFFFF',
+    },
+    'background'
+  )
+
+  return (
+    <Svg width="23" height="24" viewBox="0 0 23 24" fill="none">
+      <Path
+        d="M10 4.06065H5.8C4.11984 4.06065 3.27976 4.06065 2.63803 4.38763C2.07354 4.67525 1.6146 5.13419 1.32698 5.69868C1 6.34042 1 7.1805 1 8.86065V17.2607C1 18.9408 1 19.7809 1.32698 20.4226C1.6146 20.9871 2.07354 21.4461 2.63803 21.7337C3.27976 22.0607 4.11984 22.0607 5.8 22.0607H14.2C15.8802 22.0607 16.7202 22.0607 17.362 21.7337C17.9265 21.4461 18.3854 20.9871 18.673 20.4226C19 19.7809 19 18.9408 19 17.2607V13.0607M6.99997 16.0607H8.67452C9.1637 16.0607 9.40829 16.0607 9.63846 16.0054C9.84254 15.9564 10.0376 15.8756 10.2166 15.7659C10.4184 15.6422 10.5914 15.4693 10.9373 15.1234L20.5 5.56065C21.3284 4.73223 21.3284 3.38908 20.5 2.56065C19.6716 1.73223 18.3284 1.73222 17.5 2.56065L7.93723 12.1234C7.59133 12.4693 7.41838 12.6422 7.29469 12.8441C7.18504 13.023 7.10423 13.2181 7.05523 13.4222C6.99997 13.6524 6.99997 13.897 6.99997 14.3861V16.0607Z"
+        stroke={color}
+        strokeOpacity="0.3"
+        color={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   )

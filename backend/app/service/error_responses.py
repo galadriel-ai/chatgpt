@@ -52,6 +52,20 @@ class NotFoundAPIError(APIErrorResponse):
         )
 
 
+class FileSizeTooLargeAPIError(APIErrorResponse):
+    def __init__(self, message: str):
+        self.message = message
+
+    def to_status_code(self) -> int:
+        return status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+    def to_code(self) -> str:
+        return "file_size_too_large"
+
+    def to_message(self) -> str:
+        return self.message
+
+
 class ValidationTypeError(APIErrorResponse):
     def __init__(self, message: str):
         self.message = message

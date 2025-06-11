@@ -9,6 +9,8 @@ from app.service import error_responses
 from app.service.chat.entities import ChatRequest
 from app.service.utils import parse_uuid
 
+MAX_MESSAGE_LENGTH = 30_000
+
 
 async def execute(
     request: ChatRequest,
@@ -24,11 +26,23 @@ async def execute(
             yield json.dumps({"error": e.to_message()})
             return
 
+    if len(request.content) > MAX_MESSAGE_LENGTH:
+        yield json.dumps(
+            {
+                "error": f"Input message is too long, max length is {MAX_MESSAGE_LENGTH} characters."
+            }
+        )
+        return
+
+    uuid_attachment_ids = [
+        parse_uuid.parse(attachment_id) for attachment_id in request.attachment_ids
+    ]
     chat_input = ChatInput(
         chat_id=chat_id,
-        model=request.model,
+        think_model=request.think_model,
         content=request.content,
         is_search_enabled=request.is_search_enabled,
+        attachment_ids=uuid_attachment_ids,
     )
 
     async for chunk in chat_use_case.execute(

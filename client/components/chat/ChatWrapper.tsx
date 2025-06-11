@@ -1,23 +1,31 @@
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView } from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
+import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
+import { AttachmentFile } from '@/hooks/useMediaAttachments'
+
+import { useRouter } from 'expo-router'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
+  const router = useRouter()
+  const scrollViewRef = useRef<ScrollView>(null)
 
-  const { selectedChat, activeChat, setActiveChat, addChat } = useChat()
+  const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   useEffect(() => {
     if (selectedChat && !activeChat) {
       getChatDetails(selectedChat)
+    } else if (!selectedChat && !activeChat) {
+      setMessages([])
     }
   }, [selectedChat])
 
@@ -25,23 +33,51 @@ export function ChatWrapper() {
     if (activeChat) setMessages(activeChat.messages)
   }, [activeChat])
 
+  const scrollToBottom = (animated = true) => {
+    // Wait a tiny bit to make sure the message was rendered
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated })
+    }, 100)
+  }
+
+  const onNewChat = () => {
+    setSelectedChat(null)
+    setActiveChat(null)
+    router.push('/')
+  }
+
   const getChatDetails = async (chat: Chat): Promise<void> => {
     const chatDetails = await api.getChatDetails(chat.id)
     if (chatDetails) {
       setActiveChat(chatDetails)
+      // Wait for the chat to be rendered before scrolling
+      setTimeout(() => {
+        scrollToBottom(false)
+      }, 100)
     }
   }
 
-  const onMessage = async (message: string): Promise<boolean> => {
+  const onMessage = async (message: string, attachments?: AttachmentFile[], thinkModel?: boolean): Promise<boolean> => {
     // If it's a new chat, need to "cache" new messages, and create a new activeChat once chat_id is streamed in response
+
+    // Extract file IDs from uploaded attachments
+    const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
       role: 'user',
       content: message,
+      attachmentIds: attachmentIds,
     }
     newMessages.push(inputMessage)
+
+    if (errorMessage) {
+      // Remove the user message that caused an error
+      popMessage()
+      setErrorMessage('')
+    }
     addMessage(inputMessage)
+    scrollToBottom()
 
     try {
       const assistantMessage: Message = {
@@ -69,6 +105,9 @@ export function ChatWrapper() {
         } else if (chunk.content) {
           content += chunk.content
           updateLastMessage(content)
+        } else if (chunk.error) {
+          setErrorMessage(chunk.error)
+          popMessage()
         }
         // Whatever other chunks we get
       }
@@ -77,6 +116,8 @@ export function ChatWrapper() {
         {
           chatId: activeChat?.id || null,
           message,
+          attachmentIds,
+          thinkModel,
         },
         onChunk,
         () => {
@@ -113,6 +154,15 @@ export function ChatWrapper() {
     }
   }
 
+  const popMessage = (): void => {
+    setMessages(messages => {
+      if (messages) {
+        messages.pop()
+      }
+      return messages
+    })
+  }
+
   const updateLastMessage = (newContent: string) => {
     setActiveChat(chat => {
       if (!chat) return null
@@ -131,8 +181,11 @@ export function ChatWrapper() {
 
   return (
     <ThemedView className="flex-1 px-2">
-      <ThemedView className="flex flex-row pt-8">
+      <ThemedView className="flex w-full flex-row items-center justify-between px-2 pb-4 pt-8">
         <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
+        <Pressable onPress={onNewChat}>
+          <NewChatIcon />
+        </Pressable>
       </ThemedView>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -141,6 +194,7 @@ export function ChatWrapper() {
       >
         <ThemedView className="flex-1">
           <ScrollView
+            ref={scrollViewRef}
             contentContainerStyle={{ padding: 16 }}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
@@ -150,6 +204,12 @@ export function ChatWrapper() {
                 <ChatMessage message={m} />
               </ThemedView>
             ))}
+
+            {errorMessage && (
+              <ThemedView className="w-full">
+                <ErrorMessage error={errorMessage} />
+              </ThemedView>
+            )}
           </ScrollView>
 
           <ThemedChatInput
@@ -170,13 +230,37 @@ function ChatMessage({ message }: { message: Message }) {
   const role = message.role === 'user' ? 'You' : 'Your Sidekik'
 
   return (
-    <ThemedView className="flex flex-row gap-4 pt-6">
+    <ThemedView className="flex flex-row gap-4 py-3">
       <ThemedView className="flex w-8 flex-col items-center">
         {message.role === 'user' ? <RoleUserIcon /> : <RoleAssistantIcon />}
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
         <ThemedText>{message.content}</ThemedText>
+        {message.attachmentIds && message.attachmentIds.length > 0 && (
+          <ThemedView className="mt-2">
+            <ThemedText className="text-sm opacity-70">
+              📎 {message.attachmentIds.length} attachment
+              {message.attachmentIds.length > 1 ? 's' : ''}
+            </ThemedText>
+          </ThemedView>
+        )}
+      </ThemedView>
+    </ThemedView>
+  )
+}
+
+function ErrorMessage({ error }: { error: string }) {
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        <RoleAssistantIcon />
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">Your Sidekik</ThemedText>
+        <ThemedText lightColor={'#fc161a'} darkColor={'#fc161a'}>
+          Error: {error}
+        </ThemedText>
       </ThemedView>
     </ThemedView>
   )

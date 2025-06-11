@@ -38,7 +38,12 @@ DB_HOST_READ = os.getenv("DB_HOST_READ", "localhost")
 DB_PORT_READ = os.getenv("DB_PORT_READ", "5435")
 
 # AI configurations
-LLM_MODEL = os.getenv("LLM_MODEL", "accounts/fireworks/models/deepseek-v3-0324")
+SUPPORTED_MODELS = {
+    "default": os.getenv(
+        "LLM_DEFAULT_MODEL", "accounts/fireworks/models/deepseek-v3-0324"
+    ),
+    "think": os.getenv("LLM_THINK_MODEL", "accounts/fireworks/models/deepseek-r1-0528"),
+}
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 if not LLM_API_KEY:
     raise RuntimeError("LLM_API_KEY is not set")
@@ -47,3 +52,7 @@ SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
 if not SERPAPI_API_KEY:
     raise RuntimeError("SERPAPI_API_KEY is not set")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.fireworks.ai/inference/v1")
+
+
+STORAGE_FOLDER = os.getenv("STORAGE_FOLDER", "storage")
+STORAGE_MAX_FILE_SIZE = int(os.getenv("STORAGE_MAX_FILE_SIZE", "10485760"))

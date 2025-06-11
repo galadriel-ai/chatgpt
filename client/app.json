@@ -50,6 +50,13 @@
         {
           "iosUrlScheme": "${GOOGLE_IOS_URL_SCHEME}"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to allow you to select and upload images for chat conversations.",
+          "cameraPermission": "The app accesses your camera to allow you to take and upload photos for chat conversations."
+        }
       ]
     ],
     "experiments": {
