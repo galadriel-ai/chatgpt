@@ -16,6 +16,7 @@ from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
+from app.domain.chat.utils import get_images
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
@@ -25,6 +26,7 @@ from app.domain.chat.entities import Model
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
+from app.repository.file_repository import FileRepository
 from app.service import error_responses
 from settings import SUPPORTED_MODELS
 
@@ -40,6 +42,7 @@ async def execute(
     user: User,
     llm_repository: LlmRepository,
     chat_repository: ChatRepository,
+    file_repository: FileRepository,
 ) -> AsyncGenerator[ChatOutputChunk, None]:
     chat = await _get_chat(chat_input, user, chat_repository)
     if not chat:
@@ -48,15 +51,21 @@ async def execute(
         )
         return
 
-    model = ModelSpec(
-        id=Model.THINK_MODEL.value
+    images = await get_images(chat_input.attachment_ids, file_repository)
+    model_id = (
+        Model.THINK_MODEL
         if chat_input.think_model
-        else Model.DEFAULT_MODEL.value,
+        else Model.VLM_MODEL
+        if images
+        else Model.DEFAULT_MODEL
+    )
+    model = ModelSpec(
+        id=model_id,
         config=ModelConfig(),
     )
-    if model.id not in SUPPORTED_MODELS.values():
+    if model.id.value not in SUPPORTED_MODELS.values():
         yield ErrorChunk(
-            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS.values())}. But got {model.id}"
+            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS.values())}. But got {model.id.value}"
         )
         return
     if rate_limit_error := await get_rate_limit_error_use_case.execute(
@@ -84,13 +93,16 @@ async def execute(
         attachment_ids=[],
     )
 
+    messages_to_llm = [m.to_llm_ready_dict() for m in llm_input_messages[:-1]]
+    messages_to_llm.append(llm_input_messages[-1].to_llm_ready_dict_with_images(images))
+
     while True:
         final_tool_calls = {}
         current_tool_call_id = None
 
         try:
             async for chunk in llm_repository.completion(
-                llm_input_messages, model, chat_input.is_search_enabled
+                messages_to_llm, model, chat_input.is_search_enabled
             ):
                 if isinstance(chunk, ChunkOutput):
                     llm_message.content += chunk.content
@@ -143,7 +155,9 @@ async def execute(
                                 )
                                 yield chunk  # yield the tool call message to show user that we are searching
                                 new_messages.append(tool_call_message)
-                                llm_input_messages.append(tool_call_message)
+                                messages_to_llm.append(
+                                    tool_call_message.to_llm_ready_dict()
+                                )
 
                                 logger.info(f"Searching web for: {args['query']}")
                                 try:
@@ -159,7 +173,9 @@ async def execute(
                                         attachment_ids=[],
                                     )
                                     new_messages.append(tool_message)
-                                    llm_input_messages.append(tool_message)
+                                    messages_to_llm.append(
+                                        tool_message.to_llm_ready_dict()
+                                    )
                                     # finally yield the tool output with the result
                                     yield ToolOutput(
                                         tool_call_id=tool_call_id,

@@ -43,6 +43,7 @@ SUPPORTED_MODELS = {
         "LLM_DEFAULT_MODEL", "accounts/fireworks/models/deepseek-v3-0324"
     ),
     "think": os.getenv("LLM_THINK_MODEL", "accounts/fireworks/models/deepseek-r1-0528"),
+    "vlm": os.getenv("VLM_MODEL", "accounts/fireworks/models/qwen2p5-vl-32b-instruct"),
 }
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 if not LLM_API_KEY:
