@@ -140,11 +140,11 @@ async function uploadFile(
     console.log('Uploading file:', file)
 
     const formData = new FormData()
-    
+
     // Check if we're in web environment or React Native
     // @ts-ignore - Platform is available in React Native
     const isWeb = typeof window !== 'undefined' && !window.ReactNativeWebView
-    
+
     if (isWeb) {
       // Web environment: need to fetch the file and create a proper blob
       const response = await fetch(file.uri)

@@ -135,13 +135,3 @@ class FileRepository:
                     )
                 )
         return files
-
-    async def delete(self, file_id: UUID) -> None:
-        utc_now = utcnow()
-        async with self._session_provider.get() as session:
-            data = {
-                "id": file_id,
-                "last_updated_at": utc_now,
-            }
-            await session.execute(sqlalchemy.text(SQL_DELETE), data)
-            await session.commit()

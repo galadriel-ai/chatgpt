@@ -3,7 +3,7 @@ from typing import List
 
 from app import api_logger
 from openai import AsyncOpenAI, AsyncStream
-from app.domain.chat.entities import Message, ChunkOutput, ToolOutput, Model
+from app.domain.chat.entities import Message, ChunkOutput, ToolOutput
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
 
