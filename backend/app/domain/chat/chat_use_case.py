@@ -139,6 +139,7 @@ async def execute(
                                     role="assistant",
                                     tool_calls=[tool_call],
                                     tool_call=tool_call,
+                                    attachment_ids=[],
                                 )
                                 yield chunk  # yield the tool call message to show user that we are searching
                                 new_messages.append(tool_call_message)
@@ -155,6 +156,7 @@ async def execute(
                                         role="tool",
                                         content=result,
                                         tool_call=tool_call,
+                                        attachment_ids=[],
                                     )
                                     new_messages.append(tool_message)
                                     llm_input_messages.append(tool_message)
