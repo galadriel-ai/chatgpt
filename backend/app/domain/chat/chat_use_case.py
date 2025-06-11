@@ -6,7 +6,6 @@ from typing import Optional
 
 from uuid_extensions import uuid7
 
-import settings
 from app import api_logger
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
@@ -20,12 +19,14 @@ from app.domain.chat.entities import ToolOutput
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
+from app.domain.chat.entities import ModelSpec
+from app.domain.chat.entities import ModelConfig
 from app.domain.chat.entities import Model
-from app.domain.chat.entities import ModelId
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
+from settings import SUPPORTED_MODELS
 
 logger = api_logger.get()
 
@@ -47,8 +48,9 @@ async def execute(
         )
         return
 
-    model = Model(
-        id=ModelId.THINK_MODEL if chat_input.think_model else ModelId.DEFAULT_MODEL
+    model = ModelSpec(
+        id=Model.THINK_MODEL if chat_input.think_model else Model.DEFAULT_MODEL,
+        config=ModelConfig(),
     )
     if model.id not in SUPPORTED_MODELS:
         yield ErrorChunk(
