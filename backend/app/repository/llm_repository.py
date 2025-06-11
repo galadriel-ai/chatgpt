@@ -5,7 +5,7 @@ from typing import List
 
 from app import api_logger
 from openai import AsyncOpenAI, AsyncStream
-from app.domain.chat.entities import ChunkOutput, ToolOutput
+from app.domain.chat.entities import ChunkOutput, ToolOutput, ModelSpec
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 import serpapi
 
@@ -30,17 +30,15 @@ class LlmRepository:
     async def completion(
         self,
         messages: List[Dict],
-        model: str,
+        model: ModelSpec,
         is_search_enabled: bool = True,
-        temperature: float = 0.2,
-        max_tokens: int = 10_000,
         response_format: Optional[dict] = None,
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         stream: AsyncStream = await self.client.chat.completions.create(
-            model=model,
+            model=model.id.value,
             messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
+            temperature=model.config.temperature,
+            max_tokens=model.config.max_tokens,
             response_format=response_format,
             tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
             stream=True,

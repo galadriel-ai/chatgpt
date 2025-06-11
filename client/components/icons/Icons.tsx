@@ -1,6 +1,6 @@
 import Svg, { Path } from 'react-native-svg'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, Text } from 'react-native'
 
 export function UpArrowIcon({ onClick }: { onClick: () => Promise<void> }) {
   // On purpose inverted

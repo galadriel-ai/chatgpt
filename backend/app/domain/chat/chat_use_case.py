@@ -6,13 +6,11 @@ from typing import Optional
 
 from uuid_extensions import uuid7
 
-import settings
 from app import api_logger
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
-from app.domain.chat.entities import Image
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
@@ -22,18 +20,20 @@ from app.domain.chat.utils import get_images
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
+from app.domain.chat.entities import ModelSpec
+from app.domain.chat.entities import ModelConfig
+from app.domain.chat.entities import Model
 from app.domain.users.entities import User
 from app.repository.chat_repository import ChatRepository
 from app.repository.llm_repository import LlmRepository
 from app.repository.file_repository import FileRepository
 from app.service import error_responses
+from settings import SUPPORTED_MODELS
 
 logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
 
-DEFAULT_MODEL = settings.LLM_MODEL
-SUPPORTED_MODELS = [DEFAULT_MODEL, settings.VLM_MODEL]
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 
@@ -52,10 +52,20 @@ async def execute(
         return
 
     images = await get_images(chat_input.attachment_ids, file_repository)
-    model = _determine_model(chat_input, images)
-    if model not in SUPPORTED_MODELS:
+    model_id = (
+        Model.THINK_MODEL
+        if chat_input.think_model
+        else Model.VLM_MODEL
+        if images
+        else Model.DEFAULT_MODEL
+    )
+    model = ModelSpec(
+        id=model_id,
+        config=ModelConfig(),
+    )
+    if model.id.value not in SUPPORTED_MODELS.values():
         yield ErrorChunk(
-            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS)}."
+            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS.values())}. But got {model.id.value}"
         )
         return
     if rate_limit_error := await get_rate_limit_error_use_case.execute(
@@ -79,7 +89,7 @@ async def execute(
         chat_id=chat.id,
         role="assistant",
         content="",
-        model=model,
+        model=model.id,
         attachment_ids=[],
     )
 
@@ -90,7 +100,6 @@ async def execute(
         final_tool_calls = {}
         current_tool_call_id = None
 
-        # all messages except the last one
         try:
             async for chunk in llm_repository.completion(
                 messages_to_llm, model, chat_input.is_search_enabled
@@ -142,6 +151,7 @@ async def execute(
                                     role="assistant",
                                     tool_calls=[tool_call],
                                     tool_call=tool_call,
+                                    attachment_ids=[],
                                 )
                                 yield chunk  # yield the tool call message to show user that we are searching
                                 new_messages.append(tool_call_message)
@@ -160,6 +170,7 @@ async def execute(
                                         role="tool",
                                         content=result,
                                         tool_call=tool_call,
+                                        attachment_ids=[],
                                     )
                                     new_messages.append(tool_message)
                                     messages_to_llm.append(
@@ -241,9 +252,3 @@ async def _get_existing_messages(
     chat_repository: ChatRepository,
 ) -> List[Message]:
     return await chat_repository.get_messages(chat.id)
-
-
-def _determine_model(chat_input: ChatInput, images: List[Image]) -> str:
-    if images:
-        return settings.VLM_MODEL
-    return chat_input.model or DEFAULT_MODEL
