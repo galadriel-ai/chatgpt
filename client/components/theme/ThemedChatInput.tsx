@@ -1,18 +1,20 @@
+import React from 'react'
 import { useState } from 'react'
 import { Alert, TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { PlusIcon, UpArrowIcon } from '@/components/icons/Icons'
+import { PlusIcon, UpArrowIcon, ThinkButton } from '@/components/icons/Icons'
 import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
 import { AttachmentFile, useMediaAttachments } from '@/hooks/useMediaAttachments'
 import { useFileUpload } from '@/hooks/useFileUpload'
+import { useChat } from '@/context/ChatContext'
 
 const MAX_FILES_COUNT_PER_MESSAGE = 5
 
 export type ThemedTextInputProps = TextInputProps & {
-  onMessage: (message: string, attachments?: AttachmentFile[]) => Promise<boolean>
+  onMessage: (message: string, attachments?: AttachmentFile[], thinkModel?: boolean) => Promise<boolean>
   className?: string
 }
 
@@ -36,6 +38,7 @@ export function ThemedChatInput({
 
   const { pickFiles, takePhoto, pickPhotos } = useMediaAttachments()
   const { uploadFile } = useFileUpload()
+  const { thinkModel, setThinkModel } = useChat()
 
   const startUpload = async (file: AttachmentFile) => {
     const abortController = new AbortController()
@@ -81,7 +84,7 @@ export function ThemedChatInput({
   const onSubmitClick = async () => {
     const uploadedAttachments = attachments.filter(att => att.uploadedFileId && !att.error)
     if (inputValue.trim() || uploadedAttachments.length > 0) {
-      if (await onMessage(inputValue, uploadedAttachments)) {
+      if (await onMessage(inputValue, uploadedAttachments, thinkModel)) {
         setInputValue('')
         setAttachments([])
       } else {
@@ -103,6 +106,10 @@ export function ThemedChatInput({
     } else {
       alertFileCount()
     }
+  }
+
+  const onThinkClick = () => {
+    setThinkModel(!thinkModel)
   }
 
   const onSelectFiles = async () => {
@@ -181,16 +188,14 @@ export function ThemedChatInput({
             placeholderTextColor={placeholderColor}
             {...otherProps}
           />
-          <View className="flex flex-row justify-between">
-            <View
-              className="flex aspect-square flex-row items-center justify-center gap-4 rounded-full"
-              style={{ borderWidth: 1, borderColor }}
-            >
-              <PlusIcon onClick={onPlusClick} />
+          <View className="flex flex-row items-center justify-between">
+            <View className="flex flex-row items-center gap-2">
+              <View className="rounded-full border" style={{ borderColor, borderWidth: 1 }}>
+                <PlusIcon onClick={onPlusClick} />
+              </View>
+              <ThinkButton isActive={thinkModel} onClick={onThinkClick} />
             </View>
-            <View className="flex flex-row gap-4">
-              <UpArrowIcon onClick={onSubmitClick} />
-            </View>
+            <UpArrowIcon onClick={onSubmitClick} />
           </View>
         </ThemedView>
       </ThemedView>

@@ -9,7 +9,7 @@ from pydantic import Field
 
 class ChatRequest(BaseModel):
     chat_id: Optional[str] = Field(description="chat id", default=None)
-    model: Optional[str] = Field(description="model id", default=None)
+    think_model: Optional[bool] = Field(description="think model", default=False)
     is_search_enabled: Optional[bool] = Field(
         description="enable search tool", default=True
     )

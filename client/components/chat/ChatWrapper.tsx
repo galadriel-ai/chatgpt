@@ -57,7 +57,7 @@ export function ChatWrapper() {
     }
   }
 
-  const onMessage = async (message: string, attachments?: AttachmentFile[]): Promise<boolean> => {
+  const onMessage = async (message: string, attachments?: AttachmentFile[], thinkModel?: boolean): Promise<boolean> => {
     // If it's a new chat, need to "cache" new messages, and create a new activeChat once chat_id is streamed in response
 
     // Extract file IDs from uploaded attachments
@@ -117,6 +117,7 @@ export function ChatWrapper() {
           chatId: activeChat?.id || null,
           message,
           attachmentIds,
+          thinkModel,
         },
         onChunk,
         () => {

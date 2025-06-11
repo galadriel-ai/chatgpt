@@ -72,6 +72,7 @@ interface ChatInput {
   chatId: string | null
   message: string
   attachmentIds?: string[]
+  thinkModel?: boolean
 }
 
 export interface ChatChunk {
@@ -125,6 +126,7 @@ const streamChatResponse = (
       chat_id: chatInput.chatId,
       content: chatInput.message,
       attachment_ids: chatInput.attachmentIds,
+      think_model: chatInput.thinkModel,
     })
   )
 }

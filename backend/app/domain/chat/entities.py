@@ -2,11 +2,14 @@ import datetime
 from abc import ABC
 from abc import abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 from typing import Dict
 from typing import List
 from typing import Literal
 from typing import Optional
 from uuid import UUID
+
+from settings import SUPPORTED_MODELS
 
 
 @dataclass
@@ -20,7 +23,7 @@ class Chat:
 @dataclass
 class ChatInput:
     chat_id: Optional[UUID]
-    model: Optional[str]
+    think_model: Optional[bool]
     is_search_enabled: Optional[bool]
     content: str
     attachment_ids: List[UUID]
@@ -115,3 +118,23 @@ class Message:
 @dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+
+
+class Model(Enum):
+    DEFAULT_MODEL = SUPPORTED_MODELS["default"]
+    THINK_MODEL = SUPPORTED_MODELS["think"]
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass
+class ModelConfig:
+    temperature: Optional[float] = 0.2
+    max_tokens: Optional[int] = 128000
+
+
+@dataclass
+class ModelSpec:
+    id: Model
+    config: ModelConfig

@@ -1,6 +1,6 @@
 import Svg, { Path } from 'react-native-svg'
 import { useThemeColor } from '@/hooks/useThemeColor'
-import { Pressable, View } from 'react-native'
+import { Pressable, View, Text } from 'react-native'
 
 export function UpArrowIcon({ onClick }: { onClick: () => Promise<void> }) {
   // On purpose inverted
@@ -201,5 +201,34 @@ export function NewChatIcon() {
         strokeLinejoin="round"
       />
     </Svg>
+  )
+}
+
+export function ThinkButton({ isActive, onClick }: { isActive: boolean; onClick: () => void }) {
+  const textColor = useThemeColor({}, 'text')
+  const backgroundColor = isActive ? '#4A90E2' : 'transparent'
+
+  return (
+    <Pressable onPress={onClick}>
+      <View
+        className="px-3 py-2 rounded-full border"
+        style={{
+          backgroundColor,
+          borderColor: textColor,
+          borderWidth: 1,
+          opacity: isActive ? 0.8 : 1
+        }}
+      >
+        <Text
+          style={{
+            color: isActive ? '#FFFFFF' : textColor,
+            fontSize: 14,
+            fontWeight: '500'
+          }}
+        >
+          Think
+        </Text>
+      </View>
+    </Pressable>
   )
 }
