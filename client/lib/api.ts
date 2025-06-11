@@ -1,5 +1,8 @@
-import { API_BASE_URL } from '@env'
-import { Chat, ChatDetails } from '@/types/chat'
+// import {API_BASE_URL} from '@env'
+import {Chat, ChatDetails} from '@/types/chat'
+// TODO: validate if this is needed
+const API_BASE_URL = "https://chatgpt.galadriel.com"
+
 
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
@@ -89,7 +92,6 @@ const streamChatResponse = (
 ) => {
   const xhr = new XMLHttpRequest()
   let lastLength = 0
-
   xhr.open('POST', `${API_BASE_URL}/chat`, true)
   xhr.setRequestHeader('Content-Type', 'application/json')
 

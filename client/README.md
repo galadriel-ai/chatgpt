@@ -72,3 +72,12 @@ npm run ios
 npx expo prebuild --clean
 npm run ios
 ```
+
+
+# Release crap
+
+```bash
+npx expo prebuild --clean
+eas build --profile preview --platform ios
+eas submit --platform ios --latest
+```

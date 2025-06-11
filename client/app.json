@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Sidekik",
-    "slug": "chatgpt",
+    "name": "native",
+    "slug": "native",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "sidekik",
+    "scheme": "native",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -15,9 +15,12 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
+            "CFBundleURLSchemes": [
+              "${GOOGLE_IOS_URL_SCHEME}"
+            ]
           }
-        ]
+        ],
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       }
     },
     "android": {
@@ -26,7 +29,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.galadriel.chatgpt"
+      "package": "com.galadriel.chatgpt",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -66,9 +72,8 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b00a8d0d-419a-40ed-84f9-832771623fab"
+        "projectId": "65a4b318-14ce-4a00-ad56-bec3e27aaa0b"
       }
-    },
-    "owner": "galadriel-ai"
+    }
   }
 }
