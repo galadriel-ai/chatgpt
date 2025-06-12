@@ -83,9 +83,12 @@ export function ChatWrapper() {
     scrollToBottom()
 
     posthog.capture(EVENTS.MESSAGE_SENT, {
+      think_mode_enabled: thinkModel || false,
+      character_enabled: false, // TODO: Add character mode support
+      web_search_performed: false, // TODO: Add web search support
+      generate_content_created: false, // TODO: Add content generation support
       hasAttachments: !!attachmentIds?.length,
       attachmentCount: attachmentIds?.length || 0,
-      thinkModel: thinkModel || false,
     })
 
     try {
