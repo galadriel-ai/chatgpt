@@ -68,11 +68,20 @@ export function useMediaAttachments() {
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0]
+
+        // Debug: Log asset details
+        console.log('Camera asset details:', {
+          uri: asset.uri,
+          type: asset.type,
+          fileName: asset.fileName,
+          fileSize: asset.fileSize,
+        })
+
         return {
           id: `temp_${Date.now()}_${Math.random()}`,
           uri: asset.uri,
-          name: `photo_${Date.now()}.jpg`,
-          type: 'image/jpeg',
+          name: asset.fileName || `photo_${Date.now()}.jpg`,
+          type: asset.type || 'image/jpeg', // Ensure we have a proper MIME type
           size: asset.fileSize,
           progress: 0,
         }
@@ -105,14 +114,16 @@ export function useMediaAttachments() {
       })
 
       if (!result.canceled) {
-        return result.assets.map((asset, index) => ({
-          id: `temp_${Date.now()}_${index}`,
-          uri: asset.uri,
-          name: asset.fileName || `image_${Date.now()}_${index}.jpg`,
-          type: asset.type || 'image/jpeg',
-          size: asset.fileSize,
-          progress: 0,
-        }))
+        return result.assets.map((asset, index) => {
+          return {
+            id: `temp_${Date.now()}_${index}`,
+            uri: asset.uri,
+            name: asset.fileName || `image_${Date.now()}_${index}.jpg`,
+            type: asset.type || 'image/jpeg', // Ensure we have a proper MIME type
+            size: asset.fileSize,
+            progress: 0,
+          }
+        })
       }
       return []
     } catch (error) {

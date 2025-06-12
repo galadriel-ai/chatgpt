@@ -92,6 +92,12 @@ class ToolCall:
 
 
 @dataclass
+class Image:
+    mime_type: str
+    base64_data: str
+
+
+@dataclass
 class Message:
     id: UUID
     chat_id: UUID
@@ -102,10 +108,34 @@ class Message:
     tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None
 
-    def to_llm_reaady_dict(self) -> Dict:
+    def to_llm_ready_dict(self) -> Dict:
+        content = [{"type": "text", "text": self.content}]
         result = {
             "role": self.role,
-            "content": self.content,
+            "content": content,
+        }
+        if self.tool_call is not None:
+            result["tool_call_id"] = self.tool_call.id
+            result["name"] = self.tool_call.function["name"]
+        if self.tool_calls is not None:
+            result["tool_calls"] = [tc.to_serializable_dict() for tc in self.tool_calls]
+        return result
+
+    def to_llm_ready_dict_with_images(self, images: List[Image]) -> Dict:
+        content = [
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{image.mime_type};base64,{image.base64_data}"
+                },
+            }
+            for image in images
+        ]
+        if self.content:
+            content.append({"type": "text", "text": self.content})
+        result = {
+            "role": self.role,
+            "content": content,
         }
         if self.tool_call is not None:
             result["tool_call_id"] = self.tool_call.id
@@ -123,6 +153,7 @@ class ChatDetails(Chat):
 class Model(Enum):
     DEFAULT_MODEL = SUPPORTED_MODELS["default"]
     THINK_MODEL = SUPPORTED_MODELS["think"]
+    VLM_MODEL = SUPPORTED_MODELS["vlm"]
 
     def __str__(self) -> str:
         return self.value

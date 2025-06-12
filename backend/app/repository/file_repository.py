@@ -64,6 +64,21 @@ FROM file
 WHERE id = :id;
 """
 
+SQL_GET_BY_IDS = """
+SELECT 
+    id,
+    user_profile_id,
+    filename,
+    full_path,
+    content_type,
+    size,
+    deleted,
+    created_at,
+    last_updated_at
+FROM file
+WHERE id = ANY(:ids);
+"""
+
 SQL_DELETE = """
 UPDATE 
     file 
@@ -107,7 +122,7 @@ class FileRepository:
             row = result.first()
             if row:
                 return File(
-                    id=row.id,
+                    uid=row.id,
                     user_id=row.user_profile_id,
                     filename=row.filename,
                     full_path=row.full_path,
@@ -115,6 +130,29 @@ class FileRepository:
                     size=row.size,
                 )
         return None
+
+    async def get_by_ids(self, file_ids: List[UUID]) -> List[File]:
+        if not file_ids:
+            return []
+
+        data = {
+            "ids": file_ids,
+        }
+        files = []
+        async with self._session_provider_read.get() as session:
+            rows = await session.execute(sqlalchemy.text(SQL_GET_BY_IDS), data)
+            for row in rows:
+                files.append(
+                    File(
+                        uid=row.id,
+                        user_id=row.user_profile_id,
+                        filename=row.filename,
+                        full_path=row.full_path,
+                        content_type=row.content_type,
+                        size=row.size,
+                    )
+                )
+        return files
 
     async def get_by_user(self, user_id: UUID) -> List[File]:
         data = {
@@ -126,7 +164,7 @@ class FileRepository:
             for row in rows:
                 files.append(
                     File(
-                        id=row.id,
+                        uid=row.id,
                         user_id=row.user_profile_id,
                         filename=row.filename,
                         full_path=row.full_path,
