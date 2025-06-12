@@ -17,7 +17,7 @@ def is_test():
     return ENVIRONMENT == "test"
 
 
-APPLICATION_NAME = "DISTRIBUTED_INFERENCE"
+APPLICATION_NAME = os.getenv("APPLICATION_NAME", "CHATGPT")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1")
 API_PORT = int(os.getenv("API_PORT", 5000))
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
@@ -43,6 +43,7 @@ SUPPORTED_MODELS = {
         "LLM_DEFAULT_MODEL", "accounts/fireworks/models/deepseek-v3-0324"
     ),
     "think": os.getenv("LLM_THINK_MODEL", "accounts/fireworks/models/deepseek-r1-0528"),
+    "vlm": os.getenv("VLM_MODEL", "accounts/fireworks/models/qwen2p5-vl-32b-instruct"),
 }
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 if not LLM_API_KEY:

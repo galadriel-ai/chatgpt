@@ -8,6 +8,7 @@ from app import dependencies
 from app.domain.users.entities import User
 from app.repository.chat_configuration_repository import ChatConfigurationRepository
 from app.repository.chat_repository import ChatRepository
+from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
 from app.service.auth import authentication
 from app.service.chat import chat_details_service
@@ -33,6 +34,7 @@ async def chat(
     user: User = Depends(authentication.validate_session_token),
     llm_repository: LlmRepository = Depends(dependencies.get_llm_repository),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+    file_repository: FileRepository = Depends(dependencies.get_file_repository),
 ):
     headers = {
         "X-Content-Type-Options": "nosniff",
@@ -45,6 +47,7 @@ async def chat(
             user,
             llm_repository,
             chat_repository,
+            file_repository,
         ),
         headers=headers,
         media_type="text/plain",
