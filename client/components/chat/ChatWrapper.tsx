@@ -108,11 +108,11 @@ export function ChatWrapper() {
           })
           addChat(newChat)
         } else if (chunk.content) {
-          setBackgroundProcessingMessage(prev => (prev ? '' : prev));
+          setBackgroundProcessingMessage(prev => (prev ? '' : prev))
           content += chunk.content
           updateLastMessage(content)
         } else if (chunk.error) {
-          setBackgroundProcessingMessage(prev => (prev ? '' : prev));
+          setBackgroundProcessingMessage(prev => (prev ? '' : prev))
           setErrorMessage(chunk.error)
           popMessage()
         } else if (chunk.background_processing) {
