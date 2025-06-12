@@ -120,11 +120,11 @@ export function ChatWrapper() {
           })
           addChat(newChat)
         } else if (chunk.content) {
-          setBackgroundProcessingMessage(prev => (prev ? '' : prev))
+          setBackgroundProcessingMessage('')
           content += chunk.content
           updateLastMessage(content)
         } else if (chunk.error) {
-          setBackgroundProcessingMessage(prev => (prev ? '' : prev))
+          setBackgroundProcessingMessage('')
           setErrorMessage(chunk.error)
           popMessage()
           posthog.capture(EVENTS.MESSAGE_ERROR, { error: chunk.error })
@@ -244,9 +244,7 @@ export function ChatWrapper() {
             )}
 
             {backgroundProcessingMessage && (
-              <ThemedView className="w-full">
-                <BackgroundProcessingMessage message={backgroundProcessingMessage} />
-              </ThemedView>
+              <BackgroundProcessingMessage message={backgroundProcessingMessage} />
             )}
           </ScrollView>
 
