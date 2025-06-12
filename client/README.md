@@ -74,10 +74,11 @@ npm run ios
 ```
 
 
-# Release crap
+# Testflight setup
 
 ```bash
 npx expo prebuild --clean
 eas build --profile preview --platform ios
+# Pushes the latest build to testflight
 eas submit --platform ios --latest
 ```
