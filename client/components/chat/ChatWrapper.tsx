@@ -112,6 +112,7 @@ export function ChatWrapper() {
           content += chunk.content
           updateLastMessage(content)
         } else if (chunk.error) {
+          setBackgroundProcessingMessage(prev => (prev ? '' : prev));
           setErrorMessage(chunk.error)
           popMessage()
         } else if (chunk.background_processing) {

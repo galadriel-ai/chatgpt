@@ -80,7 +80,9 @@ async def execute(
     )
 
     if images:
-        yield BackgroundChunk(background_processing="Processing images...")
+        yield BackgroundChunk(background_processing="Processing image(s)...")
+    if chat_input.think_model:
+        yield BackgroundChunk(background_processing="Thinking...")
 
     messages = await _get_existing_messages(chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
@@ -157,7 +159,9 @@ async def execute(
                                     tool_call=tool_call,
                                     attachment_ids=[],
                                 )
-                                yield chunk  # yield the tool call message to show user that we are searching
+                                yield BackgroundChunk(
+                                    background_processing="Searching the web..."
+                                )
                                 new_messages.append(tool_call_message)
                                 messages_to_llm.append(
                                     tool_call_message.to_llm_ready_dict()
