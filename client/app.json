@@ -15,9 +15,7 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": [
-              "${GOOGLE_IOS_URL_SCHEME}"
-            ]
+            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
           }
         ],
         "UIBackgroundModes": ["fetch", "remote-notification"]
@@ -30,9 +28,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.galadriel.chatgpt",
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",

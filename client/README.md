@@ -44,6 +44,7 @@ npm run ios
 
 To force metro bundler to update itself,
 for example when changing `.env` values
+
 ```
 npx expo start --clear
 # Run again
@@ -73,11 +74,12 @@ npx expo prebuild --clean
 npm run ios
 ```
 
-
 # Testflight setup
 
 ```bash
 npx expo prebuild --clean
+# Add signing account again in xcode
+xed ios
 eas build --profile preview --platform ios
 # Pushes the latest build to testflight
 eas submit --platform ios --latest

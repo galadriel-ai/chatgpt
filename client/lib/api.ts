@@ -1,7 +1,7 @@
-import { API_BASE_URL } from '@env'
+import { API_BASE_URL as ENV_API_BASE_URL } from '@env'
 import { Chat, ChatDetails } from '@/types/chat'
-import { Platform } from 'react-native'
-import * as FileSystem from 'expo-file-system'
+
+const API_BASE_URL = ENV_API_BASE_URL || 'https://chatgpt.galadriel.com'
 
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {

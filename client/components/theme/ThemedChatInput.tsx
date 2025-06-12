@@ -15,7 +15,11 @@ import { useChat } from '@/context/ChatContext'
 const MAX_FILES_COUNT_PER_MESSAGE = 5
 
 export type ThemedTextInputProps = TextInputProps & {
-  onMessage: (message: string, attachments?: AttachmentFile[], thinkModel?: boolean) => Promise<boolean>
+  onMessage: (
+    message: string,
+    attachments?: AttachmentFile[],
+    thinkModel?: boolean
+  ) => Promise<boolean>
   className?: string
 }
 
