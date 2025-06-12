@@ -43,7 +43,7 @@ export default function LoginScreen() {
           email: userInfo.user.email,
           googleId: userInfo.user.id,
         })
-        posthog.capture(EVENTS.LOGIN_COMPLETED, { 
+        posthog.capture(EVENTS.LOGIN_COMPLETED, {
           method: 'google',
           email: userInfo.user.email,
         })
@@ -78,7 +78,7 @@ export default function LoginScreen() {
         email: credential.email,
         appleId: credential.user,
       })
-      posthog.capture(EVENTS.LOGIN_COMPLETED, { 
+      posthog.capture(EVENTS.LOGIN_COMPLETED, {
         method: 'apple',
         email: credential.email,
       })

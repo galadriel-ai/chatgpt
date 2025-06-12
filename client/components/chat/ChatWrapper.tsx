@@ -159,7 +159,9 @@ export function ChatWrapper() {
       return true
     } catch (err: unknown) {
       console.error('Streaming error:', err)
-      posthog.capture(EVENTS.MESSAGE_ERROR, { error: err instanceof Error ? err.message : String(err) })
+      posthog.capture(EVENTS.MESSAGE_ERROR, {
+        error: err instanceof Error ? err.message : String(err),
+      })
       return false
     }
   }
