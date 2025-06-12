@@ -7,10 +7,13 @@ import * as AppleAuthentication from 'expo-apple-authentication'
 import { useRouter } from 'expo-router'
 import { useEffect } from 'react'
 import { Button, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { usePostHog } from 'posthog-react-native'
+import { EVENTS } from '@/lib/analytics/posthog'
 
 export default function LoginScreen() {
   const { login } = useAuth()
   const router = useRouter()
+  const posthog = usePostHog()
 
   useEffect(() => {
     // Configure Google Sign In when the component mounts
@@ -22,12 +25,15 @@ export default function LoginScreen() {
   }, [])
 
   const handleLogin = () => {
+    posthog.capture(EVENTS.LOGIN_STARTED, { method: 'guest' })
     login({ name: 'User' })
+    posthog.capture(EVENTS.LOGIN_COMPLETED, { method: 'guest' })
     router.replace('/(main)')
   }
 
   const handleGoogleLogin = async () => {
     try {
+      posthog.capture(EVENTS.LOGIN_STARTED, { method: 'google' })
       await GoogleSignin.hasPlayServices()
       const userInfo = await GoogleSignin.signIn()
 
@@ -36,6 +42,10 @@ export default function LoginScreen() {
           name: userInfo.user.name || 'Google User',
           email: userInfo.user.email,
           googleId: userInfo.user.id,
+        })
+        posthog.capture(EVENTS.LOGIN_COMPLETED, { 
+          method: 'google',
+          email: userInfo.user.email,
         })
         router.replace('/(main)')
       }
@@ -54,6 +64,7 @@ export default function LoginScreen() {
 
   const handleAppleLogin = async () => {
     try {
+      posthog.capture(EVENTS.LOGIN_STARTED, { method: 'apple' })
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -66,6 +77,10 @@ export default function LoginScreen() {
         name: credential.fullName?.givenName || 'Apple User',
         email: credential.email,
         appleId: credential.user,
+      })
+      posthog.capture(EVENTS.LOGIN_COMPLETED, { 
+        method: 'apple',
+        email: credential.email,
       })
       router.replace('/(main)')
     } catch (e: any) {

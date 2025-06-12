@@ -9,13 +9,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Chat, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
-
 import { useRouter } from 'expo-router'
+import { usePostHog } from 'posthog-react-native'
+import { EVENTS } from '@/lib/analytics/posthog'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
   const router = useRouter()
   const scrollViewRef = useRef<ScrollView>(null)
+  const posthog = usePostHog()
 
   const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
@@ -41,6 +43,7 @@ export function ChatWrapper() {
   }
 
   const onNewChat = () => {
+    posthog.capture(EVENTS.NEW_CHAT_STARTED)
     setSelectedChat(null)
     setActiveChat(null)
     router.push('/')
@@ -79,6 +82,12 @@ export function ChatWrapper() {
     addMessage(inputMessage)
     scrollToBottom()
 
+    posthog.capture(EVENTS.MESSAGE_SENT, {
+      hasAttachments: !!attachmentIds?.length,
+      attachmentCount: attachmentIds?.length || 0,
+      thinkModel: thinkModel || false,
+    })
+
     try {
       const assistantMessage: Message = {
         id: `${Date.now()}`,
@@ -108,6 +117,7 @@ export function ChatWrapper() {
         } else if (chunk.error) {
           setErrorMessage(chunk.error)
           popMessage()
+          posthog.capture(EVENTS.MESSAGE_ERROR, { error: chunk.error })
         }
         // Whatever other chunks we get
       }
@@ -122,15 +132,22 @@ export function ChatWrapper() {
         onChunk,
         () => {
           console.log('Stream finished')
+          posthog.capture(EVENTS.MESSAGE_RESPONSE_COMPLETED, {
+            hasAttachments: !!attachmentIds?.length,
+            attachmentCount: attachmentIds?.length || 0,
+            thinkModel: thinkModel || false,
+          })
         },
-        err => {
+        (err: Error) => {
           console.error('Streaming error:', err)
+          posthog.capture(EVENTS.MESSAGE_ERROR, { error: err.message })
         }
       )
 
       return true
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Streaming error:', err)
+      posthog.capture(EVENTS.MESSAGE_ERROR, { error: err instanceof Error ? err.message : String(err) })
       return false
     }
   }
