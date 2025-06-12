@@ -1,7 +1,7 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react'
-import { Chat, ChatDetails } from '@/types/chat'
-import { useAuth } from '@/context/AuthContext'
-import { api } from '@/lib/api'
+import {createContext, ReactNode, useContext, useEffect, useState} from 'react'
+import {Chat, ChatConfiguration, ChatDetails} from '@/types/chat'
+import {useAuth} from '@/context/AuthContext'
+import {api} from '@/lib/api'
 
 type ChatProviderProps = {
   children: ReactNode
@@ -14,29 +14,39 @@ type ChatContextType = {
   activeChat: ChatDetails | null
   setActiveChat: React.Dispatch<React.SetStateAction<ChatDetails | null>>
   addChat: (chat: Chat) => void
-  thinkModel: boolean
-  setThinkModel: React.Dispatch<React.SetStateAction<boolean>>
+  chatConfiguration: ChatConfiguration | null
+  setChatConfiguration: React.Dispatch<React.SetStateAction<ChatConfiguration | null>>
 }
 
 const ChatContext = createContext<ChatContextType | null>(null)
 
-export const ChatProvider = ({ children }: ChatProviderProps) => {
-  const { user } = useAuth()
+export const ChatProvider = ({children}: ChatProviderProps) => {
+  const {user} = useAuth()
 
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
   const [activeChat, setActiveChat] = useState<ChatDetails | null>(null)
-  const [thinkModel, setThinkModel] = useState<boolean>(false)
+  // TODO: initial state should come from device memory, similar to localstorage?
+  const [chatConfiguration, setChatConfiguration] = useState<ChatConfiguration | null>(null)
 
   useEffect(() => {
     if (!user) return
-
     getChats()
   }, [user])
 
   const getChats = async (): Promise<void> => {
-    const newChats = await api.getChats()
-    setChats(newChats)
+    const userInfo = await api.getUserInfo()
+    setChats(userInfo.chats)
+    if (userInfo.chatConfiguration) setChatConfiguration(userInfo.chatConfiguration)
+    else {
+      setChatConfiguration({
+        id: '',
+        userName: '',
+        aiName: '',
+        description: '',
+        role: '',
+      })
+    }
   }
 
   const addChat = (chat: Chat) => {
@@ -52,8 +62,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         activeChat,
         setActiveChat,
         addChat,
-        thinkModel,
-        setThinkModel,
+        chatConfiguration,
+        setChatConfiguration,
       }}
     >
       {children}

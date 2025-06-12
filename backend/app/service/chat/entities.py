@@ -31,10 +31,6 @@ class ChatMessage(BaseModel):
     attachment_ids: List[str]
 
 
-class ChatsResponse(BaseModel):
-    chats: List[UserChat]
-
-
 class ChatDetailsResponse(UserChat):
     messages: List[ChatMessage]
 
@@ -52,3 +48,8 @@ class UserChatConfiguration(BaseModel):
     ai_name: str
     description: str
     role: str
+
+
+class ChatsResponse(BaseModel):
+    chats: List[UserChat]
+    chat_configuration: Optional[UserChatConfiguration]

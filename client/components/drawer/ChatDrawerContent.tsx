@@ -7,10 +7,15 @@ import {Chat} from '@/types/chat'
 import {Colors} from '@/constants/Colors'
 import {ThemedView} from '@/components/theme/ThemedView'
 import {RoleUserIcon} from '@/components/icons/Icons'
+import {useState} from "react";
+import {ChatConfigurationModal} from "@/components/configuration/ChatConfigurationModal";
+import {ThemedButton} from "@/components/theme/ThemedButton";
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const {chats, selectedChat, setSelectedChat, setActiveChat} = useChat()
   const router = useRouter()
+
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
 
   const onSelectChat = async (chat: Chat) => {
     setSelectedChat(chat)
@@ -20,22 +25,20 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
 
   const onConfigureChats = async () => {
     console.log('onConfigureChats')
+    setIsModalVisible(true)
   }
 
   return (
     <View className="flex-1">
+      <ChatConfigurationModal isVisible={isModalVisible} setIsVisible={setIsModalVisible}/>
       <DrawerContentScrollView
         {...props}
         contentContainerStyle={{paddingHorizontal: 16, paddingTop: 46}}
       >
         <View className="p-4 flex flex-row justify-between">
-          <Pressable onPress={onConfigureChats}>
-            <ThemedText>
-              Configure chats
-            </ThemedText>
-          </Pressable>
+          <ThemedButton title={'Configure chats'} onPress={onConfigureChats}/>
           <ThemedText>
-            ASD
+            Toggle
           </ThemedText>
         </View>
         <View className="p-4">

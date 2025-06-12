@@ -15,3 +15,17 @@ export interface Chat {
 export interface ChatDetails extends Chat {
   messages: Message[]
 }
+
+export interface ChatConfiguration {
+  id: string
+  userName: string
+  aiName: string
+  description: string
+  role: string
+}
+
+
+export interface UserInfo {
+  chats: Chat[]
+  chatConfiguration: ChatConfiguration | null
+}

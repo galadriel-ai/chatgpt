@@ -163,6 +163,12 @@ class ChatConfiguration(ChatConfigurationInput):
     id: UUID
 
 
+@dataclass
+class GetChatsOutput:
+    chats: List[Chat]
+    configuration: Optional[ChatConfiguration]
+
+
 class Model(Enum):
     DEFAULT_MODEL = SUPPORTED_MODELS["default"]
     THINK_MODEL = SUPPORTED_MODELS["think"]

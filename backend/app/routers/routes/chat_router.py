@@ -62,10 +62,12 @@ async def chat(
 async def get_chats(
     user: User = Depends(authentication.validate_session_token),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(dependencies.get_chat_configuration_repository),
 ):
     return await chats_service.execute(
         user,
         chat_repository,
+        configuration_repository,
     )
 
 
