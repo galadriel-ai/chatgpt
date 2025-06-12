@@ -108,12 +108,9 @@ export function ChatWrapper() {
           })
           addChat(newChat)
         } else if (chunk.content) {
+          setBackgroundProcessingMessage(prev => (prev ? '' : prev));
           content += chunk.content
           updateLastMessage(content)
-          // Clear background processing message when content arrives
-          if (backgroundProcessingMessage) {
-            setBackgroundProcessingMessage('')
-          }
         } else if (chunk.error) {
           setErrorMessage(chunk.error)
           popMessage()
@@ -209,6 +206,7 @@ export function ChatWrapper() {
             contentContainerStyle={{ padding: 16 }}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => scrollToBottom(false)}
           >
             {messages.map((m, i) => (
               <ThemedView key={`msg-${i}`} className="w-full">
@@ -244,6 +242,10 @@ export function ChatWrapper() {
 function ChatMessage({ message }: { message: Message }) {
   if (message.role === 'system') return null
 
+  if (message.role === 'assistant' && !message.content.trim()) {
+    return null
+  }
+
   const role = message.role === 'user' ? 'You' : 'Your Sidekik'
 
   return (
@@ -254,14 +256,15 @@ function ChatMessage({ message }: { message: Message }) {
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
         <ThemedText>{message.content}</ThemedText>
-        {message.attachmentIds && message.attachmentIds.length > 0 && (
+
+        {message.attachmentIds?.length ? (
           <ThemedView className="mt-2">
             <ThemedText className="text-sm opacity-70">
               📎 {message.attachmentIds.length} attachment
               {message.attachmentIds.length > 1 ? 's' : ''}
             </ThemedText>
           </ThemedView>
-        )}
+        ) : null}
       </ThemedView>
     </ThemedView>
   )
