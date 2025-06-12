@@ -81,6 +81,7 @@ export interface ChatChunk {
   chat_id?: string
   content?: string
   error?: string
+  background_processing?: string
 }
 
 const streamChatResponse = (

@@ -12,6 +12,7 @@ from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
+from app.domain.chat.entities import BackgroundChunk
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
@@ -77,6 +78,9 @@ async def execute(
     yield NewChatOutput(
         chat_id=chat.id,
     )
+
+    if images:
+        yield BackgroundChunk(background_processing="Processing images...")
 
     messages = await _get_existing_messages(chat, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages)
