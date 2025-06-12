@@ -91,7 +91,6 @@ const streamChatResponse = (
 ) => {
   const xhr = new XMLHttpRequest()
   let lastLength = 0
-
   xhr.open('POST', `${API_BASE_URL}/chat`, true)
   xhr.setRequestHeader('Content-Type', 'application/json')
 

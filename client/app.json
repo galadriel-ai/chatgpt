@@ -15,9 +15,12 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
+            "CFBundleURLSchemes": [
+              "${GOOGLE_IOS_URL_SCHEME}"
+            ]
           }
-        ]
+        ],
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       }
     },
     "android": {
@@ -26,7 +29,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.galadriel.chatgpt"
+      "package": "com.galadriel.chatgpt",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -62,6 +68,12 @@
     "experiments": {
       "typedRoutes": true,
       "baseUrl": "/"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "65a4b318-14ce-4a00-ad56-bec3e27aaa0b"
+      }
     }
   }
 }

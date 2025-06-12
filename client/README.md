@@ -42,6 +42,14 @@ npm run prebuild
 npm run ios
 ```
 
+To force metro bundler to update itself,
+for example when changing `.env` values
+```
+npx expo start --clear
+# Run again
+npm run ios
+```
+
 Run this command and you will see the app is loaded on the iPhone emulator.
 
 5. Code style/linting
@@ -63,4 +71,14 @@ npm run ios
 # If doesnt work: (resets signer in xcode)
 npx expo prebuild --clean
 npm run ios
+```
+
+
+# Testflight setup
+
+```bash
+npx expo prebuild --clean
+eas build --profile preview --platform ios
+# Pushes the latest build to testflight
+eas submit --platform ios --latest
 ```
