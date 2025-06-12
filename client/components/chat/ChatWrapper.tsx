@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Animated } from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
@@ -22,6 +22,7 @@ export function ChatWrapper() {
   const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
+  const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
 
   useEffect(() => {
     if (selectedChat && !activeChat) {
@@ -119,12 +120,16 @@ export function ChatWrapper() {
           })
           addChat(newChat)
         } else if (chunk.content) {
+          setBackgroundProcessingMessage('')
           content += chunk.content
           updateLastMessage(content)
         } else if (chunk.error) {
+          setBackgroundProcessingMessage('')
           setErrorMessage(chunk.error)
           popMessage()
           posthog.capture(EVENTS.MESSAGE_ERROR, { error: chunk.error })
+        } else if (chunk.background_processing) {
+          setBackgroundProcessingMessage(chunk.background_processing)
         }
         // Whatever other chunks we get
       }
@@ -154,7 +159,9 @@ export function ChatWrapper() {
       return true
     } catch (err: unknown) {
       console.error('Streaming error:', err)
-      posthog.capture(EVENTS.MESSAGE_ERROR, { error: err instanceof Error ? err.message : String(err) })
+      posthog.capture(EVENTS.MESSAGE_ERROR, {
+        error: err instanceof Error ? err.message : String(err),
+      })
       return false
     }
   }
@@ -222,6 +229,7 @@ export function ChatWrapper() {
             contentContainerStyle={{ padding: 16 }}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
+            onContentSizeChange={() => scrollToBottom(false)}
           >
             {messages.map((m, i) => (
               <ThemedView key={`msg-${i}`} className="w-full">
@@ -233,6 +241,10 @@ export function ChatWrapper() {
               <ThemedView className="w-full">
                 <ErrorMessage error={errorMessage} />
               </ThemedView>
+            )}
+
+            {backgroundProcessingMessage && (
+              <BackgroundProcessingMessage message={backgroundProcessingMessage} />
             )}
           </ScrollView>
 
@@ -251,6 +263,10 @@ export function ChatWrapper() {
 function ChatMessage({ message }: { message: Message }) {
   if (message.role === 'system') return null
 
+  if (message.role === 'assistant' && !message.content.trim()) {
+    return null
+  }
+
   const role = message.role === 'user' ? 'You' : 'Your Sidekik'
 
   return (
@@ -261,14 +277,15 @@ function ChatMessage({ message }: { message: Message }) {
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
         <ThemedText>{message.content}</ThemedText>
-        {message.attachmentIds && message.attachmentIds.length > 0 && (
+
+        {message.attachmentIds?.length ? (
           <ThemedView className="mt-2">
             <ThemedText className="text-sm opacity-70">
               📎 {message.attachmentIds.length} attachment
               {message.attachmentIds.length > 1 ? 's' : ''}
             </ThemedText>
           </ThemedView>
-        )}
+        ) : null}
       </ThemedView>
     </ThemedView>
   )
@@ -285,6 +302,60 @@ function ErrorMessage({ error }: { error: string }) {
         <ThemedText lightColor={'#fc161a'} darkColor={'#fc161a'}>
           Error: {error}
         </ThemedText>
+      </ThemedView>
+    </ThemedView>
+  )
+}
+
+function BackgroundProcessingMessage({ message }: { message: string }) {
+  const shimmerValue = useRef(new Animated.Value(0)).current
+
+  useEffect(() => {
+    const shimmerAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerValue, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(shimmerValue, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ])
+    )
+    shimmerAnimation.start()
+    return () => shimmerAnimation.stop()
+  }, [shimmerValue])
+
+  const shimmerTranslateX = shimmerValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-200, 200],
+  })
+
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        <RoleAssistantIcon />
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">Your Sidekik</ThemedText>
+        <ThemedView style={{ position: 'relative', overflow: 'hidden' }}>
+          <ThemedText style={{ opacity: 0.7 }}>{message}</ThemedText>
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              transform: [{ translateX: shimmerTranslateX }],
+              width: 100,
+            }}
+          />
+        </ThemedView>
       </ThemedView>
     </ThemedView>
   )

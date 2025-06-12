@@ -46,6 +46,16 @@ class ErrorChunk(ChatOutputChunk):
 
 
 @dataclass
+class BackgroundChunk(ChatOutputChunk):
+    background_processing: str
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "background_processing": self.background_processing,
+        }
+
+
+@dataclass
 class NewChatOutput(ChatOutputChunk):
     chat_id: UUID
 

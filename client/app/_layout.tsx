@@ -73,7 +73,7 @@ function AppContent() {
 
 export default function RootLayout() {
   return (
-    <PostHogProvider 
+    <PostHogProvider
       apiKey={POSTHOG_API_KEY}
       options={{
         host: POSTHOG_HOST,
