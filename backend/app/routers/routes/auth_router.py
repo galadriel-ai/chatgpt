@@ -5,7 +5,8 @@ from app.repository.user_repository import UserRepository
 from app.service.auth import apple_auth_service
 from app.service.auth import google_auth_service
 from app.service.auth import user_info_service
-from app.service.auth.authentication import get_current_user
+from app.service.auth.authentication import validate_session_token
+
 from app.service.auth.entities import (
     AppleAuthRequest,
     AuthResponse,
@@ -48,15 +49,16 @@ async def apple_auth(
 
 @router.post("/logout", summary="Logout User")
 async def logout(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(validate_session_token),
 ):
     """Logout user (client should discard tokens)"""
+    # TODO: Implement logout logic
     return {"message": "Logged out successfully"}
 
 
 @router.get("/me", response_model=UserInfoResponse, summary="Get Current User")
 async def get_me(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(validate_session_token),
 ):
     """Get current authenticated user information"""
     return user_info_service.execute(current_user)
