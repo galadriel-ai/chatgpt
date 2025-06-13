@@ -33,7 +33,6 @@ class OAuthService:
             id_info = id_token.verify_oauth2_token(
                 id_token_str, google_requests.Request(), self.google_client_id
             )
-            logger.debug(f"Google ID token verified: {id_info}")
 
             # Check if the Google ID matches
             if id_info.get("sub") != expected_google_id:
@@ -101,7 +100,6 @@ class OAuthService:
             # Get the token header to find the key ID
             unverified_header = jwt.get_unverified_header(identity_token)
             kid = unverified_header.get("kid")
-            logger.debug(f"Apple token header: {unverified_header}")
 
             if not kid:
                 raise HTTPException(
@@ -111,7 +109,6 @@ class OAuthService:
 
             # Get the appropriate public key
             public_key_info = self._get_apple_public_key(kid)
-            logger.debug(f"Apple public key info: {public_key_info}")
 
             # Verify and decode the token
             token_claims = jwt.decode(
@@ -121,7 +118,6 @@ class OAuthService:
                 audience=self.apple_client_id,
                 options={"verify_exp": True},
             )
-            logger.debug(f"Apple token claims: {token_claims}")
 
             # Check if the Apple ID matches
             if token_claims.get("sub") != expected_apple_id:

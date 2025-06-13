@@ -13,7 +13,7 @@ from jose import JWTError, jwt
 # JWT configuration
 SECRET_KEY = os.getenv("JWT_SECRET", "your-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_DAYS = 30
 
 
 class JwtRepository:
@@ -22,11 +22,11 @@ class JwtRepository:
     def __init__(self):
         self.secret_key = SECRET_KEY
         self.algorithm = ALGORITHM
-        self.access_token_expire_minutes = ACCESS_TOKEN_EXPIRE_MINUTES
+        self.access_token_expire_days = ACCESS_TOKEN_EXPIRE_DAYS
 
     def create_access_token(self, user: User) -> str:
         """Serialize user data into a JWT access token"""
-        expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
+        expire = datetime.utcnow() + timedelta(days=self.access_token_expire_days)
         payload = {
             "user_id": str(user.uid),
             "email": user.email,

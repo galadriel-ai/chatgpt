@@ -187,12 +187,3 @@ class UserRepository:
             if row:
                 return self._row_to_user(row)
         return None
-
-    # Legacy methods for backward compatibility - these can be removed later
-    async def get_by_google_id(self, google_id: str) -> Optional[User]:
-        """Legacy method - use get_by_provider('google', google_id) instead"""
-        return await self.get_by_provider("google", google_id)
-
-    async def get_by_apple_id(self, apple_id: str) -> Optional[User]:
-        """Legacy method - use get_by_provider('apple', apple_id) instead"""
-        return await self.get_by_provider("apple", apple_id)

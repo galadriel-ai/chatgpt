@@ -15,8 +15,6 @@ async def execute(
 ) -> AuthResponse:
     """Execute Apple authentication process"""
 
-    logger.debug(f"Apple authentication request: {auth_request}")
-
     # Verify Apple token and get unified user info
     oauth_user_info = await oauth_service.verify_apple_token(
         auth_request.identity_token, auth_request.apple_id

@@ -15,8 +15,6 @@ async def execute(
 ) -> AuthResponse:
     """Execute Google authentication process"""
 
-    logger.debug(f"Google authentication request: {auth_request}")
-
     # Verify Google token and get unified user info
     oauth_user_info = await oauth_service.verify_google_token(
         auth_request.id_token, auth_request.google_id, auth_request.email

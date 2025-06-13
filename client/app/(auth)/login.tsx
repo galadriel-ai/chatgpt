@@ -76,8 +76,6 @@ export default function LoginScreen() {
         if (authResponse) {
           // Store tokens securely
           await storeTokens(authResponse.access_token, authResponse.refresh_token)
-          const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
-          console.log('Tokens stored securely with access token:', accessToken)
 
           // Store tokens and user data in context
           login({

@@ -17,11 +17,10 @@ security = HTTPBearer()
 logger = api_logger.get()
 
 
-async def get_current_user(
+async def validate_session_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     user_repository: UserRepository = Depends(dependencies.get_user_repository),
 ) -> User:
-    """Get current authenticated user from JWT token"""
     try:
         # Verify the access token
         token_payload = verify_access_token(credentials.credentials)
@@ -29,9 +28,7 @@ async def get_current_user(
         # Get user from database
         user = await user_repository.get_by_id(UUID(token_payload.user_id))
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
         return user
 
@@ -41,33 +38,6 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-        )
-
-
-async def validate_session_token(
-    session_jwt: str = Header(None),
-    user_repository: UserRepository = Depends(dependencies.get_user_repository),
-) -> User:
-    try:
-        logger.info(f"Validating session token: {session_jwt}")
-        if not session_jwt:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials",
-            )
-
-        # Verify the access token
-        token_payload = verify_access_token(session_jwt)
-
-        # Get user from database
-        user = await user_repository.get_by_id(UUID(token_payload.user_id))
-        return user
-
-    except Exception:
-        logger.error("Invalid authentication credentials")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
