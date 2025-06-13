@@ -203,6 +203,16 @@ class Model(Enum):
     def __str__(self) -> str:
         return self.value
 
+    @property
+    def timeout(self) -> int:
+        if self == Model.DEFAULT_MODEL:
+            return 20
+        elif self == Model.THINK_MODEL:
+            return 30
+        elif self == Model.VLM_MODEL:
+            return 60
+        return 20
+
 
 @dataclass
 class ModelConfig:

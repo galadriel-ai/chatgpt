@@ -33,6 +33,7 @@ from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
 from settings import SUPPORTED_MODELS
+from app.exceptions import LlmError
 
 logger = api_logger.get()
 
@@ -106,11 +107,11 @@ async def execute(
     messages_to_llm = [m.to_llm_ready_dict() for m in llm_input_messages[:-1]]
     messages_to_llm.append(llm_input_messages[-1].to_llm_ready_dict_with_images(images))
 
-    while True:
-        final_tool_calls = {}
-        current_tool_call_id = None
+    try:
+        while True:
+            final_tool_calls = {}
+            current_tool_call_id = None
 
-        try:
             async for chunk in llm_repository.completion(
                 messages_to_llm, model, chat_input.is_search_enabled
             ):
@@ -197,20 +198,24 @@ async def execute(
                                     )
                                 except Exception as e:
                                     logger.error(f"Search failed: {str(e)}")
-                                    yield ErrorChunk(error=str(e))
+                                    yield ErrorChunk(
+                                        error="Failed to search the web. Please try again."
+                                    )
                                     break
                         except json.JSONDecodeError:
                             continue
-        except Exception as e:
-            logger.error(f"LLM completion failed: {str(e)}")
-            yield ErrorChunk(error=str(e))
-            break
 
-        if not final_tool_calls:
-            break
+            if not final_tool_calls:
+                break
 
-    new_messages.append(llm_message)
-    await chat_repository.insert_messages(new_messages)
+        new_messages.append(llm_message)
+        await chat_repository.insert_messages(new_messages)
+    except LlmError as e:
+        yield ErrorChunk(error=e.message)
+    except Exception:
+        yield ErrorChunk(
+            error="An unexpected error occurred. Please try again in a few moments."
+        )
 
 
 async def _get_new_messages(
