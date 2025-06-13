@@ -7,11 +7,21 @@ from app import api_logger
 from openai import AsyncOpenAI, AsyncStream
 from app.domain.chat.entities import ChunkOutput, ToolOutput, ModelSpec
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
+from app.errors import (
+    LlmTimeoutError,
+    LlmAuthenticationError,
+    LlmOrganizationError,
+    LlmRegionError,
+    LlmRateLimitError,
+    LlmQuotaError,
+    LlmServerError,
+    LlmOverloadError,
+    LlmSlowDownError,
+    LlmModelNotFoundError,
+)
 import serpapi
 
 logger = api_logger.get()
-
-TIMEOUT = 10
 
 
 class LlmRepository:
@@ -47,7 +57,7 @@ class LlmRepository:
                     tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
                     stream=True,
                 ),
-                timeout=TIMEOUT,
+                timeout=model.id.timeout,
             )
 
             async for chunk in stream:
@@ -64,10 +74,41 @@ class LlmRepository:
                 if choice.delta.content is not None:
                     yield ChunkOutput(content=choice.delta.content)
         except asyncio.TimeoutError:
-            logger.error(f"LLM request timed out after {TIMEOUT} seconds")
-            raise (
-                asyncio.TimeoutError(f"LLM request timed out after {TIMEOUT} seconds")
-            )
+            logger.error(f"LLM request timed out after {model.id.timeout} seconds")
+            raise LlmTimeoutError()
         except Exception as e:
-            logger.error(f"LLM request failed: {str(e)}")
-            raise (Exception(f"{str(e)}"))
+            error_message = str(e).lower()
+
+            if "401" in str(e):
+                if "organization" in error_message:
+                    logger.error(f"Organization error: {str(e)}")
+                    raise LlmOrganizationError()
+                else:
+                    logger.error(f"Authentication error: {str(e)}")
+                    raise LlmAuthenticationError()
+            elif "403" in str(e):
+                logger.error(f"Region not supported: {str(e)}")
+                raise LlmRegionError()
+            elif "404" in str(e):
+                logger.error(f"Model not found: {str(e)}")
+                raise LlmModelNotFoundError()
+            elif "429" in str(e):
+                if "quota" in error_message:
+                    logger.error(f"Quota exceeded: {str(e)}")
+                    raise LlmQuotaError()
+                else:
+                    logger.error(f"Rate limit exceeded: {str(e)}")
+                    raise LlmRateLimitError()
+            elif "500" in str(e):
+                logger.error(f"Server error: {str(e)}")
+                raise LlmServerError()
+            elif "503" in str(e):
+                if "slow down" in error_message:
+                    logger.error(f"Request rate too high: {str(e)}")
+                    raise LlmSlowDownError()
+                else:
+                    logger.error(f"Server overloaded: {str(e)}")
+                    raise LlmOverloadError()
+            else:
+                logger.error(f"LLM request failed: {str(e)}")
+                raise LlmServerError()
