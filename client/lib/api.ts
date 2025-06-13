@@ -3,6 +3,14 @@ import { Chat, ChatConfiguration, ChatDetails, UserInfo } from '@/types/chat'
 
 const API_BASE_URL = ENV_API_BASE_URL || 'https://chatgpt.galadriel.com'
 
+interface ApiChatConfiguration {
+  id: string
+  user_name: string
+  ai_name: string
+  description: string
+  role: string
+}
+
 async function getUserInfo(): Promise<UserInfo> {
   interface ApiResponse {
     chats: Chat[]
@@ -62,6 +70,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
       content: string
       attachment_ids: string[]
     }[]
+    configuration: ApiChatConfiguration | null
   }
 
   try {
@@ -87,6 +96,15 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
           attachmentIds: m.attachment_ids,
         }
       }),
+      configuration: responseJson.configuration
+        ? {
+            id: responseJson.configuration.id,
+            userName: responseJson.configuration.user_name,
+            aiName: responseJson.configuration.ai_name,
+            description: responseJson.configuration.description,
+            role: responseJson.configuration.role,
+          }
+        : null,
     }
   } catch {
     return null
@@ -222,13 +240,7 @@ async function uploadFile(
 const createChatConfiguration = async (
   configuration: ChatConfiguration
 ): Promise<ChatConfiguration | null> => {
-  interface ApiResponse {
-    id: string
-    user_name: string
-    ai_name: string
-    description: string
-    role: string
-  }
+  type ApiResponse = ApiChatConfiguration
 
   try {
     const response = await fetch(`${API_BASE_URL}/configure/chat`, {
