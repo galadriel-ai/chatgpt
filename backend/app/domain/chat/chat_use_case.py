@@ -30,15 +30,7 @@ from app.repository.llm_repository import LlmRepository
 from app.repository.file_repository import FileRepository
 from app.service import error_responses
 from settings import SUPPORTED_MODELS
-from app.errors import (
-    LlmTimeoutError,
-    LlmRegionError,
-    LlmRateLimitError,
-    LlmQuotaError,
-    LlmOverloadError,
-    LlmSlowDownError,
-    LlmInvalidModelError,
-)
+from app.exceptions import LlmError
 
 logger = api_logger.get()
 
@@ -214,28 +206,8 @@ async def execute(
 
         new_messages.append(llm_message)
         await chat_repository.insert_messages(new_messages)
-    except LlmTimeoutError:
-        yield ErrorChunk(
-            error="The request took too long to complete. Please try again in a few moments."
-        )
-    except LlmRegionError:
-        yield ErrorChunk(
-            error="Your region is not supported. Please check our supported regions."
-        )
-    except LlmRateLimitError:
-        yield ErrorChunk(error="Too many requests. Please try again in a few moments.")
-    except LlmQuotaError:
-        yield ErrorChunk(error="You have exceeded your quota. Please check your plan.")
-    except LlmOverloadError:
-        yield ErrorChunk(
-            error="The service is currently overloaded. Please try again in a few moments."
-        )
-    except LlmSlowDownError:
-        yield ErrorChunk(error="Please reduce your request rate and try again.")
-    except LlmInvalidModelError:
-        yield ErrorChunk(
-            error="The model is not available. Please try again with a different model."
-        )
+    except LlmError as e:
+        yield ErrorChunk(error=e.message)
     except Exception:
         yield ErrorChunk(
             error="An unexpected error occurred. Please try again in a few moments."
