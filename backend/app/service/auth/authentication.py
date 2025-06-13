@@ -7,7 +7,7 @@ from app.domain.users.entities import User, JwtTokenError
 from app.repository.jwt_repository import verify_access_token
 from app.repository.user_repository import UserRepository
 
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, status
 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -28,7 +28,9 @@ async def validate_session_token(
         # Get user from database
         user = await user_repository.get_by_id(UUID(token_payload.user_id))
         if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+            )
 
         return user
 

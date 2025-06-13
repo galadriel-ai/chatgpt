@@ -36,12 +36,14 @@ async function getUserInfo(): Promise<UserInfo> {
   }
 
   try {
+    const accessToken = await getAccessToken()
+    if (!accessToken) return emptyResponse
+
     const response = await fetch(`${API_BASE_URL}/`, {
       method: 'GET',
-      // TODO: how does user auth work?
-      // credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
     })
     if (!response.ok) return emptyResponse
@@ -320,7 +322,6 @@ async function getChats(): Promise<Chat[]> {
   } catch (error) {
     console.error('Error fetching chats:', error)
     return []
-
   }
 }
 
@@ -542,12 +543,14 @@ const createChatConfiguration = async (
   type ApiResponse = ApiChatConfiguration
 
   try {
+    const accessToken = await getAccessToken()
+    if (!accessToken) return null
+
     const response = await fetch(`${API_BASE_URL}/configure/chat`, {
       method: 'POST',
-      // TODO: how does user auth work?
-      // credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         user_name: configuration.userName,
