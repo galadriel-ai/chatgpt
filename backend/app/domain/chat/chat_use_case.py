@@ -102,11 +102,11 @@ async def execute(
     messages_to_llm = [m.to_llm_ready_dict() for m in llm_input_messages[:-1]]
     messages_to_llm.append(llm_input_messages[-1].to_llm_ready_dict_with_images(images))
 
-    while True:
-        final_tool_calls = {}
-        current_tool_call_id = None
+    try:
+        while True:
+            final_tool_calls = {}
+            current_tool_call_id = None
 
-        try:
             async for chunk in llm_repository.completion(
                 messages_to_llm, model, chat_input.is_search_enabled
             ):
@@ -197,16 +197,15 @@ async def execute(
                                     break
                         except json.JSONDecodeError:
                             continue
-        except Exception as e:
-            logger.error(f"LLM completion failed: {str(e)}")
-            yield ErrorChunk(error=str(e))
-            break
 
-        if not final_tool_calls:
-            break
+            if not final_tool_calls:
+                break
 
-    new_messages.append(llm_message)
-    await chat_repository.insert_messages(new_messages)
+        new_messages.append(llm_message)
+        await chat_repository.insert_messages(new_messages)
+    except Exception as e:
+        logger.error(f"LLM completion failed: {str(e)}")
+        yield ErrorChunk(error=f"LLM completion failed: {str(e)}")
 
 
 async def _get_new_messages(
