@@ -9,6 +9,9 @@ from pydantic import Field
 
 class ChatRequest(BaseModel):
     chat_id: Optional[str] = Field(description="chat id", default=None)
+    configuration_id: Optional[str] = Field(
+        description="chat configuration id", default=None
+    )
     think_model: Optional[bool] = Field(description="think model", default=False)
     is_search_enabled: Optional[bool] = Field(
         description="enable search tool", default=True
@@ -31,9 +34,25 @@ class ChatMessage(BaseModel):
     attachment_ids: List[str]
 
 
-class ChatsResponse(BaseModel):
-    chats: List[UserChat]
-
-
 class ChatDetailsResponse(UserChat):
     messages: List[ChatMessage]
+
+
+class ChatConfigurationRequest(BaseModel):
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+class UserChatConfiguration(BaseModel):
+    id: str
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+class ChatsResponse(BaseModel):
+    chats: List[UserChat]
+    chat_configuration: Optional[UserChatConfiguration]

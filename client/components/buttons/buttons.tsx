@@ -1,8 +1,8 @@
-import { Pressable, View, Text } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { useThemeColor } from '@/hooks/useThemeColor'
 
 export function ThinkButton({ isActive, onClick }: { isActive: boolean; onClick: () => void }) {
-  const textColor = useThemeColor({}, 'text')
+  const textColor = useThemeColor({}, 'textSecondary')
   const backgroundColor = isActive ? '#4A90E2' : 'transparent'
 
   return (

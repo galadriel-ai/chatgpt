@@ -16,12 +16,14 @@ from app.repository.utils import utcnow
 SQL_INSERT = """
 INSERT INTO chat (
     id,
+    chat_configuration_id,
     user_profile_id,
     title,
     created_at,
     last_updated_at
 ) VALUES (
     :id,
+    :chat_configuration_id,
     :user_id,
     :title,
     :created_at,
@@ -32,6 +34,7 @@ INSERT INTO chat (
 SQL_GET = """
 SELECT 
     id,
+    chat_configuration_id,
     user_profile_id,
     title,
     created_at
@@ -42,6 +45,7 @@ WHERE id = :id;
 SQL_GET_BY_USER = """
 SELECT 
     id,
+    chat_configuration_id,
     user_profile_id,
     title,
     created_at
@@ -116,16 +120,20 @@ class ChatRepository:
         self._session_provider = session_provider
         self._session_provider_read = session_provider_read
 
-    async def insert(self, user_id: UUID, title: str) -> Chat:
+    async def insert(
+        self, user_id: UUID, title: str, configuration_id: Optional[UUID]
+    ) -> Chat:
         utc_now = utcnow()
         chat = Chat(
             id=uuid7(),
+            configuration_id=configuration_id,
             user_id=user_id,
             title=title,
             created_at=utc_now,
         )
         data = {
             "id": chat.id,
+            "chat_configuration_id": chat.configuration_id,
             "user_id": chat.user_id,
             "title": chat.title,
             "created_at": utc_now,
@@ -146,6 +154,7 @@ class ChatRepository:
             if row:
                 return Chat(
                     id=row.id,
+                    configuration_id=row.chat_configuration_id,
                     user_id=row.user_profile_id,
                     title=row.title,
                     created_at=row.created_at,
@@ -163,6 +172,7 @@ class ChatRepository:
                 chats.append(
                     Chat(
                         id=row.id,
+                        configuration_id=row.chat_configuration_id,
                         user_id=row.user_profile_id,
                         title=row.title,
                         created_at=row.created_at,

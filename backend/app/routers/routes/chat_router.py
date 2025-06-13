@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from app import dependencies
 from app.domain.users.entities import User
+from app.repository.chat_configuration_repository import ChatConfigurationRepository
 from app.repository.chat_repository import ChatRepository
 from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
@@ -13,6 +14,8 @@ from app.service.auth import authentication
 from app.service.chat import chat_details_service
 from app.service.chat import chat_service
 from app.service.chat import chats_service
+from app.service.chat import create_chat_configuration_service
+from app.service.chat.entities import ChatConfigurationRequest
 from app.service.chat.entities import ChatRequest
 
 TAG = "Chat"
@@ -32,6 +35,9 @@ async def chat(
     llm_repository: LlmRepository = Depends(dependencies.get_llm_repository),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
     file_repository: FileRepository = Depends(dependencies.get_file_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     headers = {
         "X-Content-Type-Options": "nosniff",
@@ -45,6 +51,7 @@ async def chat(
             llm_repository,
             chat_repository,
             file_repository,
+            configuration_repository,
         ),
         headers=headers,
         media_type="text/plain",
@@ -59,10 +66,14 @@ async def chat(
 async def get_chats(
     user: User = Depends(authentication.validate_session_token),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     return await chats_service.execute(
         user,
         chat_repository,
+        configuration_repository,
     )
 
 
@@ -79,4 +90,25 @@ async def get_chat_details(
     return await chat_details_service.execute(
         chat_id,
         chat_repository,
+    )
+
+
+@router.post(
+    "/configure/chat",
+    summary="Add a chat configuration.",
+    tags=[TAG],
+)
+async def create_chat_configuration(
+    request: ChatConfigurationRequest = Body(
+        ..., description="Configuration for chats."
+    ),
+    user: User = Depends(authentication.validate_session_token),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
+):
+    return await create_chat_configuration_service.execute(
+        request,
+        user,
+        configuration_repository,
     )

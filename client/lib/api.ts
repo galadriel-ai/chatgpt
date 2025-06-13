@@ -1,11 +1,23 @@
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env'
-import { Chat, ChatDetails } from '@/types/chat'
+import { Chat, ChatConfiguration, ChatDetails, UserInfo } from '@/types/chat'
 
 const API_BASE_URL = ENV_API_BASE_URL || 'https://chatgpt.galadriel.com'
 
-async function getChats(): Promise<Chat[]> {
+async function getUserInfo(): Promise<UserInfo> {
   interface ApiResponse {
     chats: Chat[]
+    chat_configuration: {
+      id: string
+      user_name: string
+      ai_name: string
+      description: string
+      role: string
+    } | null
+  }
+
+  const emptyResponse: UserInfo = {
+    chats: [],
+    chatConfiguration: null,
   }
 
   try {
@@ -17,13 +29,24 @@ async function getChats(): Promise<Chat[]> {
         'Content-Type': 'application/json',
       },
     })
-    if (!response.ok) return []
+    if (!response.ok) return emptyResponse
     const responseJson: ApiResponse = await response.json()
-    return responseJson.chats
+    return {
+      chats: responseJson.chats,
+      chatConfiguration: responseJson.chat_configuration
+        ? {
+            id: responseJson.chat_configuration.id,
+            userName: responseJson.chat_configuration.user_name,
+            aiName: responseJson.chat_configuration.ai_name,
+            description: responseJson.chat_configuration.description,
+            role: responseJson.chat_configuration.role,
+          }
+        : null,
+    }
   } catch (e) {
     console.log('e')
     console.log(e)
-    return []
+    return emptyResponse
   }
 }
 
@@ -72,6 +95,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
 
 interface ChatInput {
   chatId: string | null
+  configurationId: string | null
   message: string
   attachmentIds?: string[]
   thinkModel?: boolean
@@ -126,6 +150,7 @@ const streamChatResponse = (
   xhr.send(
     JSON.stringify({
       chat_id: chatInput.chatId,
+      configuration_id: chatInput.configurationId,
       content: chatInput.message,
       attachment_ids: chatInput.attachmentIds,
       think_model: chatInput.thinkModel,
@@ -194,11 +219,53 @@ async function uploadFile(
   }
 }
 
+const createChatConfiguration = async (
+  configuration: ChatConfiguration
+): Promise<ChatConfiguration | null> => {
+  interface ApiResponse {
+    id: string
+    user_name: string
+    ai_name: string
+    description: string
+    role: string
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/configure/chat`, {
+      method: 'POST',
+      // TODO: how does user auth work?
+      // credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        user_name: configuration.userName,
+        ai_name: configuration.aiName,
+        description: configuration.description,
+        role: configuration.role,
+      }),
+    })
+    if (!response.ok) return null
+    const responseJson: ApiResponse = await response.json()
+    return {
+      id: responseJson.id,
+      userName: responseJson.user_name,
+      aiName: responseJson.ai_name,
+      description: responseJson.description,
+      role: responseJson.role,
+    }
+  } catch (e) {
+    console.log('Chat configuration API call error', e)
+    return null
+  }
+}
+
 const api = {
-  getChats,
+  getUserInfo,
   getChatDetails,
   streamChatResponse,
   uploadFile,
+  createChatConfiguration,
 }
 
 export { api }

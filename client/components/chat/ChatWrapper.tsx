@@ -19,7 +19,15 @@ export function ChatWrapper() {
   const scrollViewRef = useRef<ScrollView>(null)
   const posthog = usePostHog()
 
-  const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
+  const {
+    selectedChat,
+    setSelectedChat,
+    activeChat,
+    setActiveChat,
+    addChat,
+    isChatConfigurationEnabled,
+    chatConfiguration,
+  } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
@@ -47,6 +55,8 @@ export function ChatWrapper() {
     posthog.capture(EVENTS.NEW_CHAT_STARTED)
     setSelectedChat(null)
     setActiveChat(null)
+    setMessages([])
+    setErrorMessage('')
     router.push('/')
   }
 
@@ -70,6 +80,11 @@ export function ChatWrapper() {
 
     // Extract file IDs from uploaded attachments
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
+    // If new chat and configuration enabled, use it
+    const chatConfigurationId =
+      !activeChat && isChatConfigurationEnabled && chatConfiguration?.id
+        ? chatConfiguration.id
+        : null
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
@@ -137,6 +152,7 @@ export function ChatWrapper() {
       api.streamChatResponse(
         {
           chatId: activeChat?.id || null,
+          configurationId: chatConfigurationId,
           message,
           attachmentIds,
           thinkModel,

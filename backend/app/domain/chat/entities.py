@@ -15,6 +15,7 @@ from settings import SUPPORTED_MODELS
 @dataclass
 class Chat:
     id: UUID
+    configuration_id: Optional[UUID]
     user_id: UUID
     title: str
     created_at: datetime
@@ -23,6 +24,7 @@ class Chat:
 @dataclass
 class ChatInput:
     chat_id: Optional[UUID]
+    configuration_id: Optional[UUID]
     think_model: Optional[bool]
     is_search_enabled: Optional[bool]
     content: str
@@ -158,6 +160,25 @@ class Message:
 @dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+
+
+@dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
+
+
+@dataclass
+class GetChatsOutput:
+    chats: List[Chat]
+    configuration: Optional[ChatConfiguration]
 
 
 class Model(Enum):
