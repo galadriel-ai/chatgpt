@@ -34,6 +34,35 @@ async function getUserInfo(): Promise<UserInfo> {
     chats: [],
     chatConfiguration: null,
   }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/`, {
+      method: 'GET',
+      // TODO: how does user auth work?
+      // credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    if (!response.ok) return emptyResponse
+    const responseJson: ApiResponse = await response.json()
+    return {
+      chats: responseJson.chats,
+      chatConfiguration: responseJson.chat_configuration
+        ? {
+            id: responseJson.chat_configuration.id,
+            userName: responseJson.chat_configuration.user_name,
+            aiName: responseJson.chat_configuration.ai_name,
+            description: responseJson.chat_configuration.description,
+            role: responseJson.chat_configuration.role,
+          }
+        : null,
+    }
+  } catch (e) {
+    console.log('e')
+    console.log(e)
+    return emptyResponse
+  }
 }
 
 // Authentication API functions
@@ -265,24 +294,12 @@ async function getCurrentUser(accessToken: string): Promise<AuthResponse['user']
       },
     })
 
-    if (!response.ok) return emptyResponse
-    const responseJson: ApiResponse = await response.json()
-    return {
-      chats: responseJson.chats,
-      chatConfiguration: responseJson.chat_configuration
-        ? {
-            id: responseJson.chat_configuration.id,
-            userName: responseJson.chat_configuration.user_name,
-            aiName: responseJson.chat_configuration.ai_name,
-            description: responseJson.chat_configuration.description,
-            role: responseJson.chat_configuration.role,
-          }
-        : null,
-    }
+    if (!response.ok) return null
+    const data = await response.json()
+    return data.user
   } catch (e) {
-    console.log('e')
-    console.log(e)
-    return emptyResponse
+    console.error('Error fetching current user:', e)
+    return null
   }
 }
 
