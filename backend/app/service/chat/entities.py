@@ -28,14 +28,10 @@ class UserChat(BaseModel):
 
 class ChatMessage(BaseModel):
     id: str
-    role: Literal["system", "user", "assistant"]
+    role: str
     content: str
     model: Optional[str]
     attachment_ids: List[str]
-
-
-class ChatDetailsResponse(UserChat):
-    messages: List[ChatMessage]
 
 
 class ChatConfigurationRequest(BaseModel):
@@ -51,6 +47,11 @@ class UserChatConfiguration(BaseModel):
     ai_name: str
     description: str
     role: str
+
+
+class ChatDetailsResponse(UserChat):
+    messages: List[ChatMessage]
+    configuration: Optional[UserChatConfiguration]
 
 
 class ChatsResponse(BaseModel):

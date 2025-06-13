@@ -1,5 +1,6 @@
 import {
   Alert,
+  findNodeHandle,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -7,6 +8,7 @@ import {
   ScrollView,
   Switch,
   TouchableWithoutFeedback,
+  UIManager,
   View,
 } from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
@@ -39,6 +41,9 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
 
   const scrollViewRef = useRef<ScrollView>(null)
 
+  const descriptionInputRef = useRef<View>(null)
+  const roleInputRef = useRef<View>(null)
+
   useEffect(() => {
     if (modifiedConfiguration) return
     if (!chatConfiguration) return
@@ -68,7 +73,7 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
         >
           <ScrollView
             ref={scrollViewRef}
-            contentContainerStyle={{ paddingBottom: 200 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -131,7 +136,10 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
                     className="p-3"
                   />
                 </ThemedView>
-                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
+                <ThemedView
+                  className="flex w-full flex-col gap-2 rounded-lg"
+                  ref={descriptionInputRef}
+                >
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -147,11 +155,28 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
                         description,
                       })
                     }
+                    onFocus={() => {
+                      setTimeout(() => {
+                        const scrollViewNode = findNodeHandle(scrollViewRef.current)
+                        const descriptionNode = findNodeHandle(descriptionInputRef.current)
+
+                        if (scrollViewNode && descriptionNode) {
+                          UIManager.measureLayout(
+                            descriptionNode,
+                            scrollViewNode,
+                            () => console.warn('Measure failed'),
+                            (_x, y) => {
+                              scrollViewRef.current?.scrollTo({ y: y - 320, animated: true })
+                            }
+                          )
+                        }
+                      }, 100)
+                    }}
                     placeholder="Describe traits"
                     className="min-h-28 p-3"
                   />
                 </ThemedView>
-                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
+                <ThemedView className="flex w-full flex-col gap-2 rounded-lg" ref={roleInputRef}>
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -167,6 +192,23 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
                         role,
                       })
                     }
+                    onFocus={() => {
+                      setTimeout(() => {
+                        const scrollViewNode = findNodeHandle(scrollViewRef.current)
+                        const descriptionNode = findNodeHandle(descriptionInputRef.current)
+
+                        if (scrollViewNode && descriptionNode) {
+                          UIManager.measureLayout(
+                            descriptionNode,
+                            scrollViewNode,
+                            () => console.warn('Measure failed'),
+                            (_x, y) => {
+                              scrollViewRef.current?.scrollTo({ y: y - 220, animated: true })
+                            }
+                          )
+                        }
+                      }, 100)
+                    }}
                     placeholder="coach, friend. teacher, therapist"
                     className="p-3"
                   />

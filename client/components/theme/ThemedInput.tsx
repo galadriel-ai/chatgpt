@@ -38,6 +38,7 @@ export function ThemedChatInput({
           ref={ref}
           value={value}
           onChangeText={onUpdate}
+          onFocus={otherProps.onFocus}
           className={combinedClassName}
           style={[{ color }, style]}
           placeholder={placeholder}

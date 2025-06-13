@@ -84,12 +84,38 @@ async def get_chats(
 )
 async def get_chat_details(
     chat_id: str = Path(description="Chat ID"),
-    _: User = Depends(authentication.validate_session_token),
+    user: User = Depends(authentication.validate_session_token),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
+    chat_configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     return await chat_details_service.execute(
         chat_id,
+        user,
         chat_repository,
+        chat_configuration_repository,
+    )
+
+
+@router.post(
+    "/configure/chat",
+    summary="Add a chat configuration.",
+    tags=[TAG],
+)
+async def create_chat_configuration(
+    request: ChatConfigurationRequest = Body(
+        ..., description="Configuration for chats."
+    ),
+    user: User = Depends(authentication.validate_session_token),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
+):
+    return await create_chat_configuration_service.execute(
+        request,
+        user,
+        configuration_repository,
     )
 
 

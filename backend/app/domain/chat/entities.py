@@ -158,8 +158,28 @@ class Message:
 
 
 @dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
+
+
+@dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+    configuration: Optional[ChatConfiguration]
+
+
+@dataclass
+class GetChatsOutput:
+    chats: List[Chat]
+    configuration: Optional[ChatConfiguration]
 
 
 @dataclass
