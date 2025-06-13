@@ -6,7 +6,7 @@ import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/com
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect, useRef, useState } from 'react'
-import { Chat, Message } from '@/types/chat'
+import { Chat, ChatConfiguration, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
 import { useRouter } from 'expo-router'
@@ -19,7 +19,15 @@ export function ChatWrapper() {
   const scrollViewRef = useRef<ScrollView>(null)
   const posthog = usePostHog()
 
-  const { selectedChat, setSelectedChat, activeChat, setActiveChat, addChat } = useChat()
+  const {
+    selectedChat,
+    setSelectedChat,
+    activeChat,
+    setActiveChat,
+    addChat,
+    isChatConfigurationEnabled,
+    chatConfiguration,
+  } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
@@ -47,6 +55,8 @@ export function ChatWrapper() {
     posthog.capture(EVENTS.NEW_CHAT_STARTED)
     setSelectedChat(null)
     setActiveChat(null)
+    setMessages([])
+    setErrorMessage('')
     router.push('/')
   }
 
@@ -70,6 +80,11 @@ export function ChatWrapper() {
 
     // Extract file IDs from uploaded attachments
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
+    // If new chat and configuration enabled, use it
+    const chatConfigurationId =
+      !activeChat && isChatConfigurationEnabled && chatConfiguration?.id
+        ? chatConfiguration.id
+        : null
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
@@ -117,6 +132,7 @@ export function ChatWrapper() {
           setActiveChat({
             ...newChat,
             messages: newMessages,
+            configuration: chatConfigurationId ? chatConfiguration : null,
           })
           addChat(newChat)
           isActiveChatSet = true
@@ -138,6 +154,7 @@ export function ChatWrapper() {
       await api.streamChatResponse(
         {
           chatId: activeChat?.id || null,
+          configurationId: chatConfigurationId,
           message,
           attachmentIds,
           thinkModel,
@@ -234,7 +251,16 @@ export function ChatWrapper() {
           >
             {messages.map((m, i) => (
               <ThemedView key={`msg-${i}`} className="w-full">
-                <ChatMessage message={m} />
+                <ChatMessage
+                  message={m}
+                  configuration={
+                    activeChat
+                      ? activeChat.configuration
+                      : isChatConfigurationEnabled && chatConfiguration
+                        ? chatConfiguration
+                        : null
+                  }
+                />
               </ThemedView>
             ))}
 
@@ -261,14 +287,27 @@ export function ChatWrapper() {
   )
 }
 
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({
+  message,
+  configuration,
+}: {
+  message: Message
+  configuration: ChatConfiguration | null
+}) {
   if (message.role === 'system') return null
 
   if (message.role === 'assistant' && !message.content.trim()) {
     return null
   }
 
-  const role = message.role === 'user' ? 'You' : 'Your Sidekik'
+  const role =
+    message.role === 'user'
+      ? configuration
+        ? configuration.userName
+        : 'You'
+      : configuration
+        ? configuration.aiName
+        : 'Your Sidekik'
 
   return (
     <ThemedView className="flex flex-row gap-4 py-3">

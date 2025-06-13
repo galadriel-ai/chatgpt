@@ -15,6 +15,7 @@ from settings import SUPPORTED_MODELS
 @dataclass
 class Chat:
     id: UUID
+    configuration_id: Optional[UUID]
     user_id: UUID
     title: str
     created_at: datetime
@@ -23,6 +24,7 @@ class Chat:
 @dataclass
 class ChatInput:
     chat_id: Optional[UUID]
+    configuration_id: Optional[UUID]
     think_model: Optional[bool]
     is_search_enabled: Optional[bool]
     content: str
@@ -156,8 +158,41 @@ class Message:
 
 
 @dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
+
+
+@dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+    configuration: Optional[ChatConfiguration]
+
+
+@dataclass
+class GetChatsOutput:
+    chats: List[Chat]
+    configuration: Optional[ChatConfiguration]
+
+
+@dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
 
 
 class Model(Enum):
@@ -167,6 +202,16 @@ class Model(Enum):
 
     def __str__(self) -> str:
         return self.value
+
+    @property
+    def timeout(self) -> int:
+        if self == Model.DEFAULT_MODEL:
+            return 20
+        elif self == Model.THINK_MODEL:
+            return 30
+        elif self == Model.VLM_MODEL:
+            return 60
+        return 20
 
 
 @dataclass

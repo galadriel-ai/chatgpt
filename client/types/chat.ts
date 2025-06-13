@@ -12,6 +12,20 @@ export interface Chat {
   createdAt: number
 }
 
+export interface ChatConfiguration {
+  id: string
+  userName: string
+  aiName: string
+  description: string
+  role: string
+}
+
 export interface ChatDetails extends Chat {
   messages: Message[]
+  configuration: ChatConfiguration | null
+}
+
+export interface UserInfo {
+  chats: Chat[]
+  chatConfiguration: ChatConfiguration | null
 }

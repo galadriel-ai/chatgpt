@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Alert, TextInput, TextInputProps, View } from 'react-native'
 
 import { useThemeColor } from '@/hooks/useThemeColor'
@@ -10,7 +9,6 @@ import { AttachmentMenu } from '@/components/chat/AttachmentMenu'
 import { AttachmentPreview } from '@/components/chat/AttachmentPreview'
 import { AttachmentFile, useMediaAttachments } from '@/hooks/useMediaAttachments'
 import { useFileUpload } from '@/hooks/useFileUpload'
-import { useChat } from '@/context/ChatContext'
 
 const MAX_FILES_COUNT_PER_MESSAGE = 5
 
@@ -43,7 +41,7 @@ export function ThemedChatInput({
 
   const { pickFiles, takePhoto, pickPhotos } = useMediaAttachments()
   const { uploadFile } = useFileUpload()
-  const { thinkModel, setThinkModel } = useChat()
+  const [thinkModel, setThinkModel] = useState<boolean>(false)
 
   const startUpload = async (file: AttachmentFile) => {
     const abortController = new AbortController()
