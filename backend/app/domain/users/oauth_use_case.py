@@ -31,7 +31,7 @@ class OAuthService:
             id_info = id_token.verify_oauth2_token(
                 id_token_str, google_requests.Request(), self.google_client_id
             )
-            logger.info(f"Google ID token verified: {id_info}")
+            logger.debug(f"Google ID token verified: {id_info}")
 
             # Check if the Google ID matches
             if id_info.get("sub") != expected_google_id:
@@ -99,6 +99,7 @@ class OAuthService:
             # Get the token header to find the key ID
             unverified_header = jwt.get_unverified_header(identity_token)
             kid = unverified_header.get("kid")
+            logger.debug(f"Apple token header: {unverified_header}")
 
             if not kid:
                 raise HTTPException(
@@ -108,6 +109,7 @@ class OAuthService:
 
             # Get the appropriate public key
             public_key_info = self._get_apple_public_key(kid)
+            logger.debug(f"Apple public key info: {public_key_info}")
 
             # Verify and decode the token
             token_claims = jwt.decode(
@@ -117,6 +119,7 @@ class OAuthService:
                 audience=self.apple_client_id,
                 options={"verify_exp": True},
             )
+            logger.debug(f"Apple token claims: {token_claims}")
 
             # Check if the Apple ID matches
             if token_claims.get("sub") != expected_apple_id:
@@ -129,17 +132,20 @@ class OAuthService:
                 provider="apple",
                 provider_id=token_claims.get("sub"),
                 email=token_claims.get("email"),
-                name=None,  # Apple doesn't provide name in the token
-                profile_picture=None,  # Apple doesn't provide profile picture
+                # TODO: Apple seems to not provide name or picture in the token
+                name=token_claims.get("name") or "Apple User",
+                profile_picture=token_claims.get("picture") or None,
                 is_email_verified=token_claims.get("email") is not None,
             )
 
         except JWTError as e:
+            logger.error(f"Apple token verification failed with JWTError: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Apple token verification failed: {str(e)}",
             )
         except Exception as e:
+            logger.error(f"Apple token verification failed with Exception: {str(e)}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Apple token verification failed: {str(e)}",
