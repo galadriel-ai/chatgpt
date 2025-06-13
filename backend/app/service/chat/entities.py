@@ -9,13 +9,18 @@ from pydantic import Field
 
 class ChatRequest(BaseModel):
     chat_id: Optional[str] = Field(description="chat id", default=None)
-    model: Optional[str] = Field(description="model id", default=None)
+    think_model: Optional[bool] = Field(description="think model", default=False)
+    is_search_enabled: Optional[bool] = Field(
+        description="enable search tool", default=True
+    )
     content: str = Field(description="content")
+    attachment_ids: List[str] = Field(description="attachment ids", default=[])
 
 
 class UserChat(BaseModel):
     id: str
     title: str
+    created_at: int
 
 
 class ChatMessage(BaseModel):
@@ -23,6 +28,7 @@ class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant"]
     content: str
     model: Optional[str]
+    attachment_ids: List[str]
 
 
 class ChatsResponse(BaseModel):

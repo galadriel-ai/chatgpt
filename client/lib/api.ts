@@ -1,11 +1,14 @@
+import { API_BASE_URL as ENV_API_BASE_URL } from '@env'
 import { Chat, ChatDetails } from '@/types/chat'
-import { API_BASE_URL } from '@env'
 import * as SecureStore from 'expo-secure-store'
 import { router } from 'expo-router'
 
 // Constants for secure storage keys
 const ACCESS_TOKEN_KEY = 'access_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
+
+// Modified API functions to use fetchWithAuth
+const API_BASE_URL = ENV_API_BASE_URL || 'https://chatgpt.galadriel.com'
 
 // Authentication API functions
 export interface AuthResponse {
@@ -245,7 +248,6 @@ async function getCurrentUser(accessToken: string): Promise<AuthResponse['user']
   }
 }
 
-// Modified API functions to use fetchWithAuth
 async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
     chats: Chat[]
@@ -270,10 +272,13 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   interface ApiResponse {
     id: string
     title: string
+    created_at: number
+    // Works as long as we dont need some special mapping here
     messages: {
       id: string
       role: 'system' | 'user' | 'assistant'
       content: string
+      attachment_ids: string[]
     }[]
   }
 
@@ -288,11 +293,15 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
     return {
       id: responseJson.id,
       title: responseJson.title,
-      messages: responseJson.messages.map(m => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-      })),
+      createdAt: responseJson.created_at,
+      messages: responseJson.messages.map(m => {
+        return {
+          id: m.id,
+          role: m.role,
+          content: m.content,
+          attachmentIds: m.attachment_ids,
+        }
+      }),
     }
   } catch (error) {
     console.error('Error fetching chat details:', error)
@@ -303,12 +312,15 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
 interface ChatInput {
   chatId: string | null
   message: string
+  attachmentIds?: string[]
+  thinkModel?: boolean
 }
 
 export interface ChatChunk {
   chat_id?: string
   content?: string
   error?: string
+  background_processing?: string
 }
 
 const streamChatResponse = async (
@@ -389,8 +401,71 @@ const streamChatResponse = async (
     JSON.stringify({
       chat_id: chatInput.chatId,
       content: chatInput.message,
+      attachment_ids: chatInput.attachmentIds,
+      think_model: chatInput.thinkModel,
     })
   )
+}
+
+async function uploadFile(
+  file: { uri: string; name: string; type: string; size?: number },
+  onProgress: (progress: number) => void,
+  abortSignal?: AbortSignal
+): Promise<string | null> {
+  try {
+    // Validate file before upload
+    if (!file.uri) {
+      console.error('Upload failed: No file URI provided')
+      throw new Error('No file URI provided')
+    }
+
+    // Use the official Expo FormData approach
+    const formData = new FormData()
+
+    // Create the file object as shown in Expo docs
+    const fileObject = {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    }
+
+    console.log('File object for FormData:', fileObject)
+
+    // Append to FormData (using 'file' as the field name to match server)
+    formData.append('file', fileObject as any)
+
+    console.log('Starting upload with correct headers...')
+
+    const uploadResponse = await fetch(`${API_BASE_URL}/files`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      signal: abortSignal,
+    })
+
+    console.log('Upload response status:', uploadResponse.status)
+
+    if (uploadResponse.ok) {
+      const result = await uploadResponse.json()
+      console.log('Upload successful, file ID:', result.file_id)
+      onProgress(100)
+      return result.file_id
+    } else {
+      const errorText = await uploadResponse.text()
+      console.log('Upload failed with status:', uploadResponse.status)
+      console.log('Response text:', errorText)
+      throw new Error(`Upload failed with status ${uploadResponse.status}: ${errorText}`)
+    }
+  } catch (error) {
+    console.error('Upload error:', error)
+    // Re-throw AbortError so it can be handled properly upstream
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error
+    }
+    return null
+  }
 }
 
 const api = {
@@ -404,6 +479,7 @@ const api = {
   getChats,
   getChatDetails,
   streamChatResponse,
+  uploadFile,
 }
 
 export { api }

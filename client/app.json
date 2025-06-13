@@ -19,7 +19,8 @@
               "${GOOGLE_IOS_URL_SCHEME}"
             ]
           }
-        ]
+        ],
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       }
     },
     "android": {
@@ -28,7 +29,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.galadriel.chatgpt"
+      "package": "com.galadriel.chatgpt",
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -53,11 +55,24 @@
           "iosUrlScheme": "${GOOGLE_IOS_URL_SCHEME}"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to allow you to select and upload images for chat conversations.",
+          "cameraPermission": "The app accesses your camera to allow you to take and upload photos for chat conversations."
+        }
+      ],
       "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
       "baseUrl": "/"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "65a4b318-14ce-4a00-ad56-bec3e27aaa0b"
+      }
     }
   }
 }

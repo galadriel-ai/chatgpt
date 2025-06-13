@@ -7,10 +7,19 @@ import { Stack } from 'expo-router'
 import { Platform, View } from 'react-native'
 import 'react-native-reanimated'
 import '../global.css'
+import { PostHogProvider, usePostHog } from 'posthog-react-native'
+import { POSTHOG_API_KEY, POSTHOG_HOST } from '@env'
+import { useEffect } from 'react'
+import { EVENTS } from '@/lib/analytics/posthog'
 
-export default function RootLayout() {
+function AppContent() {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === 'dark'
+  const posthog = usePostHog()
+
+  useEffect(() => {
+    posthog.capture(EVENTS.APP_START)
+  }, [posthog])
 
   return (
     <ThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
@@ -59,5 +68,18 @@ export default function RootLayout() {
         </AuthProvider>
       </ThemedView>
     </ThemeProvider>
+  )
+}
+
+export default function RootLayout() {
+  return (
+    <PostHogProvider
+      apiKey={POSTHOG_API_KEY}
+      options={{
+        host: POSTHOG_HOST,
+      }}
+    >
+      <AppContent />
+    </PostHogProvider>
   )
 }

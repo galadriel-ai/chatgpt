@@ -14,6 +14,8 @@ type ChatContextType = {
   activeChat: ChatDetails | null
   setActiveChat: React.Dispatch<React.SetStateAction<ChatDetails | null>>
   addChat: (chat: Chat) => void
+  thinkModel: boolean
+  setThinkModel: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const ChatContext = createContext<ChatContextType | null>(null)
@@ -24,6 +26,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
   const [activeChat, setActiveChat] = useState<ChatDetails | null>(null)
+  const [thinkModel, setThinkModel] = useState<boolean>(false)
 
   useEffect(() => {
     if (!user) return
@@ -37,7 +40,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   }
 
   const addChat = (chat: Chat) => {
-    setChats(prev => [...prev, chat])
+    setChats(prev => [chat, ...prev])
   }
 
   return (
@@ -49,6 +52,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         activeChat,
         setActiveChat,
         addChat,
+        thinkModel,
+        setThinkModel,
       }}
     >
       {children}
@@ -58,6 +63,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
 export const useChat = () => {
   const context = useContext(ChatContext)
-  if (!context) throw new Error('useChat must be used within ChatProvider')
+  if (!context) {
+    throw new Error('useChat must be used within ChatProvider')
+  }
   return context
 }

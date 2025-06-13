@@ -9,6 +9,8 @@ import * as SecureStore from 'expo-secure-store'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { usePostHog } from 'posthog-react-native'
+import { EVENTS } from '@/lib/analytics/posthog'
 
 // Constants for secure storage keys
 const ACCESS_TOKEN_KEY = 'access_token'
@@ -31,6 +33,7 @@ export default function LoginScreen() {
   const { login } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState({ google: false, apple: false, guest: false })
+  const posthog = usePostHog()
 
   useEffect(() => {
     // Configure Google Sign In when the component mounts
@@ -41,9 +44,11 @@ export default function LoginScreen() {
   }, [])
 
   const handleLogin = () => {
+    posthog.capture(EVENTS.LOGIN_STARTED, { method: 'guest' })
     setLoading(prev => ({ ...prev, guest: true }))
     // For guest login, we'll just use local context for now
     login({ name: 'Guest User' })
+    posthog.capture(EVENTS.LOGIN_COMPLETED, { method: 'guest' })
     router.replace('/(main)')
     setLoading(prev => ({ ...prev, guest: false }))
   }
@@ -52,6 +57,7 @@ export default function LoginScreen() {
     setLoading(prev => ({ ...prev, google: true }))
 
     try {
+      posthog.capture(EVENTS.LOGIN_STARTED, { method: 'google' })
       await GoogleSignin.hasPlayServices()
       console.log('Google Sign In started')
       const userInfo = await GoogleSignin.signIn()
@@ -79,7 +85,11 @@ export default function LoginScreen() {
             accessToken: authResponse.access_token,
             refreshToken: authResponse.refresh_token,
           })
-          router.replace('/(main)')
+          posthog.capture(EVENTS.LOGIN_COMPLETED, {
+          method: 'google',
+          email: userInfo.user.email,
+        })
+        router.replace('/(main)')
         } else {
           Alert.alert(
             'Authentication Failed',
@@ -108,6 +118,7 @@ export default function LoginScreen() {
     setLoading(prev => ({ ...prev, apple: true }))
 
     try {
+      posthog.capture(EVENTS.LOGIN_STARTED, { method: 'apple' })
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
           AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -137,7 +148,11 @@ export default function LoginScreen() {
             accessToken: authResponse.access_token,
             refreshToken: authResponse.refresh_token,
           })
-          router.replace('/(main)')
+          posthog.capture(EVENTS.LOGIN_COMPLETED, {
+            method: 'apple',
+            email: credential.email,
+          })
+      router.replace('/(main)')
         } else {
           Alert.alert(
             'Authentication Failed',
