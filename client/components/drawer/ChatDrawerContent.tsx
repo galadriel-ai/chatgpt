@@ -1,6 +1,7 @@
 import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer'
-import { Pressable, View } from 'react-native'
+import { Pressable, Image, View } from 'react-native'
 import { useChat } from '@/context/ChatContext'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'expo-router'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { Chat } from '@/types/chat'
@@ -13,6 +14,7 @@ import { ThemedButton } from '@/components/theme/ThemedButton'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
+  const { user } = useAuth()
   const router = useRouter()
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
@@ -64,11 +66,26 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
             </Pressable>
           ))}
         </View>
-      </DrawerContentScrollView>
-      <View className="flex w-full flex-row items-center gap-2 p-4 pb-10">
-        <RoleUserIcon />
-        <ThemedText>User Name</ThemedText>
+        </DrawerContentScrollView>
+        <View className="w-full p-4">
+          <ThemedView className="flex-row items-center gap-3">
+            {user?.profile_picture ? (
+              <Image
+                source={{ uri: user.profile_picture }}
+                className="h-10 w-10 rounded-full"
+                alt="Profile picture"
+              />
+            ) : (
+              // A default profile picture with the first letter of the user's name
+              <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+                <ThemedText className="text-lg text-white">
+                  {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                </ThemedText>
+              </ThemedView>
+            )}
+            <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
+          </ThemedView>
+        </View>
       </View>
-    </View>
   )
 }
