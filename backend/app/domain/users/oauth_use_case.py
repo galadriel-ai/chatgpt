@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 from typing import Optional
 
@@ -23,7 +22,10 @@ class OAuthService:
         self.apple_keys_url = "https://appleid.apple.com/auth/keys"
 
     async def verify_google_token(
-        self, id_token_str: str, expected_google_id: str, expected_email: Optional[str] = None
+        self,
+        id_token_str: str,
+        expected_google_id: str,
+        expected_email: Optional[str] = None,
     ) -> OAuthUserInfo:
         """Verify Google ID token and return unified user info"""
         try:
@@ -85,7 +87,7 @@ class OAuthService:
                 detail="Apple public key not found for the given token",
             )
 
-        except requests.RequestException as e:
+        except requests.RequestException:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Unable to fetch Apple public keys",

@@ -39,7 +39,9 @@ class User:
     name: Optional[str] = None
     profile_picture: Optional[str] = None
     auth_provider: Optional[str] = None  # 'google', 'apple', 'local'
-    provider_id: Optional[str] = None  # OAuth provider's unique ID (e.g. Google ID, Apple ID)
+    provider_id: Optional[str] = (
+        None  # OAuth provider's unique ID (e.g. Google ID, Apple ID)
+    )
     is_email_verified: bool = False
     created_at: Optional[datetime] = None
     last_login_at: Optional[datetime] = None

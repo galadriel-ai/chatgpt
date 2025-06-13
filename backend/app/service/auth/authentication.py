@@ -7,8 +7,7 @@ from app.domain.users.entities import User, JwtTokenError
 from app.repository.jwt_repository import verify_access_token
 from app.repository.user_repository import UserRepository
 
-from app.service import error_responses
-from fastapi import Cookie, Depends, HTTPException, Header, status, Request
+from fastapi import Depends, HTTPException, Header, status
 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -16,6 +15,7 @@ security = HTTPBearer()
 
 
 logger = api_logger.get()
+
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -29,7 +29,9 @@ async def get_current_user(
         # Get user from database
         user = await user_repository.get_by_id(UUID(token_payload.user_id))
         if not user:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
+            )
 
         return user
 
@@ -38,9 +40,10 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
         )
 
 
@@ -71,7 +74,9 @@ async def validate_session_token(
         )
 
 
-async def require_valid_session(user: Optional[User] = Depends(validate_session_token)) -> User:
+async def require_valid_session(
+    user: Optional[User] = Depends(validate_session_token),
+) -> User:
     """
     Dependency that requires a valid session token
     Similar to get_current_user but uses validate_session_token internally

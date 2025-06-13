@@ -1,6 +1,3 @@
-from typing import Optional
-from uuid import UUID
-
 from app.domain.users.entities import OAuthUserInfo, User
 from app.repository.user_repository import UserRepository
 from app.repository.utils import utcnow
@@ -33,7 +30,9 @@ async def execute(
 
     if user:
         # Update existing user with OAuth info if needed
-        updated_user = _update_existing_user(user, oauth_user_info, additional_user_data)
+        updated_user = _update_existing_user(
+            user, oauth_user_info, additional_user_data
+        )
         await user_repository.update(updated_user)
         return updated_user
     else:
@@ -70,12 +69,16 @@ def _update_existing_user(
     )
 
 
-def _create_new_user(oauth_user_info: OAuthUserInfo, additional_user_data: dict) -> User:
+def _create_new_user(
+    oauth_user_info: OAuthUserInfo, additional_user_data: dict
+) -> User:
     """Create new user from OAuth information"""
 
     # Use OAuth info or additional data for name and profile picture
     name = oauth_user_info.name or additional_user_data.get("name")
-    profile_picture = oauth_user_info.profile_picture or additional_user_data.get("profile_picture")
+    profile_picture = oauth_user_info.profile_picture or additional_user_data.get(
+        "profile_picture"
+    )
 
     return User(
         uid=uuid7(),

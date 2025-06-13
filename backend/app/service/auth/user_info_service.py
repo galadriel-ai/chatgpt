@@ -12,9 +12,13 @@ def execute(current_user: User) -> UserInfoResponse:
             profile_picture=current_user.profile_picture,
             auth_provider=current_user.auth_provider,
             is_email_verified=current_user.is_email_verified,
-            created_at=current_user.created_at.isoformat() if current_user.created_at else None,
+            created_at=current_user.created_at.isoformat()
+            if current_user.created_at
+            else None,
             last_login_at=(
-                current_user.last_login_at.isoformat() if current_user.last_login_at else None
+                current_user.last_login_at.isoformat()
+                if current_user.last_login_at
+                else None
             ),
         )
     )

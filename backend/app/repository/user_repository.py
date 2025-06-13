@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from typing import Optional
 from uuid import UUID
 
@@ -178,7 +176,9 @@ class UserRepository:
                 return self._row_to_user(row)
         return None
 
-    async def get_by_provider(self, auth_provider: str, provider_id: str) -> Optional[User]:
+    async def get_by_provider(
+        self, auth_provider: str, provider_id: str
+    ) -> Optional[User]:
         """Get user by auth provider and provider ID"""
         data = {"auth_provider": auth_provider, "provider_id": provider_id}
         async with self._session_provider_read.get() as session:

@@ -1,7 +1,5 @@
 import os
 from datetime import datetime, timedelta
-from typing import Optional
-from uuid import UUID
 
 from app.domain.users.entities import (
     User,
@@ -49,7 +47,9 @@ class JwtRepository:
 
             user_id = payload.get("user_id")
             if user_id is None:
-                raise InvalidTokenPayloadError("Invalid token payload - missing user_id")
+                raise InvalidTokenPayloadError(
+                    "Invalid token payload - missing user_id"
+                )
 
             return TokenPayload(
                 user_id=user_id,
