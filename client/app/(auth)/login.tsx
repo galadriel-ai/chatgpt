@@ -5,9 +5,27 @@ import { api } from '@/lib/api'
 import { GOOGLE_CLIENT_ID } from '@env'
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
 import * as AppleAuthentication from 'expo-apple-authentication'
+import * as SecureStore from 'expo-secure-store'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native'
+
+// Constants for secure storage keys
+const ACCESS_TOKEN_KEY = 'access_token'
+const REFRESH_TOKEN_KEY = 'refresh_token'
+
+// Helper function to store tokens securely
+async function storeTokens(accessToken: string, refreshToken?: string) {
+  try {
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken)
+    if (refreshToken) {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken)
+    }
+  } catch (error) {
+    console.error('Error storing tokens:', error)
+    throw new Error('Failed to store authentication tokens')
+  }
+}
 
 export default function LoginScreen() {
   const { login } = useAuth()
@@ -32,14 +50,14 @@ export default function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     setLoading(prev => ({ ...prev, google: true }))
-    
+
     try {
       await GoogleSignin.hasPlayServices()
       console.log('Google Sign In started')
       const userInfo = await GoogleSignin.signIn()
       console.log('Google Sign In completed')
       if (userInfo && userInfo.idToken) {
-        console.log('Google Sign In sccessful')
+        console.log('Google Sign In successful')
         // Call backend authentication with correct field names
         const authResponse = await api.authenticateWithGoogle({
           id_token: userInfo.idToken,
@@ -50,6 +68,11 @@ export default function LoginScreen() {
         })
 
         if (authResponse) {
+          // Store tokens securely
+          await storeTokens(authResponse.access_token, authResponse.refresh_token)
+          const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
+          console.log('Tokens stored securely with access token:', accessToken)
+
           // Store tokens and user data in context
           login({
             ...authResponse.user,
@@ -66,7 +89,7 @@ export default function LoginScreen() {
       }
     } catch (error: any) {
       console.error('Google Sign In Error:', error)
-      
+
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('User cancelled the sign in flow')
       } else if (error.code === statusCodes.IN_PROGRESS) {
@@ -83,7 +106,7 @@ export default function LoginScreen() {
 
   const handleAppleLogin = async () => {
     setLoading(prev => ({ ...prev, apple: true }))
-    
+
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -97,14 +120,17 @@ export default function LoginScreen() {
         const authResponse = await api.authenticateWithApple({
           identity_token: credential.identityToken,
           authorization_code: credential.authorizationCode,
-          name: credential.fullName ? 
-            `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim() : 
-            undefined,
+          name: credential.fullName
+            ? `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim()
+            : undefined,
           email: credential.email || undefined,
           apple_id: credential.user,
         })
 
         if (authResponse) {
+          // Store tokens securely
+          await storeTokens(authResponse.access_token, authResponse.refresh_token)
+
           // Store tokens and user data in context
           login({
             ...authResponse.user,
@@ -113,12 +139,15 @@ export default function LoginScreen() {
           })
           router.replace('/(main)')
         } else {
-          Alert.alert('Authentication Failed', 'Unable to authenticate with Apple. Please try again.')
+          Alert.alert(
+            'Authentication Failed',
+            'Unable to authenticate with Apple. Please try again.'
+          )
         }
       }
     } catch (e: any) {
       console.error('Apple Sign In Error:', e)
-      
+
       if (e.code === 'ERR_REQUEST_CANCELED') {
         console.log('User canceled Apple Sign In')
       } else {
@@ -134,14 +163,14 @@ export default function LoginScreen() {
       <ThemedText style={styles.title}>Login</ThemedText>
 
       <View style={styles.buttonContainer}>
-        <Button 
-          title={loading.guest ? "Signing in..." : "Guest Login"} 
+        <Button
+          title={loading.guest ? 'Signing in...' : 'Guest Login'}
           onPress={handleLogin}
           disabled={loading.guest}
         />
 
-        <TouchableOpacity 
-          style={[styles.googleButton, loading.google && styles.disabledButton]} 
+        <TouchableOpacity
+          style={[styles.googleButton, loading.google && styles.disabledButton]}
           onPress={handleGoogleLogin}
           disabled={loading.google}
         >

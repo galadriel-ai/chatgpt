@@ -8,7 +8,7 @@ from app.repository.jwt_repository import verify_access_token
 from app.repository.user_repository import UserRepository
 
 from app.service import error_responses
-from fastapi import Cookie, Depends, HTTPException, status, Request
+from fastapi import Cookie, Depends, HTTPException, Header, status, Request
 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -45,10 +45,11 @@ async def get_current_user(
 
 
 async def validate_session_token(
-    session_jwt: str = Cookie(None),
+    session_jwt: str = Header(None),
     user_repository: UserRepository = Depends(dependencies.get_user_repository),
 ) -> User:
     try:
+        logger.info(f"Validating session token: {session_jwt}")
         if not session_jwt:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,

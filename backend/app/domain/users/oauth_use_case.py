@@ -9,6 +9,10 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from jose import jwt, JWTError
 
+from app import api_logger
+
+logger = api_logger.get()
+
 
 class OAuthService:
     """Domain service for OAuth token verification and user info extraction"""
@@ -27,9 +31,13 @@ class OAuthService:
             id_info = id_token.verify_oauth2_token(
                 id_token_str, google_requests.Request(), self.google_client_id
             )
+            logger.info(f"Google ID token verified: {id_info}")
 
             # Check if the Google ID matches
             if id_info.get("sub") != expected_google_id:
+                logger.error(
+                    f"Google token verification failed: ID mismatch: {id_info.get('sub')} != {expected_google_id}"
+                )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Google token verification failed: ID mismatch",
@@ -37,6 +45,9 @@ class OAuthService:
 
             # Check if email matches (if provided)
             if expected_email and id_info.get("email") != expected_email:
+                logger.error(
+                    f"Google token verification failed: Email mismatch: {id_info.get('email')} != {expected_email}"
+                )
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Google token verification failed: Email mismatch",

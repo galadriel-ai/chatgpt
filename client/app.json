@@ -15,7 +15,9 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
+            "CFBundleURLSchemes": [
+              "${GOOGLE_IOS_URL_SCHEME}"
+            ]
           }
         ]
       }
@@ -50,7 +52,8 @@
         {
           "iosUrlScheme": "${GOOGLE_IOS_URL_SCHEME}"
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,

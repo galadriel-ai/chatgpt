@@ -65,6 +65,7 @@ export function ChatWrapper() {
             messages: newMessages,
           })
           addChat(newChat)
+          isActiveChatSet = true
         } else if (chunk.content) {
           content += chunk.content
           updateLastMessage(content)
@@ -72,7 +73,7 @@ export function ChatWrapper() {
         // Whatever other chunks we get
       }
 
-      api.streamChatResponse(
+      await api.streamChatResponse(
         {
           chatId: activeChat?.id || null,
           message,

@@ -1,5 +1,11 @@
 import { Chat, ChatDetails } from '@/types/chat'
 import { API_BASE_URL } from '@env'
+import * as SecureStore from 'expo-secure-store'
+import { router } from 'expo-router'
+
+// Constants for secure storage keys
+const ACCESS_TOKEN_KEY = 'access_token'
+const REFRESH_TOKEN_KEY = 'refresh_token'
 
 // Authentication API functions
 export interface AuthResponse {
@@ -32,6 +38,109 @@ export interface AppleAuthData {
   name?: string
   email?: string
   apple_id: string
+}
+
+// Helper function to get stored tokens
+async function getTokens(): Promise<{ accessToken: string | null; refreshToken: string | null }> {
+  try {
+    const [accessToken, refreshToken] = await Promise.all([
+      SecureStore.getItemAsync(ACCESS_TOKEN_KEY),
+      SecureStore.getItemAsync(REFRESH_TOKEN_KEY),
+    ])
+    return { accessToken, refreshToken }
+  } catch (error) {
+    console.error('Error getting tokens:', error)
+    return { accessToken: null, refreshToken: null }
+  }
+}
+
+// Helper function to store tokens securely
+async function storeTokens(accessToken: string, refreshToken?: string) {
+  try {
+    await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, accessToken)
+    if (refreshToken) {
+      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refreshToken)
+    }
+  } catch (error) {
+    console.error('Error storing tokens:', error)
+    throw new Error('Failed to store authentication tokens')
+  }
+}
+
+// Helper function to clear tokens
+async function clearTokens() {
+  try {
+    await Promise.all([
+      SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY),
+      SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+    ])
+  } catch (error) {
+    console.error('Error clearing tokens:', error)
+  }
+}
+
+// Helper function to refresh token
+async function refreshAccessToken(refreshToken: string): Promise<string | null> {
+  try {
+    const response = await api.refreshToken(refreshToken)
+    if (response?.access_token) {
+      await storeTokens(response.access_token)
+      return response.access_token
+    }
+    return null
+  } catch (error) {
+    console.error('Error refreshing token:', error)
+    return null
+  }
+}
+
+// Wrapper for fetch that handles token refresh
+async function fetchWithAuth(
+  url: string,
+  options: RequestInit & { skipAuth?: boolean } = {}
+): Promise<Response> {
+  const { skipAuth = false, ...fetchOptions } = options
+  const { accessToken, refreshToken } = await getTokens()
+
+  // Add auth header if we have a token and auth is not skipped
+  if (!skipAuth && accessToken) {
+    fetchOptions.headers = {
+      ...fetchOptions.headers,
+      Authorization: `Bearer ${accessToken}`,
+    }
+  }
+
+  let response = await fetch(url, fetchOptions)
+
+  // If we get a 401 and have a refresh token, try to refresh
+  if (response.status === 401 && refreshToken && !skipAuth) {
+    const newAccessToken = await refreshAccessToken(refreshToken)
+    if (newAccessToken) {
+      // Retry the original request with the new token
+      fetchOptions.headers = {
+        ...fetchOptions.headers,
+        Authorization: `Bearer ${newAccessToken}`,
+      }
+      response = await fetch(url, fetchOptions)
+    } else {
+      // If refresh failed, clear tokens and redirect to login
+      await clearTokens()
+      router.replace('/(auth)/login')
+      throw new Error('Session expired. Please log in again.')
+    }
+  }
+
+  return response
+}
+
+// Helper function to get stored access token
+async function getAccessToken(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
+  } catch (error) {
+    console.error('Error getting access token:', error)
+    return null
+  }
 }
 
 async function authenticateWithGoogle(authData: GoogleAuthData): Promise<AuthResponse | null> {
@@ -105,7 +214,7 @@ async function logout(accessToken: string, refreshToken?: string): Promise<boole
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ refresh_token: refreshToken }),
     })
@@ -123,7 +232,7 @@ async function getCurrentUser(accessToken: string): Promise<AuthResponse['user']
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     })
 
@@ -136,37 +245,28 @@ async function getCurrentUser(accessToken: string): Promise<AuthResponse['user']
   }
 }
 
-// Existing chat functions with authentication
-async function getChats(accessToken?: string): Promise<Chat[]> {
+// Modified API functions to use fetchWithAuth
+async function getChats(): Promise<Chat[]> {
   interface ApiResponse {
     chats: Chat[]
   }
 
   try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`
-    }
-
-    const response = await fetch(`${API_BASE_URL}/`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/`, {
       method: 'GET',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
     })
-    
+
     if (!response.ok) return []
     const responseJson: ApiResponse = await response.json()
     return responseJson.chats
-  } catch (e) {
-    console.log('e')
-    console.log(e)
+  } catch (error) {
+    console.error('Error fetching chats:', error)
     return []
   }
 }
 
-async function getChatDetails(chatId: string, accessToken?: string): Promise<ChatDetails | null> {
+async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
   interface ApiResponse {
     id: string
     title: string
@@ -178,33 +278,24 @@ async function getChatDetails(chatId: string, accessToken?: string): Promise<Cha
   }
 
   try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    }
-
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`
-    }
-
-    const response = await fetch(`${API_BASE_URL}/chat/${chatId}`, {
+    const response = await fetchWithAuth(`${API_BASE_URL}/chat/${chatId}`, {
       method: 'GET',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
     })
-    
+
     if (!response.ok) return null
     const responseJson: ApiResponse = await response.json()
     return {
       id: responseJson.id,
       title: responseJson.title,
-      messages: responseJson.messages.map(m => {
-        return {
-          id: m.id,
-          role: m.role,
-          content: m.content,
-        }
-      }),
+      messages: responseJson.messages.map(m => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+      })),
     }
-  } catch {
+  } catch (error) {
+    console.error('Error fetching chat details:', error)
     return null
   }
 }
@@ -220,20 +311,54 @@ export interface ChatChunk {
   error?: string
 }
 
-const streamChatResponse = (
+const streamChatResponse = async (
   chatInput: ChatInput,
   onChunk: (chunk: ChatChunk) => void,
   onDone?: () => void,
   onError?: (err: any) => void
 ) => {
+  const { accessToken, refreshToken } = await getTokens()
+  if (!accessToken) {
+    onError?.(new Error('No access token available'))
+    return
+  }
+
   const xhr = new XMLHttpRequest()
   let lastLength = 0
+  let isRefreshing = false
 
   xhr.open('POST', `${API_BASE_URL}/chat`, true)
   xhr.setRequestHeader('Content-Type', 'application/json')
+  xhr.setRequestHeader('Authorization', `Bearer ${accessToken}`)
 
-  xhr.onreadystatechange = () => {
+  xhr.onreadystatechange = async () => {
     if (xhr.readyState === xhr.LOADING || xhr.readyState === xhr.DONE) {
+      // Handle 401 Unauthorized
+      if (xhr.status === 401 && refreshToken && !isRefreshing) {
+        isRefreshing = true
+        try {
+          const newAccessToken = await refreshAccessToken(refreshToken)
+          if (newAccessToken) {
+            // Retry the request with new token
+            xhr.abort()
+            streamChatResponse(chatInput, onChunk, onDone, onError)
+            return
+          } else {
+            // If refresh failed, clear tokens and redirect to login
+            await clearTokens()
+            router.replace('/(auth)/login')
+            onError?.(new Error('Session expired. Please log in again.'))
+            return
+          }
+        } catch (error) {
+          console.error('Error refreshing token:', error)
+          onError?.(error)
+          return
+        } finally {
+          isRefreshing = false
+        }
+      }
+
       const newText = xhr.responseText.substring(lastLength)
       lastLength = xhr.responseText.length
 
@@ -246,7 +371,7 @@ const streamChatResponse = (
           const parsed: ChatChunk = JSON.parse(trimmed)
           onChunk(parsed)
         } catch (err) {
-          console.warn('Failed to parse chunk:', trimmed)
+          console.warn('Failed to parse chunk:', trimmed, 'Error:', err)
         }
       })
     }
