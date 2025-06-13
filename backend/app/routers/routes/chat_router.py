@@ -117,24 +117,3 @@ async def create_chat_configuration(
         user,
         configuration_repository,
     )
-
-
-@router.post(
-    "/configure/chat",
-    summary="Add a chat configuration.",
-    tags=[TAG],
-)
-async def create_chat_configuration(
-    request: ChatConfigurationRequest = Body(
-        ..., description="Configuration for chats."
-    ),
-    user: User = Depends(authentication.validate_session_token),
-    configuration_repository: ChatConfigurationRepository = Depends(
-        dependencies.get_chat_configuration_repository
-    ),
-):
-    return await create_chat_configuration_service.execute(
-        request,
-        user,
-        configuration_repository,
-    )
