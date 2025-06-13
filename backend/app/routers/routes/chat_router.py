@@ -35,6 +35,9 @@ async def chat(
     llm_repository: LlmRepository = Depends(dependencies.get_llm_repository),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
     file_repository: FileRepository = Depends(dependencies.get_file_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     headers = {
         "X-Content-Type-Options": "nosniff",
@@ -48,6 +51,7 @@ async def chat(
             llm_repository,
             chat_repository,
             file_repository,
+            configuration_repository,
         ),
         headers=headers,
         media_type="text/plain",
@@ -62,7 +66,9 @@ async def chat(
 async def get_chats(
     user: User = Depends(authentication.validate_session_token),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
-    configuration_repository: ChatConfigurationRepository = Depends(dependencies.get_chat_configuration_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     return await chats_service.execute(
         user,
@@ -93,9 +99,13 @@ async def get_chat_details(
     tags=[TAG],
 )
 async def create_chat_configuration(
-    request: ChatConfigurationRequest = Body(..., description="Configuration for chats."),
+    request: ChatConfigurationRequest = Body(
+        ..., description="Configuration for chats."
+    ),
     user: User = Depends(authentication.validate_session_token),
-    configuration_repository: ChatConfigurationRepository = Depends(dependencies.get_chat_configuration_repository),
+    configuration_repository: ChatConfigurationRepository = Depends(
+        dependencies.get_chat_configuration_repository
+    ),
 ):
     return await create_chat_configuration_service.execute(
         request,

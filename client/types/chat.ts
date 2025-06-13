@@ -24,7 +24,6 @@ export interface ChatConfiguration {
   role: string
 }
 
-
 export interface UserInfo {
   chats: Chat[]
   chatConfiguration: ChatConfiguration | null

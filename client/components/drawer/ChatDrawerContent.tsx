@@ -1,18 +1,18 @@
-import {DrawerContentComponentProps, DrawerContentScrollView} from '@react-navigation/drawer'
-import {Pressable, View} from 'react-native'
-import {useChat} from '@/context/ChatContext'
-import {useRouter} from 'expo-router'
-import {ThemedText} from '@/components/theme/ThemedText'
-import {Chat} from '@/types/chat'
-import {Colors} from '@/constants/Colors'
-import {ThemedView} from '@/components/theme/ThemedView'
-import {RoleUserIcon} from '@/components/icons/Icons'
-import {useState} from "react";
-import {ChatConfigurationModal} from "@/components/configuration/ChatConfigurationModal";
-import {ThemedButton} from "@/components/theme/ThemedButton";
+import { DrawerContentComponentProps, DrawerContentScrollView } from '@react-navigation/drawer'
+import { Pressable, View } from 'react-native'
+import { useChat } from '@/context/ChatContext'
+import { useRouter } from 'expo-router'
+import { ThemedText } from '@/components/theme/ThemedText'
+import { Chat } from '@/types/chat'
+import { Colors } from '@/constants/Colors'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { RoleUserIcon } from '@/components/icons/Icons'
+import { useState } from 'react'
+import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
+import { ThemedButton } from '@/components/theme/ThemedButton'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
-  const {chats, selectedChat, setSelectedChat, setActiveChat} = useChat()
+  const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
   const router = useRouter()
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
@@ -24,22 +24,18 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   }
 
   const onConfigureChats = async () => {
-    console.log('onConfigureChats')
     setIsModalVisible(true)
   }
 
   return (
     <View className="flex-1">
-      <ChatConfigurationModal isVisible={isModalVisible} setIsVisible={setIsModalVisible}/>
+      <ChatConfigurationModal isVisible={isModalVisible} setIsVisible={setIsModalVisible} />
       <DrawerContentScrollView
         {...props}
-        contentContainerStyle={{paddingHorizontal: 16, paddingTop: 46}}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 46 }}
       >
-        <View className="p-4 flex flex-row justify-between">
-          <ThemedButton title={'Configure chats'} onPress={onConfigureChats}/>
-          <ThemedText>
-            Toggle
-          </ThemedText>
+        <View className="flex flex-row justify-between pt-8">
+          <ThemedButton title={'Configure chats'} onPress={onConfigureChats} />
         </View>
         <View className="p-4">
           <ThemedText
@@ -70,7 +66,7 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
         </View>
       </DrawerContentScrollView>
       <View className="flex w-full flex-row items-center gap-2 p-4 pb-10">
-        <RoleUserIcon/>
+        <RoleUserIcon />
         <ThemedText>User Name</ThemedText>
       </View>
     </View>

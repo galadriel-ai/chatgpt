@@ -1,16 +1,16 @@
-import {API_BASE_URL as ENV_API_BASE_URL} from '@env'
-import {Chat, ChatConfiguration, ChatDetails, UserInfo} from '@/types/chat'
+import { API_BASE_URL as ENV_API_BASE_URL } from '@env'
+import { Chat, ChatConfiguration, ChatDetails, UserInfo } from '@/types/chat'
 
 const API_BASE_URL = ENV_API_BASE_URL || 'https://chatgpt.galadriel.com'
 
 async function getUserInfo(): Promise<UserInfo> {
   interface ApiResponse {
-    chats: Chat[],
+    chats: Chat[]
     chat_configuration: {
-      id: string,
-      user_name: string,
-      ai_name: string,
-      description: string,
+      id: string
+      user_name: string
+      ai_name: string
+      description: string
       role: string
     } | null
   }
@@ -33,13 +33,15 @@ async function getUserInfo(): Promise<UserInfo> {
     const responseJson: ApiResponse = await response.json()
     return {
       chats: responseJson.chats,
-      chatConfiguration: responseJson.chat_configuration ? {
-        id: responseJson.chat_configuration.id,
-        userName: responseJson.chat_configuration.user_name,
-        aiName: responseJson.chat_configuration.ai_name,
-        description: responseJson.chat_configuration.description,
-        role: responseJson.chat_configuration.role,
-      } : null
+      chatConfiguration: responseJson.chat_configuration
+        ? {
+            id: responseJson.chat_configuration.id,
+            userName: responseJson.chat_configuration.user_name,
+            aiName: responseJson.chat_configuration.ai_name,
+            description: responseJson.chat_configuration.description,
+            role: responseJson.chat_configuration.role,
+          }
+        : null,
     }
   } catch (e) {
     console.log('e')
@@ -93,6 +95,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
 
 interface ChatInput {
   chatId: string | null
+  configurationId: string | null
   message: string
   attachmentIds?: string[]
   thinkModel?: boolean
@@ -146,6 +149,7 @@ const streamChatResponse = (
   xhr.send(
     JSON.stringify({
       chat_id: chatInput.chatId,
+      configuration_id: chatInput.configurationId,
       content: chatInput.message,
       attachment_ids: chatInput.attachmentIds,
       think_model: chatInput.thinkModel,
@@ -218,11 +222,11 @@ const createChatConfiguration = async (
   configuration: ChatConfiguration
 ): Promise<ChatConfiguration | null> => {
   interface ApiResponse {
-    id: string,
-    user_name: string,
-    ai_name: string,
-    description: string,
-    role: string,
+    id: string
+    user_name: string
+    ai_name: string
+    description: string
+    role: string
   }
 
   try {
@@ -238,7 +242,7 @@ const createChatConfiguration = async (
         ai_name: configuration.aiName,
         description: configuration.description,
         role: configuration.role,
-      })
+      }),
     })
     if (!response.ok) return null
     const responseJson: ApiResponse = await response.json()
@@ -263,4 +267,4 @@ const api = {
   createChatConfiguration,
 }
 
-export {api}
+export { api }

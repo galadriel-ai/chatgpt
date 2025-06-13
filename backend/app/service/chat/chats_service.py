@@ -12,7 +12,9 @@ async def execute(
     chat_repository: ChatRepository,
     configuration_repository: ChatConfigurationRepository,
 ) -> ChatsResponse:
-    chats_output = await get_chats_use_case.execute(user, chat_repository, configuration_repository)
+    chats_output = await get_chats_use_case.execute(
+        user, chat_repository, configuration_repository
+    )
     return ChatsResponse(
         chats=[
             UserChat(
@@ -28,5 +30,7 @@ async def execute(
             ai_name=chats_output.configuration.ai_name,
             description=chats_output.configuration.description,
             role=chats_output.configuration.role,
-        ) if chats_output.configuration else None,
+        )
+        if chats_output.configuration
+        else None,
     )

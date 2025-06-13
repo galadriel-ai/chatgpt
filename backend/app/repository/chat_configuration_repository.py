@@ -44,6 +44,19 @@ ORDER BY id DESC
 LIMIT 1;
 """
 
+SQL_GET_BY_ID_AND_USER = """
+SELECT
+    id,
+    user_name,
+    ai_name,
+    description,
+    role
+FROM chat_configuration
+WHERE 
+    id = :id 
+    AND user_profile_id = :user_id;
+"""
+
 
 class ChatConfigurationRepository:
     def __init__(
@@ -52,7 +65,9 @@ class ChatConfigurationRepository:
         self._session_provider = session_provider
         self._session_provider_read = session_provider_read
 
-    async def insert(self, configuration: ChatConfigurationInput, user_id: UUID) -> UUID:
+    async def insert(
+        self, configuration: ChatConfigurationInput, user_id: UUID
+    ) -> UUID:
         utc_now = utcnow()
         configuration_id = uuid7()
         data = {
@@ -75,7 +90,31 @@ class ChatConfigurationRepository:
             "user_id": user_id,
         }
         async with self._session_provider_read.get() as session:
-            result = await session.execute(sqlalchemy.text(SQL_GET_LATEST_BY_USER), data)
+            result = await session.execute(
+                sqlalchemy.text(SQL_GET_LATEST_BY_USER), data
+            )
+            row = result.first()
+            if row:
+                return ChatConfiguration(
+                    id=row.id,
+                    user_name=row.user_name,
+                    ai_name=row.ai_name,
+                    description=row.description,
+                    role=row.role,
+                )
+        return None
+
+    async def get_by_id_and_user(
+        self, configuration_id: UUID, user_id: UUID
+    ) -> Optional[ChatConfiguration]:
+        data = {
+            "id": configuration_id,
+            "user_id": user_id,
+        }
+        async with self._session_provider_read.get() as session:
+            result = await session.execute(
+                sqlalchemy.text(SQL_GET_BY_ID_AND_USER), data
+            )
             row = result.first()
             if row:
                 return ChatConfiguration(

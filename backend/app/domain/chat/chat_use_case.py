@@ -3,16 +3,21 @@ from copy import deepcopy
 from typing import AsyncGenerator
 from typing import List
 from typing import Optional
+from uuid import UUID
 
 from uuid_extensions import uuid7
 
 from app import api_logger
+from app.domain.chat import get_system_prompt_use_case
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
 from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import Message
+from app.domain.chat.entities import Model
+from app.domain.chat.entities import ModelConfig
+from app.domain.chat.entities import ModelSpec
 from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
@@ -20,21 +25,17 @@ from app.domain.chat.utils import get_images
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
-from app.domain.chat.entities import ModelSpec
-from app.domain.chat.entities import ModelConfig
-from app.domain.chat.entities import Model
 from app.domain.users.entities import User
+from app.repository.chat_configuration_repository import ChatConfigurationRepository
 from app.repository.chat_repository import ChatRepository
-from app.repository.llm_repository import LlmRepository
 from app.repository.file_repository import FileRepository
+from app.repository.llm_repository import LlmRepository
 from app.service import error_responses
 from settings import SUPPORTED_MODELS
 
 logger = api_logger.get()
 
 MAX_TITLE_LENGTH = 30
-
-DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
 
 async def execute(
@@ -43,8 +44,9 @@ async def execute(
     llm_repository: LlmRepository,
     chat_repository: ChatRepository,
     file_repository: FileRepository,
+    configuration_repository: ChatConfigurationRepository,
 ) -> AsyncGenerator[ChatOutputChunk, None]:
-    chat = await _get_chat(chat_input, user, chat_repository)
+    chat = await _get_chat(chat_input, user, chat_repository, configuration_repository)
     if not chat:
         yield ErrorChunk(
             error=error_responses.NotFoundAPIError("chat_id not found.").to_message()
@@ -79,7 +81,9 @@ async def execute(
     )
 
     messages = await _get_existing_messages(chat, chat_repository)
-    new_messages = await _get_new_messages(chat_input, chat, messages)
+    new_messages = await _get_new_messages(
+        chat_input, chat, user, messages, configuration_repository
+    )
 
     llm_input_messages = [deepcopy(m) for m in messages]
     llm_input_messages.extend([deepcopy(m) for m in new_messages])
@@ -204,16 +208,21 @@ async def execute(
 async def _get_new_messages(
     chat_input: ChatInput,
     chat: Chat,
+    user: User,
     existing_messages: List[Message],
+    configuration_repository: ChatConfigurationRepository,
 ) -> List[Message]:
     new_messages = []
     if not existing_messages:
+        system_prompt = await get_system_prompt_use_case.execute(
+            chat_input, user, configuration_repository
+        )
         new_messages.append(
             Message(
                 id=uuid7(),
                 chat_id=chat.id,
                 role="system",
-                content=DEFAULT_SYSTEM_MESSAGE,
+                content=system_prompt,
                 model=None,
                 attachment_ids=[],
             )
@@ -231,9 +240,16 @@ async def _get_new_messages(
     return new_messages
 
 
-async def _get_chat(chat_input, user, chat_repository) -> Optional[Chat]:
+async def _get_chat(
+    chat_input: ChatInput,
+    user: User,
+    chat_repository: ChatRepository,
+    configuration_repository: ChatConfigurationRepository,
+) -> Optional[Chat]:
     if not chat_input.chat_id:
-        chat = await _create_chat(chat_input, user, chat_repository)
+        chat = await _create_chat(
+            chat_input, user, chat_repository, configuration_repository
+        )
     else:
         chat = await chat_repository.get(chat_input.chat_id)
     return chat
@@ -243,8 +259,19 @@ async def _create_chat(
     chat_input: ChatInput,
     user: User,
     chat_repository: ChatRepository,
+    configuration_repository: ChatConfigurationRepository,
 ) -> Chat:
-    return await chat_repository.insert(user.uid, chat_input.content[:MAX_TITLE_LENGTH])
+    configuration_id: Optional[UUID] = None
+    if chat_input.configuration_id:
+        configuration = await configuration_repository.get_by_id_and_user(
+            chat_input.configuration_id, user.uid
+        )
+        if configuration:
+            # Should error if not found?
+            configuration_id = configuration.id
+    return await chat_repository.insert(
+        user.uid, chat_input.content[:MAX_TITLE_LENGTH], configuration_id
+    )
 
 
 async def _get_existing_messages(

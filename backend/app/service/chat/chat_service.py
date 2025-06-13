@@ -3,6 +3,7 @@ import json
 from app.domain.chat import chat_use_case
 from app.domain.chat.entities import ChatInput
 from app.domain.users.entities import User
+from app.repository.chat_configuration_repository import ChatConfigurationRepository
 from app.repository.chat_repository import ChatRepository
 from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
@@ -19,6 +20,7 @@ async def execute(
     llm_repository: LlmRepository,
     chat_repository: ChatRepository,
     file_repository: FileRepository,
+    configuration_repository: ChatConfigurationRepository,
 ):
     chat_id = None
     if request.chat_id:
@@ -41,6 +43,7 @@ async def execute(
     ]
     chat_input = ChatInput(
         chat_id=chat_id,
+        configuration_id=request.configuration_id,
         think_model=request.think_model,
         content=request.content,
         is_search_enabled=request.is_search_enabled,
@@ -53,5 +56,6 @@ async def execute(
         llm_repository,
         chat_repository,
         file_repository,
+        configuration_repository,
     ):
         yield json.dumps(chunk.to_serializable_dict()) + "\n"

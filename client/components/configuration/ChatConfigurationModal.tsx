@@ -1,4 +1,5 @@
 import {
+  Alert,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -6,106 +7,91 @@ import {
   ScrollView,
   Switch,
   TouchableWithoutFeedback,
-  View
-} from "react-native";
-import {ThemedView} from "@/components/theme/ThemedView";
-import {ThemedText} from "@/components/theme/ThemedText";
-import {ThemedButton} from "@/components/theme/ThemedButton";
-import {useChat} from "@/context/ChatContext";
-import {useEffect, useRef, useState} from "react";
-import {Colors} from "@/constants/Colors";
-import {ChatConfiguration} from "@/types/chat";
-import {ThemedChatInput} from "@/components/theme/ThemedInput";
-import {useThemeColor} from "@/hooks/useThemeColor";
-import {api} from "@/lib/api";
+  View,
+} from 'react-native'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { ThemedText } from '@/components/theme/ThemedText'
+import { ThemedButton } from '@/components/theme/ThemedButton'
+import { useChat } from '@/context/ChatContext'
+import { useEffect, useRef, useState } from 'react'
+import { Colors } from '@/constants/Colors'
+import { ChatConfiguration } from '@/types/chat'
+import { ThemedChatInput } from '@/components/theme/ThemedInput'
+import { useThemeColor } from '@/hooks/useThemeColor'
+import { api } from '@/lib/api'
 
 interface Props {
   isVisible: boolean
   setIsVisible: (isVisible: boolean) => void
 }
 
-export function ChatConfigurationModal(
-  {isVisible, setIsVisible}: Props
-) {
+export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
   const backgroundColor = useThemeColor({}, 'background')
 
-  const {chatConfiguration, setChatConfiguration} = useChat()
+  const {
+    chatConfiguration,
+    setChatConfiguration,
+    isChatConfigurationEnabled,
+    setIsChatConfigurationEnabled,
+  } = useChat()
 
   const [modifiedConfiguration, setModifiedConfiguration] = useState<ChatConfiguration | null>(null)
 
-  const [isToggled, setIsToggled] = useState<boolean>(false)
-
   const scrollViewRef = useRef<ScrollView>(null)
-
 
   useEffect(() => {
     if (modifiedConfiguration) return
     if (!chatConfiguration) return
-    setModifiedConfiguration(
-      JSON.parse(JSON.stringify(chatConfiguration))
-    )
-  }, [chatConfiguration]);
-
+    setModifiedConfiguration(JSON.parse(JSON.stringify(chatConfiguration)))
+  }, [chatConfiguration])
 
   const onSave = async () => {
-    console.log("onSave")
     if (!modifiedConfiguration) return
     const newConfiguration = await api.createChatConfiguration(modifiedConfiguration)
     if (newConfiguration) {
-      console.log("YEEES")
       setChatConfiguration(newConfiguration)
-      setModifiedConfiguration(
-        JSON.parse(JSON.stringify(newConfiguration))
-      )
+      setModifiedConfiguration(JSON.parse(JSON.stringify(newConfiguration)))
+      Alert.alert('Configuration updated', 'Successfully updated the configuration')
+      setIsVisible(false)
     } else {
-      console.log("NOOO")
+      Alert.alert('Configuration update failed', 'Failed to save the configuration')
     }
   }
 
   return (
-    <Modal
-      animationType="slide"
-      visible={isVisible}
-      onRequestClose={() => setIsVisible(false)}
-    >
+    <Modal animationType="slide" visible={isVisible} onRequestClose={() => setIsVisible(false)}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{flex: 1, backgroundColor}}
+          style={{ flex: 1, backgroundColor }}
           className="flex-1 px-2 pb-10 pt-16"
         >
           <ScrollView
             ref={scrollViewRef}
-            contentContainerStyle={{paddingBottom: 200}}
+            contentContainerStyle={{ paddingBottom: 200 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View
-              className="flex flex-row justify-between items-center"
-            >
-              <ThemedButton title="Close" onPress={() => setIsVisible(false)}/>
+            <View className="flex flex-row items-center justify-between">
+              <ThemedButton title="Close" onPress={() => setIsVisible(false)} />
               <ThemedText>Customize Chats</ThemedText>
               {/*TODO:*/}
-              <ThemedButton title="Save" onPress={onSave}/>
+              <ThemedButton title="Save" onPress={onSave} />
             </View>
-            {modifiedConfiguration &&
-              <View className="flex flex-col w-full pt-10 gap-8">
+            {modifiedConfiguration && (
+              <View className="flex w-full flex-col gap-8 pt-10">
                 <ThemedView
-                  className="flex flex-row justify-between items-center w-full rounded-lg p-4"
+                  className="flex w-full flex-row items-center justify-between rounded-lg p-4"
                   lightColor={Colors.light.backgroundHighlight}
                   darkColor={Colors.dark.backgroundHighlight}
                 >
-                  <ThemedText>
-                    Enable for new chats
-                  </ThemedText>
+                  <ThemedText>Enable for new chats</ThemedText>
                   <Switch
-                    value={isToggled}
-                    onValueChange={(value) => setIsToggled(value)}
+                    value={isChatConfigurationEnabled}
+                    onValueChange={value => setIsChatConfigurationEnabled(value)}
                   />
                 </ThemedView>
-                <ThemedView
-                  className="flex flex-col gap-2 w-full rounded-lg"
-                >
+                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -115,16 +101,17 @@ export function ChatConfigurationModal(
                   </ThemedText>
                   <ThemedChatInput
                     value={modifiedConfiguration.userName}
-                    onUpdate={(userName: string) => setModifiedConfiguration({
-                      ...modifiedConfiguration, userName
-                    })}
+                    onUpdate={(userName: string) =>
+                      setModifiedConfiguration({
+                        ...modifiedConfiguration,
+                        userName,
+                      })
+                    }
                     placeholder="Name"
                     className="p-3"
                   />
                 </ThemedView>
-                <ThemedView
-                  className="flex flex-col gap-2 w-full rounded-lg"
-                >
+                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -134,16 +121,17 @@ export function ChatConfigurationModal(
                   </ThemedText>
                   <ThemedChatInput
                     value={modifiedConfiguration.aiName}
-                    onUpdate={(aiName: string) => setModifiedConfiguration({
-                      ...modifiedConfiguration, aiName
-                    })}
+                    onUpdate={(aiName: string) =>
+                      setModifiedConfiguration({
+                        ...modifiedConfiguration,
+                        aiName,
+                      })
+                    }
                     placeholder="Name of the assistant"
                     className="p-3"
                   />
                 </ThemedView>
-                <ThemedView
-                  className="flex flex-col gap-2 w-full rounded-lg"
-                >
+                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -153,16 +141,17 @@ export function ChatConfigurationModal(
                   </ThemedText>
                   <ThemedChatInput
                     value={modifiedConfiguration.description}
-                    onUpdate={(description: string) => setModifiedConfiguration({
-                      ...modifiedConfiguration, description
-                    })}
+                    onUpdate={(description: string) =>
+                      setModifiedConfiguration({
+                        ...modifiedConfiguration,
+                        description,
+                      })
+                    }
                     placeholder="Describe traits"
-                    className="p-3 min-h-28"
+                    className="min-h-28 p-3"
                   />
                 </ThemedView>
-                <ThemedView
-                  className="flex flex-col gap-2 w-full rounded-lg"
-                >
+                <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
                   <ThemedText
                     className="pl-2"
                     lightColor={Colors.light.textSecondary}
@@ -172,15 +161,18 @@ export function ChatConfigurationModal(
                   </ThemedText>
                   <ThemedChatInput
                     value={modifiedConfiguration.role}
-                    onUpdate={(role: string) => setModifiedConfiguration({
-                      ...modifiedConfiguration, role
-                    })}
+                    onUpdate={(role: string) =>
+                      setModifiedConfiguration({
+                        ...modifiedConfiguration,
+                        role,
+                      })
+                    }
                     placeholder="coach, friend. teacher, therapist"
                     className="p-3"
                   />
                 </ThemedView>
               </View>
-            }
+            )}
           </ScrollView>
         </KeyboardAvoidingView>
       </TouchableWithoutFeedback>
