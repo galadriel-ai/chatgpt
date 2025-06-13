@@ -54,7 +54,7 @@ async def chat(
     tags=[TAG],
 )
 async def get_chats(
-    user: User = Depends(authentication.validate_session_token),
+    user: User = Depends(authentication.get_current_user),
     chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
 ):
     return await chats_service.execute(

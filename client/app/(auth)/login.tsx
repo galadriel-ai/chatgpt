@@ -35,9 +35,11 @@ export default function LoginScreen() {
     
     try {
       await GoogleSignin.hasPlayServices()
+      console.log('Google Sign In started')
       const userInfo = await GoogleSignin.signIn()
-
+      console.log('Google Sign In completed')
       if (userInfo && userInfo.idToken) {
+        console.log('Google Sign In sccessful')
         // Call backend authentication with correct field names
         const authResponse = await api.authenticateWithGoogle({
           id_token: userInfo.idToken,
@@ -56,7 +58,10 @@ export default function LoginScreen() {
           })
           router.replace('/(main)')
         } else {
-          Alert.alert('Authentication Failed', 'Unable to authenticate with Google. Please try again.')
+          Alert.alert(
+            'Authentication Failed',
+            'Unable to authenticate with Google. Please try again.'
+          )
         }
       }
     } catch (error: any) {

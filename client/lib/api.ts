@@ -36,6 +36,7 @@ export interface AppleAuthData {
 
 async function authenticateWithGoogle(authData: GoogleAuthData): Promise<AuthResponse | null> {
   try {
+    console.log('Google auth request started')
     const response = await fetch(`${API_BASE_URL}/auth/google`, {
       method: 'POST',
       headers: {
@@ -43,7 +44,7 @@ async function authenticateWithGoogle(authData: GoogleAuthData): Promise<AuthRes
       },
       body: JSON.stringify(authData),
     })
-
+    console.log('Google auth request completed')
     if (!response.ok) {
       const errorData = await response.json()
       console.error('Google auth error:', errorData)
