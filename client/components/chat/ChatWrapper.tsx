@@ -6,7 +6,7 @@ import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/com
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect, useRef, useState } from 'react'
-import { Chat, Message } from '@/types/chat'
+import { Chat, ChatConfiguration, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
 import { useRouter } from 'expo-router'
@@ -132,8 +132,10 @@ export function ChatWrapper() {
           setActiveChat({
             ...newChat,
             messages: newMessages,
+            configuration: chatConfigurationId ? chatConfiguration : null,
           })
           addChat(newChat)
+          isActiveChatSet = true
         } else if (chunk.content) {
           setBackgroundProcessingMessage('')
           content += chunk.content
@@ -149,7 +151,7 @@ export function ChatWrapper() {
         // Whatever other chunks we get
       }
 
-      api.streamChatResponse(
+      await api.streamChatResponse(
         {
           chatId: activeChat?.id || null,
           configurationId: chatConfigurationId,
@@ -249,7 +251,16 @@ export function ChatWrapper() {
           >
             {messages.map((m, i) => (
               <ThemedView key={`msg-${i}`} className="w-full">
-                <ChatMessage message={m} />
+                <ChatMessage
+                  message={m}
+                  configuration={
+                    activeChat
+                      ? activeChat.configuration
+                      : isChatConfigurationEnabled && chatConfiguration
+                        ? chatConfiguration
+                        : null
+                  }
+                />
               </ThemedView>
             ))}
 
@@ -276,14 +287,27 @@ export function ChatWrapper() {
   )
 }
 
-function ChatMessage({ message }: { message: Message }) {
+function ChatMessage({
+  message,
+  configuration,
+}: {
+  message: Message
+  configuration: ChatConfiguration | null
+}) {
   if (message.role === 'system') return null
 
   if (message.role === 'assistant' && !message.content.trim()) {
     return null
   }
 
-  const role = message.role === 'user' ? 'You' : 'Your Sidekik'
+  const role =
+    message.role === 'user'
+      ? configuration
+        ? configuration.userName
+        : 'You'
+      : configuration
+        ? configuration.aiName
+        : 'Your Sidekik'
 
   return (
     <ThemedView className="flex flex-row gap-4 py-3">

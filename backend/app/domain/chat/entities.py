@@ -158,8 +158,28 @@ class Message:
 
 
 @dataclass
+class ChatConfigurationInput:
+    user_name: str
+    ai_name: str
+    description: str
+    role: str
+
+
+@dataclass
+class ChatConfiguration(ChatConfigurationInput):
+    id: UUID
+
+
+@dataclass
 class ChatDetails(Chat):
     messages: List[Message]
+    configuration: Optional[ChatConfiguration]
+
+
+@dataclass
+class GetChatsOutput:
+    chats: List[Chat]
+    configuration: Optional[ChatConfiguration]
 
 
 @dataclass
@@ -175,12 +195,6 @@ class ChatConfiguration(ChatConfigurationInput):
     id: UUID
 
 
-@dataclass
-class GetChatsOutput:
-    chats: List[Chat]
-    configuration: Optional[ChatConfiguration]
-
-
 class Model(Enum):
     DEFAULT_MODEL = SUPPORTED_MODELS["default"]
     THINK_MODEL = SUPPORTED_MODELS["think"]
@@ -188,6 +202,16 @@ class Model(Enum):
 
     def __str__(self) -> str:
         return self.value
+
+    @property
+    def timeout(self) -> int:
+        if self == Model.DEFAULT_MODEL:
+            return 20
+        elif self == Model.THINK_MODEL:
+            return 30
+        elif self == Model.VLM_MODEL:
+            return 60
+        return 20
 
 
 @dataclass

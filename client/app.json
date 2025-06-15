@@ -15,7 +15,9 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
+            "CFBundleURLSchemes": [
+              "${GOOGLE_IOS_URL_SCHEME}"
+            ]
           }
         ],
         "UIBackgroundModes": ["fetch", "remote-notification"]
@@ -59,7 +61,8 @@
           "photosPermission": "The app accesses your photos to allow you to select and upload images for chat conversations.",
           "cameraPermission": "The app accesses your camera to allow you to take and upload photos for chat conversations."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true,
