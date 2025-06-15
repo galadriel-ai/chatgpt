@@ -99,7 +99,7 @@ async def execute(
         chat_id=chat.id,
         role="assistant",
         content="",
-        model=model.id,
+        model=model.id.value,
         attachment_ids=[],
     )
 
@@ -112,7 +112,7 @@ async def execute(
 
         try:
             async for chunk in llm_repository.completion(
-                messages_to_llm, model, chat_input.is_search_enabled
+                messages_to_llm, model, chat_input.is_search_enabled or False
             ):
                 if isinstance(chunk, ChunkOutput):
                     llm_message.content += chunk.content

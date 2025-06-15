@@ -200,3 +200,12 @@ class ModelConfig:
 class ModelSpec:
     id: Model
     config: ModelConfig
+
+
+class Intent(Enum):
+    DEFAULT = "default"
+    IMAGE_COMPREHENSION = "image_comprehension"
+    IMAGE_GENERATION = "image_generation"
+
+    def __str__(self) -> str:
+        return self.value
