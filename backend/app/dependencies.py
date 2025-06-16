@@ -17,9 +17,11 @@ def get_file_repository() -> FileRepository:
 
 def get_llm_repository() -> LlmRepository:
     return LlmRepository(
-        settings.LLM_API_KEY,
-        settings.SERPAPI_API_KEY,
-        settings.LLM_BASE_URL,
+        api_key=settings.LLM_API_KEY,
+        search_api_key=settings.SERPAPI_API_KEY,
+        base_url=settings.LLM_BASE_URL,
+        fallback_api_key=settings.FALLBACK_LLM_API_KEY,
+        fallback_base_url=settings.FALLBACK_LLM_BASE_URL,
     )
 
 

@@ -67,9 +67,9 @@ async def execute(
         id=model_id,
         config=ModelConfig(),
     )
-    if model.id.value not in SUPPORTED_MODELS.values():
+    if model.id.value not in SUPPORTED_MODELS:
         yield ErrorChunk(
-            error=f"Unsupported model, supported models are {', '.join(SUPPORTED_MODELS.values())}. But got {model.id.value}"
+            error=f"Unsupported model type, supported model types are {', '.join(SUPPORTED_MODELS.keys())}. But got {model.id.value}"
         )
         return
     if rate_limit_error := await get_rate_limit_error_use_case.execute(
