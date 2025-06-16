@@ -61,7 +61,7 @@ SUMMARIZATION_MODEL = ModelSpec(
     config=ModelConfig(),
 )
 
-SUMMARIZATION_FREQUENCY_SECONDS = 1800
+SUMMARIZATION_FREQUENCY_SECONDS = 900
 
 logger = api_logger.get()
 

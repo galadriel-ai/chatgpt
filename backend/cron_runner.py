@@ -14,7 +14,7 @@ async def start_cron_jobs():
     connection.init_defaults()
 
     tasks = [
-        (_run_character_summarization_job, "Chat summarization job", 1800),
+        (_run_character_summarization_job, "Chat summarization job", 900),
     ]
 
     await asyncio.gather(*[_cron_runner(*t) for t in tasks])
