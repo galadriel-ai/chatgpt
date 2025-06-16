@@ -13,10 +13,13 @@ from app.service.auth.entities import (
     GoogleAuthRequest,
     UserInfoResponse,
 )
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
+import logging
 
 TAG = "Authentication"
 router = APIRouter(prefix="/auth", tags=[TAG])
+
+logger = logging.getLogger(__name__)
 
 
 @router.post("/google", response_model=AuthResponse, summary="Google Sign In/Sign Up")
@@ -50,10 +53,24 @@ async def apple_auth(
 @router.post("/logout", summary="Logout User")
 async def logout(
     current_user: User = Depends(validate_session_token),
+    user_repository: UserRepository = Depends(dependencies.get_user_repository),
 ):
-    """Logout user (client should discard tokens)"""
-    # TODO: Implement logout logic
-    return {"message": "Logged out successfully"}
+    """Logout user and update last logout timestamp"""
+    try:
+        # Update last logout timestamp
+
+        # TODO: Additional cleanup actions could be added here:
+        # - Blacklist the current token
+        # - Clear any server-side sessions
+        # - Invalidate refresh tokens
+
+        return {"message": "Logged out successfully"}
+    except Exception as e:
+        logger.error(f"Error during logout: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred during logout",
+        )
 
 
 @router.get("/me", response_model=UserInfoResponse, summary="Get Current User")

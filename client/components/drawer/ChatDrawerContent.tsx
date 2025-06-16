@@ -11,11 +11,15 @@ import { RoleUserIcon } from '@/components/icons/Icons'
 import { useState } from 'react'
 import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
 import { ThemedButton } from '@/components/theme/ThemedButton'
+import { api } from '@/lib/api'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const router = useRouter()
+  const backgroundColor = useThemeColor({}, 'backgroundSecondary')
+  const textColor = useThemeColor({}, 'text')
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
 
@@ -27,6 +31,21 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
 
   const onConfigureChats = async () => {
     setIsModalVisible(true)
+  }
+
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint
+      if (user?.accessToken) {
+        await api.logout(user.accessToken, user.refreshToken)
+      }
+      // Clear local state and redirect
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if the backend call fails, we should still clear local state
+      await logout()
+    }
   }
 
   return (
@@ -66,26 +85,37 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
             </Pressable>
           ))}
         </View>
-        </DrawerContentScrollView>
-        <View className="w-full p-4">
-          <ThemedView className="flex-row items-center gap-3">
-            {user?.profile_picture ? (
-              <Image
-                source={{ uri: user.profile_picture }}
-                className="h-10 w-10 rounded-full"
-                alt="Profile picture"
-              />
-            ) : (
-              // A default profile picture with the first letter of the user's name
-              <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
-                <ThemedText className="text-lg text-white">
-                  {user?.name?.[0]?.toUpperCase() ?? 'G'}
-                </ThemedText>
-              </ThemedView>
-            )}
-            <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
-          </ThemedView>
-        </View>
+      </DrawerContentScrollView>
+      <View className="w-full p-4">
+        <ThemedView className="flex-row items-center gap-3">
+          {user?.profile_picture ? (
+            <Image
+              source={{ uri: user.profile_picture }}
+              className="h-10 w-10 rounded-full"
+              alt="Profile picture"
+            />
+          ) : (
+            // A default profile picture with the first letter of the user's name
+            <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+              <ThemedText className="text-lg text-white">
+                {user?.name?.[0]?.toUpperCase() ?? 'G'}
+              </ThemedText>
+            </ThemedView>
+          )}
+          <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
+        </ThemedView>
+        <Pressable
+          onPress={handleLogout}
+          className="mt-4 rounded-lg bg-red-500 px-4 py-2"
+          style={({ pressed }) => [
+            {
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <ThemedText className="text-center text-white">Logout</ThemedText>
+        </Pressable>
       </View>
+    </View>
   )
 }

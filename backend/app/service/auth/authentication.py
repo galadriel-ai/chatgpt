@@ -27,6 +27,8 @@ async def validate_session_token(
 
         # Get user from database
         user = await user_repository.get_by_id(UUID(token_payload.user_id))
+        logger.debug(f"User validated: {user}")
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"
