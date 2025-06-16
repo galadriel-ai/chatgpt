@@ -1,15 +1,21 @@
-from typing import AsyncGenerator, Optional
+import asyncio
+from typing import AsyncGenerator
 from typing import Dict
 from typing import List
-import asyncio
+from typing import Optional
+
+import openai
+import serpapi
+from openai import AsyncOpenAI
+from openai import AsyncStream
+from openai import NotGiven
 
 from app import api_logger
-import openai
-from openai import AsyncOpenAI, AsyncStream
-from app.domain.chat.entities import ChunkOutput, ToolOutput, ModelSpec
+from app.domain.chat.entities import ChunkOutput
+from app.domain.chat.entities import ModelSpec
+from app.domain.chat.entities import ToolOutput
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.exceptions import LlmError
-import serpapi
 
 logger = api_logger.get()
 
@@ -44,7 +50,7 @@ class LlmRepository:
                     temperature=model.config.temperature,
                     max_tokens=model.config.max_tokens,
                     response_format=response_format,
-                    tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
+                    tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else NotGiven(),
                     stream=True,
                 ),
                 timeout=model.id.timeout,
@@ -86,6 +92,25 @@ class LlmRepository:
         except openai.APIError as e:
             logger.error(f"API error: {str(e)}")
             raise LlmError(message=e.body["message"])
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise LlmError(
+                message="An unexpected error occurred. Please try again in a few moments."
+            )
+
+    async def completion_nostream(
+        self,
+        messages: List[Dict],
+        model: ModelSpec,
+    ) -> str:
+        try:
+            response_content = ""
+            async for chunk in self.completion(
+                messages=messages, model=model, is_search_enabled=False
+            ):
+                if type(chunk) is ChunkOutput:
+                    response_content += chunk.content
+            return response_content
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}")
             raise LlmError(

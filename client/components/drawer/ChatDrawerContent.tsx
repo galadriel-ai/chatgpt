@@ -37,7 +37,7 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 46 }}
       >
         <View className="flex flex-row justify-between pt-8">
-          <ThemedButton title={'Configure chats'} onPress={onConfigureChats} />
+          <ThemedButton title={'Customize character'} onPress={onConfigureChats} />
         </View>
         <View className="p-4">
           <ThemedText

@@ -50,6 +50,7 @@ SELECT
     title,
     created_at
 FROM chat
+WHERE user_profile_id = :user_id
 ORDER BY id DESC;
 """
 

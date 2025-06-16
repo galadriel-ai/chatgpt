@@ -9,7 +9,13 @@ async def execute(
     user: User,
     repository: ChatConfigurationRepository,
 ) -> ChatConfiguration:
-    configuration_id = await repository.insert(configuration_input, user.uid)
+    existing_configuration = await repository.get_latest_by_user_id(user.uid)
+    # Only works if there is 1 configuration per user
+    if existing_configuration:
+        configuration_id = existing_configuration.id
+        await repository.update(configuration_input, configuration_id)
+    else:
+        configuration_id = await repository.insert(configuration_input, user.uid)
     return ChatConfiguration(
         id=configuration_id,
         user_name=configuration_input.user_name,
