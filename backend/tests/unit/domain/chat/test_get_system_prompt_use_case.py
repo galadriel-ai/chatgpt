@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock
 from uuid_extensions import uuid7
 
 from app.domain.chat import get_system_prompt_use_case as use_case
-from app.domain.chat.entities import ChatConfiguration
 from app.domain.chat.entities import ChatConfigurationSummary
 from app.domain.chat.entities import ChatInput
 from tests.unit import testing_utils
