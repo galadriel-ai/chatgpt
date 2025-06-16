@@ -58,6 +58,18 @@ class BackgroundChunk(ChatOutputChunk):
 
 
 @dataclass
+class GenerationChunk(ChatOutputChunk):
+    generation_id: str
+    generation_message: str
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "generation_id": self.generation_id,
+            "generation_message": self.generation_message,
+        }
+
+
+@dataclass
 class NewChatOutput(ChatOutputChunk):
     chat_id: UUID
 
@@ -230,6 +242,7 @@ class Intent(Enum):
     DEFAULT = "default"
     IMAGE_COMPREHENSION = "image_comprehension"
     IMAGE_GENERATION = "image_generation"
+    VIDEO_GENERATION = "video_generation"
 
     def __str__(self) -> str:
         return self.value

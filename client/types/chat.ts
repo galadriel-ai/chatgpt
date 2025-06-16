@@ -6,6 +6,10 @@ export type Message = {
   attachmentIds?: string[] // Only store file IDs
 }
 
+export interface MessageWithImage extends Message {
+  imageUrl?: string
+}
+
 export interface Chat {
   id: string
   title: string
@@ -28,4 +32,10 @@ export interface ChatDetails extends Chat {
 export interface UserInfo {
   chats: Chat[]
   chatConfiguration: ChatConfiguration | null
+}
+
+export interface JobStatus {
+  id: string
+  status: string
+  url: string | null
 }

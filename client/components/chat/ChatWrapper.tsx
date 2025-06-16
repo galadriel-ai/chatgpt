@@ -1,4 +1,16 @@
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Animated } from 'react-native'
+import React from 'react'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Animated,
+  Image,
+  Modal,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
@@ -6,12 +18,14 @@ import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/com
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { useEffect, useRef, useState } from 'react'
-import { Chat, ChatConfiguration, Message } from '@/types/chat'
+import { Chat, ChatConfiguration, Message, MessageWithImage } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
 import { useRouter } from 'expo-router'
 import { usePostHog } from 'posthog-react-native'
 import { EVENTS } from '@/lib/analytics/posthog'
+import * as MediaLibrary from 'expo-media-library'
+import * as FileSystem from 'expo-file-system'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -31,6 +45,7 @@ export function ChatWrapper() {
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null)
 
   useEffect(() => {
     if (selectedChat && !activeChat) {
@@ -69,6 +84,36 @@ export function ChatWrapper() {
         scrollToBottom(false)
       }, 100)
     }
+  }
+
+  // Poll job status and update message with imageUrl when ready
+  const pollJobStatus = async (generationId: string) => {
+    let interval: ReturnType<typeof setInterval> | null = null
+    const poll = async () => {
+      const status = await api.getJobStatus(generationId)
+      if (status?.url) {
+        setActiveChat(chat => {
+          if (!chat) return null
+          setBackgroundProcessingMessage('')
+          return {
+            ...chat,
+            messages: [
+              ...chat.messages,
+              {
+                id: `${Date.now()}`,
+                role: 'assistant',
+                content: '',
+                imageUrl: status.url || undefined,
+                attachmentIds: [],
+              },
+            ],
+          }
+        })
+        if (interval) clearInterval(interval)
+      }
+    }
+    interval = setInterval(poll, 2000)
+    await poll()
   }
 
   const onMessage = async (
@@ -147,6 +192,10 @@ export function ChatWrapper() {
           posthog.capture(EVENTS.MESSAGE_ERROR, { error: chunk.error })
         } else if (chunk.background_processing) {
           setBackgroundProcessingMessage(chunk.background_processing)
+        } else if (chunk.generation_message && chunk.generation_id) {
+          setBackgroundProcessingMessage(chunk.generation_message)
+          // Find the index of the last message (the assistant message)
+          pollJobStatus(chunk.generation_id)
         }
         // Whatever other chunks we get
       }
@@ -228,6 +277,10 @@ export function ChatWrapper() {
     })
   }
 
+  if (typeof window !== 'undefined') {
+    ;(window as any).setFullscreenImage = setFullscreenImage
+  }
+
   return (
     <ThemedView className="flex-1 px-2">
       <ThemedView className="flex w-full flex-row items-center justify-between px-2 pb-4 pt-8">
@@ -260,6 +313,7 @@ export function ChatWrapper() {
                         ? chatConfiguration
                         : null
                   }
+                  setFullscreenImage={setFullscreenImage}
                 />
               </ThemedView>
             ))}
@@ -283,6 +337,43 @@ export function ChatWrapper() {
           />
         </ThemedView>
       </KeyboardAvoidingView>
+      <Modal visible={!!fullscreenImage} transparent={true} animationType="fade">
+        <View style={styles.fullscreenContainer}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => setFullscreenImage(null)}>
+            <ThemedText style={{ fontSize: 32, color: 'white' }}>×</ThemedText>
+          </TouchableOpacity>
+          {fullscreenImage && (
+            <>
+              <Image
+                source={{ uri: fullscreenImage }}
+                style={styles.fullscreenImage}
+                resizeMode="contain"
+              />
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={async () => {
+                  try {
+                    const { status } = await MediaLibrary.requestPermissionsAsync()
+                    if (status !== 'granted') {
+                      alert('Permission to access gallery is required!')
+                      return
+                    }
+                    // Download image to a local file
+                    const fileUri = FileSystem.cacheDirectory + 'downloaded_image.jpg'
+                    await FileSystem.downloadAsync(fullscreenImage, fileUri)
+                    await MediaLibrary.saveToLibraryAsync(fileUri)
+                    alert('Image saved to gallery!')
+                  } catch (e) {
+                    alert('Failed to save image: ' + e)
+                  }
+                }}
+              >
+                <ThemedText style={{ color: 'white' }}>Save to Gallery</ThemedText>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </Modal>
     </ThemedView>
   )
 }
@@ -290,13 +381,15 @@ export function ChatWrapper() {
 function ChatMessage({
   message,
   configuration,
+  setFullscreenImage,
 }: {
-  message: Message
+  message: MessageWithImage
   configuration: ChatConfiguration | null
+  setFullscreenImage: (url: string) => void
 }) {
   if (message.role === 'system') return null
 
-  if (message.role === 'assistant' && !message.content.trim()) {
+  if (message.role === 'assistant' && !message.content.trim() && !message.imageUrl) {
     return null
   }
 
@@ -316,8 +409,16 @@ function ChatMessage({
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
-        <ThemedText>{message.content}</ThemedText>
-
+        {message.content && <ThemedText>{message.content}</ThemedText>}
+        {message.imageUrl && (
+          <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
+            <Image
+              source={{ uri: message.imageUrl }}
+              style={{ width: 200, height: 200, borderRadius: 8, marginTop: 8 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        )}
         {message.attachmentIds?.length ? (
           <ThemedView className="mt-2">
             <ThemedText className="text-sm opacity-70">
@@ -400,3 +501,28 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
     </ThemedView>
   )
 }
+
+const styles = StyleSheet.create({
+  fullscreenContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: '90%',
+    height: '70%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 2,
+  },
+  saveButton: {
+    marginTop: 20,
+    backgroundColor: '#333',
+    padding: 12,
+    borderRadius: 8,
+  },
+})

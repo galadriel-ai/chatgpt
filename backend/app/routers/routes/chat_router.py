@@ -10,6 +10,8 @@ from app.repository.chat_configuration_repository import ChatConfigurationReposi
 from app.repository.chat_repository import ChatRepository
 from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
+from app.repository.generation_repository import GenerationRepository
+from app.repository.wavespeed_repository import WavespeedRepository
 from app.service.auth import authentication
 from app.service.chat import chat_details_service
 from app.service.chat import chat_service
@@ -38,6 +40,12 @@ async def chat(
     configuration_repository: ChatConfigurationRepository = Depends(
         dependencies.get_chat_configuration_repository
     ),
+    generation_repository: GenerationRepository = Depends(
+        dependencies.get_generation_repository
+    ),
+    wavespeed_repository: WavespeedRepository = Depends(
+        dependencies.get_wavespeed_repository
+    ),
 ):
     headers = {
         "X-Content-Type-Options": "nosniff",
@@ -52,6 +60,8 @@ async def chat(
             chat_repository,
             file_repository,
             configuration_repository,
+            generation_repository,
+            wavespeed_repository,
         ),
         headers=headers,
         media_type="text/plain",

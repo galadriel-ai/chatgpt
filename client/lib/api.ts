@@ -1,7 +1,7 @@
 import { API_BASE_URL as ENV_API_BASE_URL } from '@env'
 import * as SecureStore from 'expo-secure-store'
 import { router } from 'expo-router'
-import { Chat, ChatConfiguration, ChatDetails, UserInfo } from '@/types/chat'
+import { Chat, ChatConfiguration, ChatDetails, JobStatus, UserInfo } from '@/types/chat'
 
 // Constants for secure storage keys
 const ACCESS_TOKEN_KEY = 'access_token'
@@ -389,6 +389,8 @@ export interface ChatChunk {
   content?: string
   error?: string
   background_processing?: string
+  generation_id?: string
+  generation_message?: string
 }
 
 const streamChatResponse = async (
@@ -537,6 +539,28 @@ async function uploadFile(
   }
 }
 
+const getJobStatus = async (jobId: string): Promise<JobStatus | null> => {
+  try {
+    const { accessToken, refreshToken } = await getTokens()
+    if (!accessToken) {
+      return null
+    }
+    const response = await fetch(`${API_BASE_URL}/job/${jobId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+    if (!response.ok) return null
+    const responseJson: JobStatus = await response.json()
+    return responseJson
+  } catch (e) {
+    console.error('Error fetching job status:', e)
+    return null
+  }
+}
+
 const createChatConfiguration = async (
   configuration: ChatConfiguration
 ): Promise<ChatConfiguration | null> => {
@@ -581,6 +605,7 @@ const api = {
   refreshToken,
   logout,
   getCurrentUser,
+  getJobStatus,
   // Chat
   getChats,
   getUserInfo,

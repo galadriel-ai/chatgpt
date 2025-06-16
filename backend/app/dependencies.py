@@ -4,6 +4,9 @@ from app.repository.chat_repository import ChatRepository
 from app.repository.connection import get_session_provider
 from app.repository.connection import get_session_provider_read
 from app.repository.file_repository import FileRepository
+from app.repository.generation_repository import GenerationRepository
+from app.repository.cloud_storage_repository import CloudStorageRepository
+from app.repository.wavespeed_repository import WavespeedRepository
 from app.repository.llm_repository import LlmRepository
 from app.repository.user_repository import UserRepository
 
@@ -41,4 +44,26 @@ def get_chat_configuration_repository() -> ChatConfigurationRepository:
     return ChatConfigurationRepository(
         get_session_provider(),
         get_session_provider_read(),
+    )
+
+
+def get_generation_repository() -> GenerationRepository:
+    return GenerationRepository(
+        get_session_provider(),
+        get_session_provider_read(),
+    )
+
+
+def get_wavespeed_repository() -> WavespeedRepository:
+    if not settings.WAVESPEED_API_KEY:
+        raise ValueError("WAVESPEED_API_KEY is not set")
+    return WavespeedRepository(
+        settings.WAVESPEED_API_KEY,
+    )
+
+
+def get_cloud_storage_repository() -> CloudStorageRepository:
+    return CloudStorageRepository(
+        settings.GCS_BUCKET,
+        settings.GOOGLE_CREDENTIALS,
     )

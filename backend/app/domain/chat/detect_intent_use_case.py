@@ -1,11 +1,13 @@
-from typing import List
-
-from app.domain.chat.entities import Intent, Model, ModelConfig, ModelSpec
+from app.domain.chat.entities import ChunkOutput
+from app.domain.chat.entities import Intent
+from app.domain.chat.entities import Model
+from app.domain.chat.entities import ModelConfig
+from app.domain.chat.entities import ModelSpec
 from app.repository.llm_repository import LlmRepository
 from app.dependencies import get_llm_repository
 
 PROMPT_TEMPLATE = """
-You are a helpful assistant that can detect the intent of a message.
+You are a helpful assistant that can detect the intent of a message. Respond only with the intent.
 
 The intent can be one of the following:
 \t{intents}
@@ -29,11 +31,18 @@ async def execute(
         id=Model.DEFAULT_MODEL,
         config=ModelConfig(),
     )
-    async for chunk in llm_repository.completion([{"role": "system", "content": prompt}], model):
-        print(chunk)
-    return Intent("default")
+    response = ""
+    async for chunk in llm_repository.completion(
+        [{"role": "system", "content": prompt}], model
+    ):
+        if isinstance(chunk, ChunkOutput) and chunk.content:
+            response += chunk.content
+
+    intent = Intent(response)
+    return intent
 
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(execute("Draw a monkey", get_llm_repository()))
