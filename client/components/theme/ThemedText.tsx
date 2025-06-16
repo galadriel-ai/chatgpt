@@ -49,11 +49,11 @@ export function ThemedText({
       className={combinedClassName}
       style={[
         { color },
-        effectiveType === 'default' ? styles.default : undefined,
-        effectiveType === 'title' ? styles.title : undefined,
-        effectiveType === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        effectiveType === 'subtitle' ? styles.subtitle : undefined,
-        effectiveType === 'link' ? styles.link : undefined,
+        effectiveType === 'default' ? ThemedTextStyles.default : undefined,
+        effectiveType === 'title' ? ThemedTextStyles.title : undefined,
+        effectiveType === 'defaultSemiBold' ? ThemedTextStyles.defaultSemiBold : undefined,
+        effectiveType === 'subtitle' ? ThemedTextStyles.subtitle : undefined,
+        effectiveType === 'link' ? ThemedTextStyles.link : undefined,
         style,
       ]}
       {...rest}
@@ -61,7 +61,7 @@ export function ThemedText({
   )
 }
 
-const styles = StyleSheet.create({
+export const ThemedTextStyles = StyleSheet.create({
   default: {
     fontSize: 16,
     lineHeight: 24,

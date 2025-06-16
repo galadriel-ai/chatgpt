@@ -5,6 +5,7 @@ import { DrawerActions, useNavigation } from '@react-navigation/native'
 import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
+import { ThemedMarkdownText } from '@/components/theme/ThemedMarkdownText'
 import { useEffect, useRef, useState } from 'react'
 import { Chat, ChatConfiguration, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
@@ -316,7 +317,7 @@ function ChatMessage({
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
-        <ThemedText>{message.content}</ThemedText>
+        <ThemedMarkdownText content={message.content} />
 
         {message.attachmentIds?.length ? (
           <ThemedView className="mt-2">
