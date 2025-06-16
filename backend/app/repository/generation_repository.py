@@ -17,6 +17,7 @@ SQL_INSERT = """
 INSERT INTO generation (
     id,
     user_profile_id,
+    chat_id,
     type,
     prompt,
     status,
@@ -27,6 +28,7 @@ INSERT INTO generation (
 ) VALUES (
     :id,
     :user_profile_id,
+    :chat_id,
     :type,
     :prompt,
     :status,
@@ -41,6 +43,7 @@ SQL_GET = """
 SELECT 
     id,
     user_profile_id,
+    chat_id,
     type,
     prompt,
     status,
@@ -71,6 +74,7 @@ class GenerationRepository:
     async def insert(
         self,
         user_id: UUID,
+        chat_id: Optional[UUID],
         type: GenerationType,
         prompt: str,
         status: GenerationStatus,
@@ -82,6 +86,7 @@ class GenerationRepository:
         data = {
             "id": id,
             "user_profile_id": user_id,
+            "chat_id": chat_id,
             "type": type,
             "prompt": prompt,
             "status": status,
@@ -96,6 +101,7 @@ class GenerationRepository:
         return GenerationOutput(
             id=id,
             user_id=user_id,
+            chat_id=chat_id,
             type=type,
             prompt=prompt,
             status=status,
@@ -116,6 +122,7 @@ class GenerationRepository:
                 return GenerationOutput(
                     id=row.id,
                     user_id=row.user_profile_id,
+                    chat_id=row.chat_id,
                     type=row.type,
                     prompt=row.prompt,
                     status=row.status,

@@ -93,11 +93,20 @@ async def execute(
         chat_id=chat.id,
     )
 
+    messages = await _get_existing_messages(chat, chat_repository)
+    new_messages = await _get_new_messages(
+        chat_input, chat, user, messages, configuration_repository
+    )
+
     match intent:
         case Intent.IMAGE_GENERATION:
             generation_output = await generate_image_use_case.execute(
                 user,
-                GenerationInput(type=GenerationType.IMAGE, prompt=chat_input.content),
+                GenerationInput(
+                    type=GenerationType.IMAGE,
+                    prompt=chat_input.content,
+                    chat_id=chat.id,
+                ),
                 generation_repository,
                 wavespeed_repository,
             )
@@ -105,17 +114,13 @@ async def execute(
                 generation_id=str(generation_output.id),
                 generation_message="Generating image...",
             )
+            await chat_repository.insert_messages(new_messages)
             return
         case _:
             if images:
                 yield BackgroundChunk(background_processing="Processing image(s)...")
             if chat_input.think_model:
                 yield BackgroundChunk(background_processing="Thinking...")
-
-    messages = await _get_existing_messages(chat, chat_repository)
-    new_messages = await _get_new_messages(
-        chat_input, chat, user, messages, configuration_repository
-    )
 
     llm_input_messages = [deepcopy(m) for m in messages]
     llm_input_messages.extend([deepcopy(m) for m in new_messages])

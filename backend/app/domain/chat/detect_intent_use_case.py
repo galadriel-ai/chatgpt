@@ -26,7 +26,6 @@ async def execute(
     # get all enum values as a string
     intents = [intent.value for intent in Intent]
     prompt = PROMPT_TEMPLATE.format(intents="\n\t".join(intents), message=message)
-    print(prompt)
     model = ModelSpec(
         id=Model.DEFAULT_MODEL,
         config=ModelConfig(),

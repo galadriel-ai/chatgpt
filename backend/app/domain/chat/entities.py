@@ -128,6 +128,7 @@ class Message:
     role: Literal["system", "user", "assistant", "tool"]
     attachment_ids: List[UUID]
     content: Optional[str] = None
+    image_url: Optional[str] = None
     model: Optional[str] = None
     tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None

@@ -27,8 +27,8 @@ class WavespeedRepository:
         self,
         prompt: str,
     ) -> WavespeedGenerationOutput:
-        with httpx.Client() as client:
-            response = client.post(
+        async with httpx.AsyncClient() as session:
+            response = await session.post(
                 "https://api.wavespeed.ai/api/v3/wavespeed-ai/flux-kontext-max/text-to-image",
                 headers={
                     "Content-Type": "application/json",

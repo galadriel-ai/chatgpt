@@ -23,12 +23,14 @@ class GenerationStatus(Enum):
 class GenerationInput:
     type: GenerationType
     prompt: str
+    chat_id: Optional[UUID] = None
 
 
 @dataclass
 class GenerationOutput:
     id: UUID
     user_id: UUID
+    chat_id: Optional[UUID]
     type: GenerationType
     prompt: str
     status: GenerationStatus

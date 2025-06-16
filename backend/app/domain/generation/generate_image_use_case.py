@@ -17,9 +17,13 @@ async def execute(
     status = GenerationStatus(response.status)
     return await repository.insert(
         user.uid,
+        request.chat_id,
         GenerationType.IMAGE,
         request.prompt,
         status,
-        {"wavespeed_id": response.id},
+        {
+            "wavespeed_id": response.id,
+            "original_prompt": request.prompt,
+        },
         None,
     )

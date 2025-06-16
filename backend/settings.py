@@ -62,3 +62,5 @@ STORAGE_MAX_FILE_SIZE = int(os.getenv("STORAGE_MAX_FILE_SIZE", "10485760"))
 GOOGLE_CREDENTIALS = "credentials.json"
 GCS_BUCKET = os.getenv("GCS_BUCKET", "chatgpt")
 WAVESPEED_API_KEY = os.getenv("WAVESPEED_API_KEY")
+if not WAVESPEED_API_KEY:
+    raise ValueError("WAVESPEED_API_KEY is not set")

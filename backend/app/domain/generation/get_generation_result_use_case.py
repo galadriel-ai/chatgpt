@@ -6,8 +6,10 @@ import httpx
 from uuid_extensions import uuid7
 
 import settings
+from app.domain.chat.entities import Message
 from app.domain.generation.entities import GenerationOutput
 from app.domain.generation.entities import GenerationStatus
+from app.repository.chat_repository import ChatRepository
 from app.repository.generation_repository import GenerationRepository
 from app.repository.cloud_storage_repository import CloudStorageRepository
 from app.repository.wavespeed_repository import WavespeedRepository
@@ -19,6 +21,7 @@ IMAGES_FOLDER = "images"
 async def execute(
     generation_id: UUID,
     repository: GenerationRepository,
+    chat_repository: ChatRepository,
     cloud_storage_repository: CloudStorageRepository,
     wavespeed_repository: WavespeedRepository,
 ) -> GenerationOutput:
@@ -30,12 +33,28 @@ async def execute(
     response = await wavespeed_repository.get_result(generation.data["wavespeed_id"])
     if response.status == "completed" and response.url:
         response.url = await upload_to_gcp(response.url, cloud_storage_repository)
+        if generation.chat_id:
+            # add assistant chat message with image url
+            await chat_repository.insert_messages(
+                [
+                    Message(
+                        id=uuid7(),
+                        attachment_ids=[],
+                        chat_id=generation.chat_id,
+                        role="assistant",
+                        content="",
+                        image_url=response.url,
+                    )
+                ]
+            )
+
     await repository.update(
         generation_id, GenerationStatus(response.status), response.url
     )
     return GenerationOutput(
         id=generation_id,
         user_id=generation.user_id,
+        chat_id=generation.chat_id,
         type=generation.type,
         prompt=generation.prompt,
         status=GenerationStatus(response.status),
@@ -53,7 +72,6 @@ async def upload_to_gcp(
     parsed_url = urlparse(download_url)
     original_image_name = unquote(parsed_url.path.split("/")[-1])
     new_image_name = await _generate_filename(original_image_name)
-    print(original_image_name, new_image_name)
     if not settings.is_production():
         return download_url
 

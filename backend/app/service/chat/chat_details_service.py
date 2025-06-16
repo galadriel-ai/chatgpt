@@ -32,6 +32,7 @@ async def execute(
                 content=m.content,
                 model=m.model,
                 attachment_ids=[str(a) for a in m.attachment_ids],
+                image_url=m.image_url,
             )
             for m in chat_details.messages
         ],

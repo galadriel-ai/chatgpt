@@ -336,6 +336,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
       role: 'system' | 'user' | 'assistant'
       content: string
       attachment_ids: string[]
+      image_url: string | null
     }[]
     configuration: ApiChatConfiguration | null
   }
@@ -358,6 +359,7 @@ async function getChatDetails(chatId: string): Promise<ChatDetails | null> {
           role: m.role,
           content: m.content,
           attachmentIds: m.attachment_ids,
+          imageUrl: m.image_url,
         }
       }),
       configuration: responseJson.configuration

@@ -19,7 +19,7 @@ import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
 import { ThemedMarkdownText } from '@/components/theme/ThemedMarkdownText'
 import { useEffect, useRef, useState } from 'react'
-import { Chat, ChatConfiguration, Message, MessageWithImage } from '@/types/chat'
+import { Chat, ChatConfiguration, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
 import { useRouter } from 'expo-router'
@@ -27,12 +27,14 @@ import { usePostHog } from 'posthog-react-native'
 import { EVENTS } from '@/lib/analytics/posthog'
 import * as MediaLibrary from 'expo-media-library'
 import * as FileSystem from 'expo-file-system'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
   const router = useRouter()
   const scrollViewRef = useRef<ScrollView>(null)
   const posthog = usePostHog()
+  const insets = useSafeAreaInsets();
 
   const {
     selectedChat,
@@ -339,19 +341,23 @@ export function ChatWrapper() {
         </ThemedView>
       </KeyboardAvoidingView>
       <Modal visible={!!fullscreenImage} transparent={true} animationType="fade">
-        <View style={styles.fullscreenContainer}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => setFullscreenImage(null)}>
-            <ThemedText style={{ fontSize: 32, color: 'white' }}>×</ThemedText>
+        <ThemedView
+          className="flex-1 items-center justify-center"
+        >
+          <TouchableOpacity
+            style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 20 }}
+            onPress={() => setFullscreenImage(null)}
+          >
+            <ThemedText style={{ fontSize: 32 }}>×</ThemedText>
           </TouchableOpacity>
           {fullscreenImage && (
             <>
               <Image
                 source={{ uri: fullscreenImage }}
-                style={styles.fullscreenImage}
-                resizeMode="contain"
+                style={{ width: '90%', aspectRatio: 1, maxHeight: '70%', resizeMode: 'contain' }}
               />
               <TouchableOpacity
-                style={styles.saveButton}
+                className="mt-4 bg-gray-800 p-3 rounded-lg"
                 onPress={async () => {
                   try {
                     const { status } = await MediaLibrary.requestPermissionsAsync()
@@ -373,7 +379,7 @@ export function ChatWrapper() {
               </TouchableOpacity>
             </>
           )}
-        </View>
+        </ThemedView>
       </Modal>
     </ThemedView>
   )
@@ -384,7 +390,7 @@ function ChatMessage({
   configuration,
   setFullscreenImage,
 }: {
-  message: MessageWithImage
+  message: Message
   configuration: ChatConfiguration | null
   setFullscreenImage: (url: string) => void
 }) {
@@ -415,8 +421,7 @@ function ChatMessage({
           <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
             <Image
               source={{ uri: message.imageUrl }}
-              style={{ width: 200, height: 200, borderRadius: 8, marginTop: 8 }}
-              resizeMode="contain"
+              style={{ width: '100%', aspectRatio: 1, maxHeight: 300, borderRadius: 8, marginTop: 8, resizeMode: 'contain' }}
             />
           </TouchableOpacity>
         )}
@@ -503,27 +508,3 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
   )
 }
 
-const styles = StyleSheet.create({
-  fullscreenContainer: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fullscreenImage: {
-    width: '90%',
-    height: '70%',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 2,
-  },
-  saveButton: {
-    marginTop: 20,
-    backgroundColor: '#333',
-    padding: 12,
-    borderRadius: 8,
-  },
-})

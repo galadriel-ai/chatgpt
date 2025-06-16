@@ -55,8 +55,6 @@ def get_generation_repository() -> GenerationRepository:
 
 
 def get_wavespeed_repository() -> WavespeedRepository:
-    if not settings.WAVESPEED_API_KEY:
-        raise ValueError("WAVESPEED_API_KEY is not set")
     return WavespeedRepository(
         settings.WAVESPEED_API_KEY,
     )

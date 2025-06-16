@@ -6,6 +6,7 @@ from fastapi import Path
 
 from app import dependencies
 from app.domain.users.entities import User
+from app.repository.chat_repository import ChatRepository
 from app.repository.generation_repository import GenerationRepository
 from app.repository.cloud_storage_repository import CloudStorageRepository
 from app.repository.wavespeed_repository import WavespeedRepository
@@ -29,6 +30,7 @@ async def get_job_status(
     generation_repository: GenerationRepository = Depends(
         dependencies.get_generation_repository
     ),
+    chat_repository: ChatRepository = Depends(dependencies.get_chat_repository),
     cloud_storage_repository: CloudStorageRepository = Depends(
         dependencies.get_cloud_storage_repository
     ),
@@ -40,6 +42,7 @@ async def get_job_status(
         job_id,
         user,
         generation_repository,
+        chat_repository,
         cloud_storage_repository,
         wavespeed_repository,
     )
