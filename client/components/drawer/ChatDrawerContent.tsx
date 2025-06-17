@@ -7,7 +7,6 @@ import { ThemedText } from '@/components/theme/ThemedText'
 import { Chat } from '@/types/chat'
 import { Colors } from '@/constants/Colors'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { RoleUserIcon } from '@/components/icons/Icons'
 import { useState } from 'react'
 import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
 import { ThemedButton } from '@/components/theme/ThemedButton'
@@ -77,13 +76,17 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
             />
           ) : (
             // A default profile picture with the first letter of the user's name
-            <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+            <ThemedView
+              className="h-10 w-10 items-center justify-center rounded-full"
+              lightColor={Colors.light.border}
+              darkColor={Colors.dark.border}
+            >
               <ThemedText className="text-lg text-white">
-                {user?.name?.[0]?.toUpperCase() ?? 'G'}
+                {user?.name?.[0]?.toUpperCase() ?? 'S'}
               </ThemedText>
             </ThemedView>
           )}
-          <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
+          <ThemedText>{user?.name ?? 'Sidekik User'}</ThemedText>
         </ThemedView>
       </View>
     </View>
