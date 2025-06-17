@@ -3,12 +3,16 @@ import { ThemedView } from '@/components/theme/ThemedView'
 import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
 import { GOOGLE_CLIENT_ID } from '@env'
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin'
+import {
+  GoogleSignin,
+  statusCodes,
+  GoogleSigninButton,
+} from '@react-native-google-signin/google-signin'
 import * as AppleAuthentication from 'expo-apple-authentication'
 import * as SecureStore from 'expo-secure-store'
 import { useRouter } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { Alert, StyleSheet, View } from 'react-native'
 import { usePostHog } from 'posthog-react-native'
 import { EVENTS } from '@/lib/analytics/posthog'
 
@@ -32,7 +36,7 @@ async function storeTokens(accessToken: string, refreshToken?: string) {
 export default function LoginScreen() {
   const { login } = useAuth()
   const router = useRouter()
-  const [loading, setLoading] = useState({ google: false, apple: false, guest: false })
+  const [loading, setLoading] = useState({ google: false, apple: false })
   const posthog = usePostHog()
 
   useEffect(() => {
@@ -42,16 +46,6 @@ export default function LoginScreen() {
       iosClientId: GOOGLE_CLIENT_ID,
     })
   }, [])
-
-  const handleLogin = () => {
-    posthog.capture(EVENTS.LOGIN_STARTED, { method: 'guest' })
-    setLoading(prev => ({ ...prev, guest: true }))
-    // For guest login, we'll just use local context for now
-    login({ name: 'Guest User' })
-    posthog.capture(EVENTS.LOGIN_COMPLETED, { method: 'guest' })
-    router.replace('/(main)')
-    setLoading(prev => ({ ...prev, guest: false }))
-  }
 
   const handleGoogleLogin = async () => {
     setLoading(prev => ({ ...prev, google: true }))
@@ -173,26 +167,16 @@ export default function LoginScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedText style={styles.title}>Login</ThemedText>
+      <ThemedText style={styles.title}>Welcome to Sidekik</ThemedText>
 
       <View style={styles.buttonContainer}>
-        <Button
-          title={loading.guest ? 'Signing in...' : 'Guest Login'}
-          onPress={handleLogin}
-          disabled={loading.guest}
-        />
-
-        <TouchableOpacity
-          style={[styles.googleButton, loading.google && styles.disabledButton]}
-          onPress={handleGoogleLogin}
+        <GoogleSigninButton
+          style={styles.googleButton}
+          onPress={loading.google ? () => {} : handleGoogleLogin}
           disabled={loading.google}
-        >
-          {loading.google ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <ThemedText style={styles.googleButtonText}>Sign in with Google</ThemedText>
-          )}
-        </TouchableOpacity>
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+        />
 
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
@@ -221,18 +205,15 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 300,
     gap: 20,
-  },
-  appleButton: {
-    width: '100%',
-    height: 44,
+    alignItems: 'center',
   },
   googleButton: {
-    width: '100%',
+    width: 300,
     height: 44,
-    backgroundColor: '#4285F4',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  appleButton: {
+    width: 300,
+    height: 44,
   },
   googleButtonText: {
     color: 'white',
