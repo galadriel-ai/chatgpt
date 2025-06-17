@@ -96,6 +96,7 @@ async def execute(
     system_prompt = await get_system_prompt_use_case.execute(
         chat_input, user, configuration_repository
     )
+    logger.debug(f"System prompt: {system_prompt}")
     messages = await _get_existing_messages(chat, system_prompt, chat_repository)
     new_messages = await _get_new_messages(chat_input, chat, messages, system_prompt)
 
@@ -138,6 +139,8 @@ async def execute(
     messages_to_llm = [m.to_llm_ready_dict() for m in llm_input_messages[:-1]]
     messages_to_llm.append(llm_input_messages[-1].to_llm_ready_dict_with_images(images))
 
+    logger.debug(f"Messages to LLM: {messages_to_llm}")
+
     try:
         while True:
             final_tool_calls = {}
@@ -175,6 +178,7 @@ async def execute(
                                 final_tool_calls[tool_call_id]["name"]
                                 == SEARCH_TOOL_DEFINITION["function"]["name"]
                             ):
+                                logger.info(f"Searching the web for: {args['query']}")
                                 # Create and persist the assistant's tool call message
                                 tool_call = ToolCall(
                                     id=tool_call_id,

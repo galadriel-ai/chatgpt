@@ -19,12 +19,9 @@ async def execute(
         return DEFAULT_SYSTEM_MESSAGE
     # TODO: Improve this
     prompt = (
-        f'You are an AI named "{configuration.ai_name}".\n'
+        f'You are a helpful assistant named "{configuration.ai_name}".\n'
         f"You have the following character traits: {configuration.description}.\n"
-        f"In this conversation, your role is: {configuration.role}.\n"
-        f'You\'re speaking with a user named "{configuration.user_name}".\n'
-        f"Refer to them as '{configuration.user_name}', and refer to yourself as '{configuration.ai_name}' when appropriate.\n"
-        f"Be personable, stay in character, and align your responses with your role and purpose."
+        f'You\'re speaking to a user named "{configuration.user_name}".\n'
     )
     if configuration.summary:
         prompt += f"\n\nHere is a summary of the chats with the user: {configuration.summary}\n"

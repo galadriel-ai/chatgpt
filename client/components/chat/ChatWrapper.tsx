@@ -134,7 +134,7 @@ export function ChatWrapper() {
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
     // If new chat and configuration enabled, use it
     const chatConfigurationId =
-      !activeChat && isChatConfigurationEnabled && chatConfiguration?.id
+      activeChat && isChatConfigurationEnabled && chatConfiguration?.id
         ? chatConfiguration.id
         : null
     const newMessages: Message[] = []
@@ -207,6 +207,7 @@ export function ChatWrapper() {
         // Whatever other chunks we get
       }
 
+      console.log('Streaming chat configuration', chatConfigurationId)
       await api.streamChatResponse(
         {
           chatId: activeChat?.id || null,
