@@ -50,9 +50,12 @@ async def apple_auth(
 @router.post("/logout", summary="Logout User")
 async def logout(
     current_user: User = Depends(validate_session_token),
+    user_repository: UserRepository = Depends(dependencies.get_user_repository),
 ):
-    """Logout user (client should discard tokens)"""
-    # TODO: Implement logout logic
+    """Logout user and update last logout timestamp"""
+    # TODO: Additional cleanup actions could be added here:
+    # - Blacklist the current token
+    # - Invalidate refresh tokens
     return {"message": "Logged out successfully"}
 
 

@@ -7,14 +7,14 @@ import { ThemedText } from '@/components/theme/ThemedText'
 import { Chat } from '@/types/chat'
 import { Colors } from '@/constants/Colors'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { RoleUserIcon } from '@/components/icons/Icons'
 import { useState } from 'react'
 import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
 import { ThemedButton } from '@/components/theme/ThemedButton'
+import { api } from '@/lib/api'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const router = useRouter()
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
@@ -27,6 +27,21 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
 
   const onConfigureChats = async () => {
     setIsModalVisible(true)
+  }
+
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint
+      if (user?.accessToken) {
+        await api.logout(user.accessToken, user.refreshToken)
+      }
+      // Clear local state and redirect
+      await logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Even if the backend call fails, we should still clear local state
+      await logout()
+    }
   }
 
   return (
@@ -85,6 +100,17 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
           )}
           <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
         </ThemedView>
+        <Pressable
+          onPress={handleLogout}
+          className="mt-4 rounded-lg bg-red-500 px-4 py-2"
+          style={({ pressed }) => [
+            {
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <ThemedText className="text-center text-white">Logout</ThemedText>
+        </Pressable>
       </View>
     </View>
   )
