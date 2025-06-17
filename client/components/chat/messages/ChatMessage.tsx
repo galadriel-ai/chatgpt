@@ -1,11 +1,11 @@
-import {ChatConfiguration, Message} from '@/types/chat'
-import {ThemedView} from '@/components/theme/ThemedView'
-import {RoleUserIcon} from '@/components/icons/Icons'
-import {ThemedText} from '@/components/theme/ThemedText'
-import {ThemedMarkdownText} from '@/components/theme/ThemedMarkdownText'
-import {Image, TouchableOpacity} from 'react-native'
+import { ChatConfiguration, Message } from '@/types/chat'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { RoleUserIcon } from '@/components/icons/Icons'
+import { ThemedText } from '@/components/theme/ThemedText'
+import { ThemedMarkdownText } from '@/components/theme/ThemedMarkdownText'
+import { Image, TouchableOpacity } from 'react-native'
 import React from 'react'
-import {getAssistantProfilePicture} from '@/constants/Characters'
+import { getAssistantProfilePicture } from '@/constants/Characters'
 
 export function ChatMessage({
   message,
@@ -24,7 +24,7 @@ export function ChatMessage({
 
   const role =
     message.role === 'user'
-      ? (configuration && configuration.userName)
+      ? configuration
         ? configuration.userName
         : 'You'
       : configuration
