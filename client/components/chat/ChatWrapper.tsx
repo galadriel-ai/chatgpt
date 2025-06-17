@@ -38,7 +38,7 @@ export function ChatWrapper() {
   const router = useRouter()
   const scrollViewRef = useRef<ScrollView>(null)
   const posthog = usePostHog()
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets()
 
   const {
     selectedChat,
@@ -345,9 +345,7 @@ export function ChatWrapper() {
         </ThemedView>
       </KeyboardAvoidingView>
       <Modal visible={!!fullscreenImage} transparent={true} animationType="fade">
-        <ThemedView
-          className="flex-1 items-center justify-center"
-        >
+        <ThemedView className="flex-1 items-center justify-center">
           <TouchableOpacity
             style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 20 }}
             onPress={() => setFullscreenImage(null)}
@@ -361,7 +359,7 @@ export function ChatWrapper() {
                 style={{ width: '90%', aspectRatio: 1, maxHeight: '70%', resizeMode: 'contain' }}
               />
               <TouchableOpacity
-                className="mt-4 bg-gray-800 p-3 rounded-lg"
+                className="mt-4 rounded-lg bg-gray-800 p-3"
                 onPress={async () => {
                   try {
                     const { status } = await MediaLibrary.requestPermissionsAsync()
@@ -425,7 +423,14 @@ function ChatMessage({
           <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
             <Image
               source={{ uri: message.imageUrl }}
-              style={{ width: '100%', aspectRatio: 1, maxHeight: 300, borderRadius: 8, marginTop: 8, resizeMode: 'contain' }}
+              style={{
+                width: '100%',
+                aspectRatio: 1,
+                maxHeight: 300,
+                borderRadius: 8,
+                marginTop: 8,
+                resizeMode: 'contain',
+              }}
             />
           </TouchableOpacity>
         )}
@@ -459,22 +464,14 @@ function ErrorMessage({ error }: { error: string }) {
 }
 
 function BackgroundProcessingMessage({ message }: { message: string }) {
-  const shimmerValue = useRef(new Animated.Value(0)).current;
-  const isDarkMode = useColorScheme() === 'dark';
+  const shimmerValue = useRef(new Animated.Value(0)).current
+  const isDarkMode = useColorScheme() === 'dark'
 
-  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text');
+  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text')
 
   const shimmerColors: [string, string, string] = isDarkMode
-    ? [
-        'rgba(255,255,255,0)',
-        'rgba(255,255,255,0.85)',
-        'rgba(255,255,255,0)',
-      ]
-    : [
-        'rgba(0,0,0,0)',
-        'rgba(0,0,0,0.85)',
-        'rgba(0,0,0,0)',
-      ];
+    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,0)']
+    : ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']
 
   useEffect(() => {
     const shimmerAnimation = Animated.loop(
@@ -490,15 +487,15 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
           useNativeDriver: true,
         }),
       ])
-    );
-    shimmerAnimation.start();
-    return () => shimmerAnimation.stop();
-  }, [shimmerValue]);
+    )
+    shimmerAnimation.start()
+    return () => shimmerAnimation.stop()
+  }, [shimmerValue])
 
   const shimmerTranslateX = shimmerValue.interpolate({
     inputRange: [0, 1],
     outputRange: [-100, 200],
-  });
+  })
 
   return (
     <ThemedView className="flex flex-row gap-4 py-3">
@@ -531,6 +528,5 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
         </MaskedView>
       </ThemedView>
     </ThemedView>
-  );
+  )
 }
-
