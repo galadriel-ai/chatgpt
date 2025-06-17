@@ -7,19 +7,15 @@ import { ThemedText } from '@/components/theme/ThemedText'
 import { Chat } from '@/types/chat'
 import { Colors } from '@/constants/Colors'
 import { ThemedView } from '@/components/theme/ThemedView'
-import { RoleUserIcon } from '@/components/icons/Icons'
 import { useState } from 'react'
 import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
 import { ThemedButton } from '@/components/theme/ThemedButton'
 import { api } from '@/lib/api'
-import { useThemeColor } from '@/hooks/useThemeColor'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
   const { user, logout } = useAuth()
   const router = useRouter()
-  const backgroundColor = useThemeColor({}, 'backgroundSecondary')
-  const textColor = useThemeColor({}, 'text')
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
 
@@ -56,7 +52,7 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 46 }}
       >
         <View className="flex flex-row justify-between pt-8">
-          <ThemedButton title={'Configure chats'} onPress={onConfigureChats} />
+          <ThemedButton title={'Customize character'} onPress={onConfigureChats} />
         </View>
         <View className="p-4">
           <ThemedText

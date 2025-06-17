@@ -58,6 +58,18 @@ class BackgroundChunk(ChatOutputChunk):
 
 
 @dataclass
+class GenerationChunk(ChatOutputChunk):
+    generation_id: str
+    generation_message: str
+
+    def to_serializable_dict(self) -> Dict:
+        return {
+            "generation_id": self.generation_id,
+            "generation_message": self.generation_message,
+        }
+
+
+@dataclass
 class NewChatOutput(ChatOutputChunk):
     chat_id: UUID
 
@@ -116,6 +128,7 @@ class Message:
     role: Literal["system", "user", "assistant", "tool"]
     attachment_ids: List[UUID]
     content: Optional[str] = None
+    image_url: Optional[str] = None
     model: Optional[str] = None
     tool_call: Optional[ToolCall] = None
     tool_calls: Optional[List[ToolCall]] = None
@@ -217,10 +230,28 @@ class Model(Enum):
 @dataclass
 class ModelConfig:
     temperature: Optional[float] = 0.2
-    max_tokens: Optional[int] = 128000
+    max_tokens: Optional[int] = 32768
 
 
 @dataclass
 class ModelSpec:
     id: Model
     config: ModelConfig
+
+
+class Intent(Enum):
+    DEFAULT = "default"
+    IMAGE_COMPREHENSION = "image_comprehension"
+    IMAGE_GENERATION = "image_generation"
+    VIDEO_GENERATION = "video_generation"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+@dataclass
+class ChatConfigurationSummary(ChatConfiguration):
+    user_profile_id: UUID
+    summary_id: Optional[UUID]
+    summary: Optional[str]
+    last_summarized_at: Optional[datetime]

@@ -50,6 +50,7 @@ SELECT
     title,
     created_at
 FROM chat
+WHERE user_profile_id = :user_id
 ORDER BY id DESC;
 """
 
@@ -59,6 +60,7 @@ INSERT INTO message (
     chat_id,
     role,
     content,
+    image_url,
     model,
     attachment_ids,
     tool_call_id,
@@ -72,6 +74,7 @@ INSERT INTO message (
     :chat_id,
     :role,
     :content,
+    :image_url,
     :model,
     :attachment_ids,
     :tool_call_id,
@@ -89,6 +92,7 @@ SELECT
     chat_id,
     role,
     content,
+    image_url,
     model,
     tool_call_id,
     tool_name,
@@ -200,6 +204,7 @@ class ChatRepository:
                     "chat_id": message.chat_id,
                     "role": message.role,
                     "content": message.content,
+                    "image_url": message.image_url,
                     "model": message.model,
                     "tool_call_id": message.tool_call.id if message.tool_call else None,
                     "tool_name": message.tool_call.function["name"]
@@ -246,6 +251,7 @@ class ChatRepository:
                         chat_id=row.chat_id,
                         role=row.role,
                         content=row.content,
+                        image_url=row.image_url,
                         model=row.model,
                         tool_call=tool_call,
                         tool_calls=tool_calls,

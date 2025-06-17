@@ -8,6 +8,7 @@ from uuid import UUID
 from uuid_extensions import uuid7
 
 from app import api_logger
+from app.domain.chat import detect_intent_use_case
 from app.domain.chat import get_system_prompt_use_case
 from app.domain.chat.entities import Chat
 from app.domain.chat.entities import ChatInput
@@ -15,6 +16,8 @@ from app.domain.chat.entities import ChatOutputChunk
 from app.domain.chat.entities import ChunkOutput
 from app.domain.chat.entities import ErrorChunk
 from app.domain.chat.entities import BackgroundChunk
+from app.domain.chat.entities import GenerationChunk
+from app.domain.chat.entities import Intent
 from app.domain.chat.entities import Message
 from app.domain.chat.entities import Model
 from app.domain.chat.entities import ModelConfig
@@ -23,6 +26,9 @@ from app.domain.chat.entities import NewChatOutput
 from app.domain.chat.entities import ToolCall
 from app.domain.chat.entities import ToolOutput
 from app.domain.chat.utils import get_images
+from app.domain.generation.entities import GenerationInput
+from app.domain.generation.entities import GenerationType
+from app.domain.generation import generate_image_use_case
 from app.domain.llm_tools.search import search_web
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.domain.users import get_rate_limit_error_use_case
@@ -31,6 +37,8 @@ from app.repository.chat_configuration_repository import ChatConfigurationReposi
 from app.repository.chat_repository import ChatRepository
 from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
+from app.repository.generation_repository import GenerationRepository
+from app.repository.wavespeed_repository import WavespeedRepository
 from app.service import error_responses
 from settings import SUPPORTED_MODELS
 from app.exceptions import LlmError
@@ -47,6 +55,8 @@ async def execute(
     chat_repository: ChatRepository,
     file_repository: FileRepository,
     configuration_repository: ChatConfigurationRepository,
+    generation_repository: GenerationRepository,
+    wavespeed_repository: WavespeedRepository,
 ) -> AsyncGenerator[ChatOutputChunk, None]:
     chat = await _get_chat(chat_input, user, chat_repository, configuration_repository)
     if not chat:
@@ -55,6 +65,7 @@ async def execute(
         )
         return
 
+    intent = await detect_intent_use_case.execute(chat_input.content, llm_repository)
     images = await get_images(chat_input.attachment_ids, file_repository)
     model_id = (
         Model.THINK_MODEL
@@ -82,15 +93,35 @@ async def execute(
         chat_id=chat.id,
     )
 
-    if images:
-        yield BackgroundChunk(background_processing="Processing image(s)...")
-    if chat_input.think_model:
-        yield BackgroundChunk(background_processing="Thinking...")
-
-    messages = await _get_existing_messages(chat, chat_repository)
-    new_messages = await _get_new_messages(
-        chat_input, chat, user, messages, configuration_repository
+    system_prompt = await get_system_prompt_use_case.execute(
+        chat_input, user, configuration_repository
     )
+    messages = await _get_existing_messages(chat, system_prompt, chat_repository)
+    new_messages = await _get_new_messages(chat_input, chat, messages, system_prompt)
+
+    match intent:
+        case Intent.IMAGE_GENERATION:
+            generation_output = await generate_image_use_case.execute(
+                user,
+                GenerationInput(
+                    type=GenerationType.IMAGE,
+                    prompt=chat_input.content,
+                    chat_id=chat.id,
+                ),
+                generation_repository,
+                wavespeed_repository,
+            )
+            yield GenerationChunk(
+                generation_id=str(generation_output.id),
+                generation_message="Generating image...",
+            )
+            await chat_repository.insert_messages(new_messages)
+            return
+        case _:
+            if images:
+                yield BackgroundChunk(background_processing="Processing image(s)...")
+            if chat_input.think_model:
+                yield BackgroundChunk(background_processing="Thinking...")
 
     llm_input_messages = [deepcopy(m) for m in messages]
     llm_input_messages.extend([deepcopy(m) for m in new_messages])
@@ -100,7 +131,7 @@ async def execute(
         chat_id=chat.id,
         role="assistant",
         content="",
-        model=model.id,
+        model=model.id.value,
         attachment_ids=[],
     )
 
@@ -113,7 +144,7 @@ async def execute(
             current_tool_call_id = None
 
             async for chunk in llm_repository.completion(
-                messages_to_llm, model, chat_input.is_search_enabled
+                messages_to_llm, model, chat_input.is_search_enabled or False
             ):
                 if isinstance(chunk, ChunkOutput):
                     llm_message.content += chunk.content
@@ -221,15 +252,11 @@ async def execute(
 async def _get_new_messages(
     chat_input: ChatInput,
     chat: Chat,
-    user: User,
     existing_messages: List[Message],
-    configuration_repository: ChatConfigurationRepository,
+    system_prompt: str,
 ) -> List[Message]:
     new_messages = []
     if not existing_messages:
-        system_prompt = await get_system_prompt_use_case.execute(
-            chat_input, user, configuration_repository
-        )
         new_messages.append(
             Message(
                 id=uuid7(),
@@ -289,6 +316,10 @@ async def _create_chat(
 
 async def _get_existing_messages(
     chat: Chat,
+    system_prompt: str,
     chat_repository: ChatRepository,
 ) -> List[Message]:
-    return await chat_repository.get_messages(chat.id)
+    messages = await chat_repository.get_messages(chat.id)
+    if messages and messages[0].role == "system":
+        messages[0].content = system_prompt
+    return messages
