@@ -1,21 +1,21 @@
-import {ChatConfiguration, Message} from "@/types/chat";
-import {ThemedView} from "@/components/theme/ThemedView";
-import {RoleAssistantIcon, RoleUserIcon} from "@/components/icons/Icons";
-import {ThemedText} from "@/components/theme/ThemedText";
-import {ThemedMarkdownText} from "@/components/theme/ThemedMarkdownText";
-import {Image, TouchableOpacity} from "react-native";
-import React from "react";
+import {ChatConfiguration, Message} from '@/types/chat'
+import {ThemedView} from '@/components/theme/ThemedView'
+import {RoleUserIcon} from '@/components/icons/Icons'
+import {ThemedText} from '@/components/theme/ThemedText'
+import {ThemedMarkdownText} from '@/components/theme/ThemedMarkdownText'
+import {Image, TouchableOpacity} from 'react-native'
+import React from 'react'
+import {getAssistantProfilePicture} from '@/constants/Characters'
 
-export function ChatMessage(
-  {
-    message,
-    configuration,
-    setFullscreenImage,
-  }: {
-    message: Message
-    configuration: ChatConfiguration | null
-    setFullscreenImage: (url: string) => void
-  }) {
+export function ChatMessage({
+  message,
+  configuration,
+  setFullscreenImage,
+}: {
+  message: Message
+  configuration: ChatConfiguration | null
+  setFullscreenImage: (url: string) => void
+}) {
   if (message.role === 'system') return null
 
   if (message.role === 'assistant' && !message.content.trim() && !message.imageUrl) {
@@ -24,7 +24,7 @@ export function ChatMessage(
 
   const role =
     message.role === 'user'
-      ? configuration
+      ? (configuration && configuration.userName)
         ? configuration.userName
         : 'You'
       : configuration
@@ -34,15 +34,15 @@ export function ChatMessage(
   return (
     <ThemedView className="flex flex-row gap-4 py-3">
       <ThemedView className="flex w-8 flex-col items-center">
-        {message.role === 'user' ? <RoleUserIcon/> : <RoleAssistantIcon/>}
+        {message.role === 'user' ? <RoleUserIcon /> : getAssistantProfilePicture(configuration)}
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">{role}</ThemedText>
-        {message.content && <ThemedMarkdownText content={message.content}/>}
+        {message.content && <ThemedMarkdownText content={message.content} />}
         {message.imageUrl && (
           <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
             <Image
-              source={{uri: message.imageUrl}}
+              source={{ uri: message.imageUrl }}
               style={{
                 width: '100%',
                 aspectRatio: 1,

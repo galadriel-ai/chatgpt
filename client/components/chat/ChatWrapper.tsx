@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Image,
   KeyboardAvoidingView,
@@ -9,25 +9,25 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import {ThemedView} from '@/components/theme/ThemedView'
-import {ThemedChatInput} from '@/components/theme/ThemedChatInput'
-import {DrawerActions, useNavigation} from '@react-navigation/native'
-import {NewChatIcon, SideBarIcon} from '@/components/icons/Icons'
-import {useChat} from '@/context/ChatContext'
-import {ThemedText} from '@/components/theme/ThemedText'
-import {Chat, Message} from '@/types/chat'
-import {api, ChatChunk} from '@/lib/api'
-import {AttachmentFile} from '@/hooks/useMediaAttachments'
-import {useRouter} from 'expo-router'
-import {usePostHog} from 'posthog-react-native'
-import {EVENTS} from '@/lib/analytics/posthog'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
+import { DrawerActions, useNavigation } from '@react-navigation/native'
+import { NewChatIcon, SideBarIcon } from '@/components/icons/Icons'
+import { useChat } from '@/context/ChatContext'
+import { ThemedText } from '@/components/theme/ThemedText'
+import { Chat, ChatConfiguration, Message } from '@/types/chat'
+import { api, ChatChunk } from '@/lib/api'
+import { AttachmentFile } from '@/hooks/useMediaAttachments'
+import { useRouter } from 'expo-router'
+import { usePostHog } from 'posthog-react-native'
+import { EVENTS } from '@/lib/analytics/posthog'
 import * as MediaLibrary from 'expo-media-library'
 import * as FileSystem from 'expo-file-system'
-import {useSafeAreaInsets} from 'react-native-safe-area-context'
-import {ChatMessage} from "@/components/chat/messages/ChatMessage";
-import {ErrorMessage} from "@/components/chat/messages/ChatErrorMessage";
-import {BackgroundProcessingMessage} from './messages/BackgroundProcessingMessage'
-import {NewChatModal} from "@/components/chat/NewChatModal";
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ChatMessage } from '@/components/chat/messages/ChatMessage'
+import { ErrorMessage } from '@/components/chat/messages/ChatErrorMessage'
+import { BackgroundProcessingMessage } from './messages/BackgroundProcessingMessage'
+import { NewChatModal } from '@/components/chat/NewChatModal'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -42,19 +42,24 @@ export function ChatWrapper() {
     activeChat,
     setActiveChat,
     addChat,
-    isChatConfigurationEnabled,
-    chatConfiguration,
+    selectedChatConfiguration,
+    setSelectedChatConfiguration,
   } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null)
 
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState<boolean>(false)
+
   useEffect(() => {
     if (selectedChat && !activeChat) {
       getChatDetails(selectedChat)
+      setIsNewChatModalOpen(false)
     } else if (!selectedChat && !activeChat) {
       setMessages([])
+      // TODO:?
+      if (selectedChatConfiguration === undefined) setIsNewChatModalOpen(true)
     }
   }, [selectedChat])
 
@@ -65,16 +70,22 @@ export function ChatWrapper() {
   const scrollToBottom = (animated = true) => {
     // Wait a tiny bit to make sure the message was rendered
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({animated})
+      scrollViewRef.current?.scrollToEnd({ animated })
     }, 100)
   }
 
-  const onNewChat = () => {
+  const onConfigureNewChat = () => {
+    setIsNewChatModalOpen(true)
+  }
+
+  const onNewChat = (configuration: ChatConfiguration | null) => {
     posthog.capture(EVENTS.NEW_CHAT_STARTED)
+    setSelectedChatConfiguration(configuration)
     setSelectedChat(null)
     setActiveChat(null)
     setMessages([])
     setErrorMessage('')
+    setIsNewChatModalOpen(false)
     router.push('/')
   }
 
@@ -129,10 +140,7 @@ export function ChatWrapper() {
     // Extract file IDs from uploaded attachments
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
     // If new chat and configuration enabled, use it
-    const chatConfigurationId =
-      !activeChat && isChatConfigurationEnabled && chatConfiguration?.id
-        ? chatConfiguration.id
-        : null
+    const chatConfigurationId = selectedChatConfiguration ? selectedChatConfiguration.id : null
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
@@ -180,7 +188,7 @@ export function ChatWrapper() {
           setActiveChat({
             ...newChat,
             messages: newMessages,
-            configuration: chatConfigurationId ? chatConfiguration : null,
+            configuration: chatConfigurationId ? selectedChatConfiguration || null : null,
           })
           addChat(newChat)
           isActiveChatSet = true
@@ -192,7 +200,7 @@ export function ChatWrapper() {
           setBackgroundProcessingMessage('')
           setErrorMessage(chunk.error)
           popMessage()
-          posthog.capture(EVENTS.MESSAGE_ERROR, {error: chunk.error})
+          posthog.capture(EVENTS.MESSAGE_ERROR, { error: chunk.error })
         } else if (chunk.background_processing) {
           setBackgroundProcessingMessage(chunk.background_processing)
         } else if (chunk.generation_message && chunk.generation_id) {
@@ -222,7 +230,7 @@ export function ChatWrapper() {
         },
         (err: Error) => {
           console.error('Streaming error:', err)
-          posthog.capture(EVENTS.MESSAGE_ERROR, {error: err.message})
+          posthog.capture(EVENTS.MESSAGE_ERROR, { error: err.message })
         }
       )
 
@@ -286,23 +294,23 @@ export function ChatWrapper() {
 
   return (
     <ThemedView className="flex-1 px-2">
-      <NewChatModal isVisible={true}/>
-      <View className="flex w-full flex-row items-center bg-transparent justify-between px-2 pb-4 pt-8 absolute z-10">
-        <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())}/>
-        <Pressable onPress={onNewChat}>
-          <NewChatIcon/>
+      <NewChatModal isVisible={isNewChatModalOpen} onNewChat={onNewChat} />
+      <View className="absolute z-10 flex w-full flex-row items-center justify-between bg-transparent px-2 pb-4 pt-8">
+        <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
+        <Pressable onPress={onConfigureNewChat}>
+          <NewChatIcon />
         </Pressable>
       </View>
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={10}
       >
-        <ThemedView className="flex-1">
+        <ThemedView className="flex-1 pt-14">
           <ScrollView
             ref={scrollViewRef}
-            contentContainerStyle={{padding: 16}}
-            style={{flex: 1}}
+            contentContainerStyle={{ padding: 16 }}
+            style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
             onContentSizeChange={() => scrollToBottom(false)}
           >
@@ -311,11 +319,7 @@ export function ChatWrapper() {
                 <ChatMessage
                   message={m}
                   configuration={
-                    activeChat
-                      ? activeChat.configuration
-                      : isChatConfigurationEnabled && chatConfiguration
-                        ? chatConfiguration
-                        : null
+                    activeChat ? activeChat.configuration : selectedChatConfiguration || null
                   }
                   setFullscreenImage={setFullscreenImage}
                 />
@@ -324,12 +328,12 @@ export function ChatWrapper() {
 
             {errorMessage && (
               <ThemedView className="w-full">
-                <ErrorMessage error={errorMessage}/>
+                <ErrorMessage error={errorMessage} />
               </ThemedView>
             )}
 
             {backgroundProcessingMessage && (
-              <BackgroundProcessingMessage message={backgroundProcessingMessage}/>
+              <BackgroundProcessingMessage message={backgroundProcessingMessage} />
             )}
           </ScrollView>
 
@@ -337,29 +341,29 @@ export function ChatWrapper() {
             onMessage={onMessage}
             placeholder="Message"
             className="px-4 py-2"
-            style={{fontSize: 16}}
+            style={{ fontSize: 16 }}
           />
         </ThemedView>
       </KeyboardAvoidingView>
       <Modal visible={!!fullscreenImage} transparent={true} animationType="fade">
         <ThemedView className="flex-1 items-center justify-center">
           <TouchableOpacity
-            style={{position: 'absolute', top: insets.top + 12, right: 16, zIndex: 20}}
+            style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 20 }}
             onPress={() => setFullscreenImage(null)}
           >
-            <ThemedText style={{fontSize: 32}}>×</ThemedText>
+            <ThemedText style={{ fontSize: 32 }}>×</ThemedText>
           </TouchableOpacity>
           {fullscreenImage && (
             <>
               <Image
-                source={{uri: fullscreenImage}}
-                style={{width: '90%', aspectRatio: 1, maxHeight: '70%', resizeMode: 'contain'}}
+                source={{ uri: fullscreenImage }}
+                style={{ width: '90%', aspectRatio: 1, maxHeight: '70%', resizeMode: 'contain' }}
               />
               <TouchableOpacity
                 className="mt-4 rounded-lg bg-gray-800 p-3"
                 onPress={async () => {
                   try {
-                    const {status} = await MediaLibrary.requestPermissionsAsync()
+                    const { status } = await MediaLibrary.requestPermissionsAsync()
                     if (status !== 'granted') {
                       alert('Permission to access gallery is required!')
                       return
@@ -374,7 +378,7 @@ export function ChatWrapper() {
                   }
                 }}
               >
-                <ThemedText style={{color: 'white'}}>Save to Gallery</ThemedText>
+                <ThemedText style={{ color: 'white' }}>Save to Gallery</ThemedText>
               </TouchableOpacity>
             </>
           )}
@@ -383,4 +387,3 @@ export function ChatWrapper() {
     </ThemedView>
   )
 }
-

@@ -1,10 +1,10 @@
-import {useEffect, useRef} from "react";
-import {Animated} from "react-native";
-import {ThemedView} from "@/components/theme/ThemedView";
-import {RoleAssistantIcon} from "@/components/icons/Icons";
-import {ThemedText} from "@/components/theme/ThemedText";
+import { useEffect, useRef } from 'react'
+import { Animated } from 'react-native'
+import { ThemedView } from '@/components/theme/ThemedView'
+import { RoleAssistantIcon } from '@/components/icons/Icons'
+import { ThemedText } from '@/components/theme/ThemedText'
 
-export function BackgroundProcessingMessage({message}: { message: string }) {
+export function BackgroundProcessingMessage({ message }: { message: string }) {
   const shimmerValue = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export function BackgroundProcessingMessage({message}: { message: string }) {
   return (
     <ThemedView className="flex flex-row gap-4 py-3">
       <ThemedView className="flex w-8 flex-col items-center">
-        <RoleAssistantIcon/>
+        <RoleAssistantIcon />
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">Your Sidekik</ThemedText>
-        <ThemedView style={{position: 'relative', overflow: 'hidden'}}>
-          <ThemedText style={{opacity: 0.7}}>{message}</ThemedText>
+        <ThemedView style={{ position: 'relative', overflow: 'hidden' }}>
+          <ThemedText style={{ opacity: 0.7 }}>{message}</ThemedText>
           <Animated.View
             style={{
               position: 'absolute',
@@ -48,7 +48,7 @@ export function BackgroundProcessingMessage({message}: { message: string }) {
               right: 0,
               bottom: 0,
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              transform: [{translateX: shimmerTranslateX}],
+              transform: [{ translateX: shimmerTranslateX }],
               width: 100,
             }}
           />

@@ -75,7 +75,7 @@ FROM chat_configuration cc
 LEFT JOIN chat_configuration_summary ccs ON ccs.chat_configuration_id = cc.id
 WHERE 
     cc.id = :id 
-    AND cc.user_profile_id = :user_id;
+    AND (cc.user_profile_id = :user_id OR cc.user_profile_id IS NULL);
 """
 
 SQL_GET_CHARACTERS_NEEDING_SUMMARIZATION = """
@@ -92,7 +92,8 @@ SELECT
 FROM chat_configuration cc
 LEFT JOIN chat_configuration_summary ccs ON ccs.chat_configuration_id = cc.id
 WHERE 
-    ccs.last_summarized_at < :last_summarized_at OR ccs.last_summarized_at IS NULL;
+    (ccs.last_summarized_at < :last_summarized_at OR ccs.last_summarized_at IS NULL)
+    AND cc.user_profile_id IS NOT NULL;
 """
 
 SQL_GET_MESSAGES_BY_CONFIGURATION = """

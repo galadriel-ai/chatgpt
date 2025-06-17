@@ -30,12 +30,7 @@ interface Props {
 export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
   const backgroundColor = useThemeColor({}, 'background')
 
-  const {
-    chatConfiguration,
-    setChatConfiguration,
-    isChatConfigurationEnabled,
-    setIsChatConfigurationEnabled,
-  } = useChat()
+  const { chatConfiguration, setChatConfiguration } = useChat()
 
   const [modifiedConfiguration, setModifiedConfiguration] = useState<ChatConfiguration | null>(null)
 
@@ -85,17 +80,6 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
             </View>
             {modifiedConfiguration && (
               <View className="flex w-full flex-col gap-8 pt-10">
-                <ThemedView
-                  className="flex w-full flex-row items-center justify-between rounded-lg p-4"
-                  lightColor={Colors.light.backgroundHighlight}
-                  darkColor={Colors.dark.backgroundHighlight}
-                >
-                  <ThemedText>Enable for new chats</ThemedText>
-                  <Switch
-                    value={isChatConfigurationEnabled}
-                    onValueChange={value => setIsChatConfigurationEnabled(value)}
-                  />
-                </ThemedView>
                 <ThemedView className="flex w-full flex-col gap-2 rounded-lg">
                   <ThemedText
                     className="pl-2"

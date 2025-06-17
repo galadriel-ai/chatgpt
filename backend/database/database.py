@@ -47,7 +47,7 @@ class ChatConfiguration(Base):
     user_profile_id = Column(
         UUID(as_uuid=True),
         ForeignKey(UserProfile.id),
-        nullable=False,
+        nullable=True,
     )
     user_name = Column(String(), nullable=False)
     ai_name = Column(String(), nullable=False)
@@ -166,19 +166,15 @@ class Generation(Base):
     __tablename__ = "generation"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid7)
-    user_profile_id = (
-        Column(
-            UUID(as_uuid=True),
-            ForeignKey(UserProfile.id),
-            nullable=False,
-        ),
+    user_profile_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(UserProfile.id),
+        nullable=False,
     )
-    chat_id = (
-        Column(
-            UUID(as_uuid=True),
-            ForeignKey(Chat.id),
-            nullable=True,
-        ),
+    chat_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(Chat.id),
+        nullable=True,
     )
     type = Column(String(), nullable=False)
     prompt = Column(String(), nullable=False)
