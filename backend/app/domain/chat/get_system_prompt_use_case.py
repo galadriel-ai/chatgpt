@@ -18,7 +18,7 @@ async def execute(
     if not configuration:
         return DEFAULT_SYSTEM_MESSAGE
     # TODO: Improve this
-    return (
+    prompt = (
         f'You are an AI named "{configuration.ai_name}".\n'
         f"You have the following character traits: {configuration.description}.\n"
         f"In this conversation, your role is: {configuration.role}.\n"
@@ -26,3 +26,6 @@ async def execute(
         f"Refer to them as '{configuration.user_name}', and refer to yourself as '{configuration.ai_name}' when appropriate.\n"
         f"Be personable, stay in character, and align your responses with your role and purpose."
     )
+    if configuration.summary:
+        prompt += f"\n\nHere is a summary of the chats with the user: {configuration.summary}\n"
+    return prompt
