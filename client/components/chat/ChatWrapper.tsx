@@ -295,7 +295,7 @@ export function ChatWrapper() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={10}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 10}
       >
         <ThemedView className="flex-1">
           <ScrollView
@@ -341,9 +341,7 @@ export function ChatWrapper() {
         </ThemedView>
       </KeyboardAvoidingView>
       <Modal visible={!!fullscreenImage} transparent={true} animationType="fade">
-        <ThemedView
-          className="flex-1 items-center justify-center"
-        >
+        <ThemedView className="flex-1 items-center justify-center">
           <TouchableOpacity
             style={{ position: 'absolute', top: insets.top + 12, right: 16, zIndex: 20 }}
             onPress={() => setFullscreenImage(null)}
@@ -357,7 +355,7 @@ export function ChatWrapper() {
                 style={{ width: '90%', aspectRatio: 1, maxHeight: '70%', resizeMode: 'contain' }}
               />
               <TouchableOpacity
-                className="mt-4 bg-gray-800 p-3 rounded-lg"
+                className="mt-4 rounded-lg bg-gray-800 p-3"
                 onPress={async () => {
                   try {
                     const { status } = await MediaLibrary.requestPermissionsAsync()
