@@ -93,10 +93,11 @@ async def execute(
         chat_id=chat.id,
     )
 
-    messages = await _get_existing_messages(chat, chat_repository)
-    new_messages = await _get_new_messages(
-        chat_input, chat, user, messages, configuration_repository
+    system_prompt = await get_system_prompt_use_case.execute(
+        chat_input, user, configuration_repository
     )
+    messages = await _get_existing_messages(chat, system_prompt, chat_repository)
+    new_messages = await _get_new_messages(chat_input, chat, messages, system_prompt)
 
     match intent:
         case Intent.IMAGE_GENERATION:
@@ -251,15 +252,11 @@ async def execute(
 async def _get_new_messages(
     chat_input: ChatInput,
     chat: Chat,
-    user: User,
     existing_messages: List[Message],
-    configuration_repository: ChatConfigurationRepository,
+    system_prompt: str,
 ) -> List[Message]:
     new_messages = []
     if not existing_messages:
-        system_prompt = await get_system_prompt_use_case.execute(
-            chat_input, user, configuration_repository
-        )
         new_messages.append(
             Message(
                 id=uuid7(),
@@ -319,6 +316,10 @@ async def _create_chat(
 
 async def _get_existing_messages(
     chat: Chat,
+    system_prompt: str,
     chat_repository: ChatRepository,
 ) -> List[Message]:
-    return await chat_repository.get_messages(chat.id)
+    messages = await chat_repository.get_messages(chat.id)
+    if messages and messages[0].role == "system":
+        messages[0].content = system_prompt
+    return messages

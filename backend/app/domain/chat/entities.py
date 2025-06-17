@@ -238,7 +238,7 @@ class Model(Enum):
 @dataclass
 class ModelConfig:
     temperature: Optional[float] = 0.2
-    max_tokens: Optional[int] = 128000
+    max_tokens: Optional[int] = 32768
 
 
 @dataclass
@@ -255,3 +255,11 @@ class Intent(Enum):
 
     def __str__(self) -> str:
         return self.value
+
+
+@dataclass
+class ChatConfigurationSummary(ChatConfiguration):
+    user_profile_id: UUID
+    summary_id: Optional[UUID]
+    summary: Optional[str]
+    last_summarized_at: Optional[datetime]

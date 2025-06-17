@@ -1,13 +1,21 @@
-from typing import AsyncGenerator, Optional, Dict, List
 import asyncio
+from typing import AsyncGenerator
+from typing import Dict
+from typing import List
+from typing import Optional
+
+import openai
+import serpapi
+from openai import AsyncOpenAI
+from openai import AsyncStream
+from openai import NotGiven
 
 from app import api_logger
-import openai
-from openai import AsyncOpenAI
-from app.domain.chat.entities import ChunkOutput, ToolOutput, ModelSpec
+from app.domain.chat.entities import ChunkOutput
+from app.domain.chat.entities import ModelSpec
+from app.domain.chat.entities import ToolOutput
 from app.domain.llm_tools.tools_definition import SEARCH_TOOL_DEFINITION
 from app.exceptions import LlmError
-import serpapi
 
 logger = api_logger.get()
 
@@ -109,14 +117,14 @@ class LlmRepository:
         response_format: Optional[dict],
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         logger.info(f"Using model: {model_id}")
-        stream = await asyncio.wait_for(
+        stream: AsyncStream = await asyncio.wait_for(
             client.chat.completions.create(
                 model=model_id,
                 messages=messages,
                 temperature=model.config.temperature,
                 max_tokens=model.config.max_tokens,
                 response_format=response_format,
-                tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
+                tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else NotGiven(),
                 stream=True,
             ),
             timeout=model.type.timeout,
@@ -135,3 +143,22 @@ class LlmRepository:
                         )
             if choice.delta.content is not None:
                 yield ChunkOutput(content=choice.delta.content)
+
+    async def completion_nostream(
+        self,
+        messages: List[Dict],
+        model: ModelSpec,
+    ) -> str:
+        try:
+            response_content = ""
+            async for chunk in self.completion(
+                messages=messages, model=model, is_search_enabled=False
+            ):
+                if type(chunk) is ChunkOutput:
+                    response_content += chunk.content
+            return response_content
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise LlmError(
+                message="An unexpected error occurred. Please try again in a few moments."
+            )
