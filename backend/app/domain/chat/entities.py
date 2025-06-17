@@ -209,9 +209,9 @@ class ChatConfiguration(ChatConfigurationInput):
 
 
 class Model(Enum):
-    DEFAULT_MODEL = SUPPORTED_MODELS["default"]
-    THINK_MODEL = SUPPORTED_MODELS["think"]
-    VLM_MODEL = SUPPORTED_MODELS["vlm"]
+    DEFAULT_MODEL = "default"
+    THINK_MODEL = "think"
+    VLM_MODEL = "vlm"
 
     def __str__(self) -> str:
         return self.value
@@ -221,10 +221,18 @@ class Model(Enum):
         if self == Model.DEFAULT_MODEL:
             return 20
         elif self == Model.THINK_MODEL:
-            return 30
+            return 20
         elif self == Model.VLM_MODEL:
-            return 60
+            return 30
         return 20
+
+    @property
+    def primary_model(self) -> str:
+        return SUPPORTED_MODELS[self.value]["primary"]
+
+    @property
+    def fallback_model(self) -> str:
+        return SUPPORTED_MODELS[self.value]["fallback"]
 
 
 @dataclass
@@ -235,7 +243,7 @@ class ModelConfig:
 
 @dataclass
 class ModelSpec:
-    id: Model
+    type: Model
     config: ModelConfig
 
 
