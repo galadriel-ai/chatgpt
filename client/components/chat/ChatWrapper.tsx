@@ -28,13 +28,17 @@ import { EVENTS } from '@/lib/analytics/posthog'
 import * as MediaLibrary from 'expo-media-library'
 import * as FileSystem from 'expo-file-system'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useThemeColor } from '@/hooks/useThemeColor'
+import MaskedView from '@react-native-masked-view/masked-view'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useColorScheme } from '@/hooks/useColorScheme'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
   const router = useRouter()
   const scrollViewRef = useRef<ScrollView>(null)
   const posthog = usePostHog()
-  const insets = useSafeAreaInsets();
+  const insets = useSafeAreaInsets()
 
   const {
     selectedChat,
@@ -419,7 +423,14 @@ function ChatMessage({
           <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
             <Image
               source={{ uri: message.imageUrl }}
-              style={{ width: '100%', aspectRatio: 1, maxHeight: 300, borderRadius: 8, marginTop: 8, resizeMode: 'contain' }}
+              style={{
+                width: '100%',
+                aspectRatio: 1,
+                maxHeight: 300,
+                borderRadius: 8,
+                marginTop: 8,
+                resizeMode: 'contain',
+              }}
             />
           </TouchableOpacity>
         )}
@@ -454,6 +465,13 @@ function ErrorMessage({ error }: { error: string }) {
 
 function BackgroundProcessingMessage({ message }: { message: string }) {
   const shimmerValue = useRef(new Animated.Value(0)).current
+  const isDarkMode = useColorScheme() === 'dark'
+
+  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text')
+
+  const shimmerColors: [string, string, string] = isDarkMode
+    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,0)']
+    : ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']
 
   useEffect(() => {
     const shimmerAnimation = Animated.loop(
@@ -461,12 +479,12 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
         Animated.timing(shimmerValue, {
           toValue: 1,
           duration: 1500,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
         Animated.timing(shimmerValue, {
           toValue: 0,
           duration: 0,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }),
       ])
     )
@@ -476,7 +494,7 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
 
   const shimmerTranslateX = shimmerValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [-200, 200],
+    outputRange: [-100, 200],
   })
 
   return (
@@ -486,23 +504,29 @@ function BackgroundProcessingMessage({ message }: { message: string }) {
       </ThemedView>
       <ThemedView className="flex flex-1 flex-col gap-1">
         <ThemedText className="font-bold">Your Sidekik</ThemedText>
-        <ThemedView style={{ position: 'relative', overflow: 'hidden' }}>
-          <ThemedText style={{ opacity: 0.7 }}>{message}</ThemedText>
+        <MaskedView
+          maskElement={
+            <ThemedText style={{ opacity: 0.9, fontWeight: 'normal', color: textColor }}>
+              {message}
+            </ThemedText>
+          }
+        >
           <Animated.View
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              width: 300,
+              height: 20,
               transform: [{ translateX: shimmerTranslateX }],
-              width: 100,
             }}
-          />
-        </ThemedView>
+          >
+            <LinearGradient
+              colors={shimmerColors}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+        </MaskedView>
       </ThemedView>
     </ThemedView>
   )
 }
-
