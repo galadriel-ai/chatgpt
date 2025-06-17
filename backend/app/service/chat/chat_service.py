@@ -7,6 +7,8 @@ from app.repository.chat_configuration_repository import ChatConfigurationReposi
 from app.repository.chat_repository import ChatRepository
 from app.repository.file_repository import FileRepository
 from app.repository.llm_repository import LlmRepository
+from app.repository.generation_repository import GenerationRepository
+from app.repository.wavespeed_repository import WavespeedRepository
 from app.service import error_responses
 from app.service.chat.entities import ChatRequest
 from app.service.utils import parse_uuid
@@ -21,6 +23,8 @@ async def execute(
     chat_repository: ChatRepository,
     file_repository: FileRepository,
     configuration_repository: ChatConfigurationRepository,
+    generation_repository: GenerationRepository,
+    wavespeed_repository: WavespeedRepository,
 ):
     chat_id = None
     if request.chat_id:
@@ -57,5 +61,7 @@ async def execute(
         chat_repository,
         file_repository,
         configuration_repository,
+        generation_repository,
+        wavespeed_repository,
     ):
         yield json.dumps(chunk.to_serializable_dict()) + "\n"

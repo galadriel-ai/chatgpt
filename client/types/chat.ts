@@ -4,6 +4,7 @@ export type Message = {
   role: 'system' | 'user' | 'assistant'
   content: string
   attachmentIds?: string[] // Only store file IDs
+  imageUrl?: string | null
 }
 
 export interface Chat {
@@ -28,4 +29,10 @@ export interface ChatDetails extends Chat {
 export interface UserInfo {
   chats: Chat[]
   chatConfiguration: ChatConfiguration | null
+}
+
+export interface JobStatus {
+  id: string
+  status: string
+  url: string | null
 }
