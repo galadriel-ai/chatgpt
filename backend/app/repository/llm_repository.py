@@ -38,19 +38,76 @@ class LlmRepository:
         )
         self.search_client = serpapi.Client(api_key=search_api_key)
 
+    async def completion(
+        self,
+        messages: List[Dict],
+        model: ModelSpec,
+        is_search_enabled: bool = True,
+        response_format: Optional[dict] = None,
+    ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
+        try:
+            async for output in self._completion(
+                self.client,
+                messages,
+                model,
+                model.type.primary_model,
+                is_search_enabled,
+                response_format,
+            ):
+                yield output
+        except (
+            asyncio.TimeoutError,
+            openai.RateLimitError,
+            openai.NotFoundError,
+            openai.BadRequestError,
+            openai.InternalServerError,
+            openai.APIStatusError,
+            openai.APIError,
+        ) as e:
+            logger.warning(
+                f"Primary LLM client failed: {str(e)}. Attempting fallback..."
+            )
+            try:
+                async for output in self._completion(
+                    self.fallback_client,
+                    messages,
+                    model,
+                    model.type.fallback_model,
+                    is_search_enabled,
+                    response_format,
+                ):
+                    yield output
+            except Exception as fallback_error:
+                logger.error(f"Fallback LLM client also failed: {str(fallback_error)}")
+                if isinstance(e, asyncio.TimeoutError):
+                    raise LlmError(
+                        message="Request timed out, please try again in a few moments."
+                    )
+                elif (
+                    hasattr(e, "body")
+                    and isinstance(e.body, dict)
+                    and "message" in e.body
+                ):
+                    raise LlmError(message=e.body["message"])
+                else:
+                    raise LlmError(
+                        message="An unexpected error occurred. Please try again in a few moments."
+                    )
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            raise LlmError(
+                message="An unexpected error occurred. Please try again in a few moments."
+            )
+
     async def _completion(
         self,
         client: AsyncOpenAI,
         messages: List[Dict],
         model: ModelSpec,
+        model_id: str,
         is_search_enabled: bool,
         response_format: Optional[dict],
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
-        model_id = (
-            model.type.primary_model
-            if client == self.client
-            else model.type.fallback_model
-        )
         logger.info(f"Using model: {model_id}")
         stream = await asyncio.wait_for(
             client.chat.completions.create(
@@ -78,62 +135,3 @@ class LlmRepository:
                         )
             if choice.delta.content is not None:
                 yield ChunkOutput(content=choice.delta.content)
-
-    async def completion(
-        self,
-        messages: List[Dict],
-        model: ModelSpec,
-        is_search_enabled: bool = True,
-        response_format: Optional[dict] = None,
-    ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
-        try:
-            async for output in self._completion(
-                self.client,
-                messages,
-                model,
-                is_search_enabled,
-                response_format,
-            ):
-                yield output
-        except (
-            asyncio.TimeoutError,
-            openai.RateLimitError,
-            openai.NotFoundError,
-            openai.BadRequestError,
-            openai.InternalServerError,
-            openai.APIStatusError,
-            openai.APIError,
-        ) as e:
-            logger.warning(
-                f"Primary LLM client failed: {str(e)}. Attempting fallback..."
-            )
-            try:
-                async for output in self._completion(
-                    self.fallback_client,
-                    messages,
-                    model,
-                    is_search_enabled,
-                    response_format,
-                ):
-                    yield output
-            except Exception as fallback_error:
-                logger.error(f"Fallback LLM client also failed: {str(fallback_error)}")
-                if isinstance(e, asyncio.TimeoutError):
-                    raise LlmError(
-                        message="Request timed out, please try again in a few moments."
-                    )
-                elif (
-                    hasattr(e, "body")
-                    and isinstance(e.body, dict)
-                    and "message" in e.body
-                ):
-                    raise LlmError(message=e.body["message"])
-                else:
-                    raise LlmError(
-                        message="An unexpected error occurred. Please try again in a few moments."
-                    )
-        except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
-            raise LlmError(
-                message="An unexpected error occurred. Please try again in a few moments."
-            )
