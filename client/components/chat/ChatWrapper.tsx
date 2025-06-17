@@ -28,6 +28,10 @@ import { ChatMessage } from '@/components/chat/messages/ChatMessage'
 import { ErrorMessage } from '@/components/chat/messages/ChatErrorMessage'
 import { BackgroundProcessingMessage } from './messages/BackgroundProcessingMessage'
 import { NewChatModal } from '@/components/chat/NewChatModal'
+import { useThemeColor } from '@/hooks/useThemeColor'
+import MaskedView from '@react-native-masked-view/masked-view'
+import { LinearGradient } from 'expo-linear-gradient'
+import { useColorScheme } from '@/hooks/useColorScheme'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -304,7 +308,7 @@ export function ChatWrapper() {
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={10}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 10}
       >
         <ThemedView className="flex-1 pt-14">
           <ScrollView
@@ -384,6 +388,150 @@ export function ChatWrapper() {
           )}
         </ThemedView>
       </Modal>
+    </ThemedView>
+  )
+}
+
+function ChatMessage({
+  message,
+  configuration,
+  setFullscreenImage,
+}: {
+  message: Message
+  configuration: ChatConfiguration | null
+  setFullscreenImage: (url: string) => void
+}) {
+  if (message.role === 'system') return null
+
+  if (message.role === 'assistant' && !message.content.trim() && !message.imageUrl) {
+    return null
+  }
+
+  const role =
+    message.role === 'user'
+      ? configuration
+        ? configuration.userName
+        : 'You'
+      : configuration
+        ? configuration.aiName
+        : 'Your Sidekik'
+
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        {message.role === 'user' ? <RoleUserIcon /> : <RoleAssistantIcon />}
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">{role}</ThemedText>
+        {message.content && <ThemedMarkdownText content={message.content} />}
+        {message.imageUrl && (
+          <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
+            <Image
+              source={{ uri: message.imageUrl }}
+              style={{
+                width: '100%',
+                aspectRatio: 1,
+                maxHeight: 300,
+                borderRadius: 8,
+                marginTop: 8,
+                resizeMode: 'contain',
+              }}
+            />
+          </TouchableOpacity>
+        )}
+        {message.attachmentIds?.length ? (
+          <ThemedView className="mt-2">
+            <ThemedText className="text-sm opacity-70">
+              📎 {message.attachmentIds.length} attachment
+              {message.attachmentIds.length > 1 ? 's' : ''}
+            </ThemedText>
+          </ThemedView>
+        ) : null}
+      </ThemedView>
+    </ThemedView>
+  )
+}
+
+function ErrorMessage({ error }: { error: string }) {
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        <RoleAssistantIcon />
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">Your Sidekik</ThemedText>
+        <ThemedText lightColor={'#fc161a'} darkColor={'#fc161a'}>
+          Error: {error}
+        </ThemedText>
+      </ThemedView>
+    </ThemedView>
+  )
+}
+
+function BackgroundProcessingMessage({ message }: { message: string }) {
+  const shimmerValue = useRef(new Animated.Value(0)).current
+  const isDarkMode = useColorScheme() === 'dark'
+
+  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text')
+
+  const shimmerColors: [string, string, string] = isDarkMode
+    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,0)']
+    : ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']
+
+  useEffect(() => {
+    const shimmerAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerValue, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerValue, {
+          toValue: 0,
+          duration: 0,
+          useNativeDriver: true,
+        }),
+      ])
+    )
+    shimmerAnimation.start()
+    return () => shimmerAnimation.stop()
+  }, [shimmerValue])
+
+  const shimmerTranslateX = shimmerValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-100, 200],
+  })
+
+  return (
+    <ThemedView className="flex flex-row gap-4 py-3">
+      <ThemedView className="flex w-8 flex-col items-center">
+        <RoleAssistantIcon />
+      </ThemedView>
+      <ThemedView className="flex flex-1 flex-col gap-1">
+        <ThemedText className="font-bold">Your Sidekik</ThemedText>
+        <MaskedView
+          maskElement={
+            <ThemedText style={{ opacity: 0.9, fontWeight: 'normal', color: textColor }}>
+              {message}
+            </ThemedText>
+          }
+        >
+          <Animated.View
+            style={{
+              width: 300,
+              height: 20,
+              transform: [{ translateX: shimmerTranslateX }],
+            }}
+          >
+            <LinearGradient
+              colors={shimmerColors}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+        </MaskedView>
+      </ThemedView>
     </ThemedView>
   )
 }

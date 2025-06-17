@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { ChatConfigurationModal } from '@/components/configuration/ChatConfigurationModal'
 import { ThemedButton } from '@/components/theme/ThemedButton'
 import { api } from '@/lib/api'
+import { useThemeColor } from '@/hooks/useThemeColor'
 
 export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const { chats, selectedChat, setSelectedChat, setActiveChat } = useChat()
@@ -18,6 +19,10 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
   const router = useRouter()
 
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false)
+  
+  const borderColor = useThemeColor({}, 'border')
+  const backgroundColor = useThemeColor({}, 'background')
+  const textColor = useThemeColor({}, 'text')
 
   const onSelectChat = async (chat: Chat) => {
     setSelectedChat(chat)
@@ -106,14 +111,17 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
         </ThemedView>
         <Pressable
           onPress={handleLogout}
-          className="mt-4 rounded-lg bg-red-500 px-4 py-2"
+          className="mt-4 rounded-lg px-4 py-3"
           style={({ pressed }) => [
             {
-              opacity: pressed ? 0.8 : 1,
+              backgroundColor: pressed ? '#dc2626' : '#ef4444',
+              borderWidth: 1,
+              borderColor: pressed ? '#dc2626' : '#ef4444',
+              opacity: pressed ? 0.9 : 1,
             },
           ]}
         >
-          <ThemedText className="text-center text-white">Logout</ThemedText>
+          <ThemedText className="text-left font-medium text-white">Logout</ThemedText>
         </Pressable>
       </View>
     </View>
