@@ -31,6 +31,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useThemeColor } from '@/hooks/useThemeColor'
 import MaskedView from '@react-native-masked-view/masked-view'
 import { LinearGradient } from 'expo-linear-gradient'
+import { useColorScheme } from '@/hooks/useColorScheme'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -459,10 +460,9 @@ function ErrorMessage({ error }: { error: string }) {
 
 function BackgroundProcessingMessage({ message }: { message: string }) {
   const shimmerValue = useRef(new Animated.Value(0)).current;
-  const colorScheme = useThemeColor({ light: 'light', dark: 'dark' }, 'background');
-  const isDarkMode = colorScheme === '#000' || colorScheme === 'dark' || colorScheme === '#111';
+  const isDarkMode = useColorScheme() === 'dark';
 
-  const textColor = isDarkMode ? '#fff' : '#111';
+  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text');
 
   const shimmerColors: [string, string, string] = isDarkMode
     ? [
