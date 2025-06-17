@@ -72,9 +72,7 @@ class LlmRepository:
             openai.APIStatusError,
             openai.APIError,
         ) as e:
-            logger.warning(
-                f"Primary LLM client failed: {str(e)}. Attempting fallback..."
-            )
+            logger.error(f"Primary LLM client failed: {str(e)}. Attempting fallback...")
             try:
                 async for output in self._completion(
                     self.fallback_client,
@@ -116,7 +114,6 @@ class LlmRepository:
         is_search_enabled: bool,
         response_format: Optional[dict],
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
-        logger.info(f"Using model: {model_id}")
         stream: AsyncStream = await asyncio.wait_for(
             client.chat.completions.create(
                 model=model_id,
