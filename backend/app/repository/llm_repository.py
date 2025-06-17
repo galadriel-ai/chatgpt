@@ -47,7 +47,9 @@ class LlmRepository:
         response_format: Optional[dict],
     ) -> AsyncGenerator[ChunkOutput | ToolOutput, None]:
         model_id = (
-            model.id.primary_model if client == self.client else model.id.fallback_model
+            model.type.primary_model
+            if client == self.client
+            else model.type.fallback_model
         )
         logger.info(f"Using model: {model_id}")
         stream = await asyncio.wait_for(
@@ -60,7 +62,7 @@ class LlmRepository:
                 tools=[SEARCH_TOOL_DEFINITION] if is_search_enabled else None,
                 stream=True,
             ),
-            timeout=model.id.timeout,
+            timeout=model.type.timeout,
         )
 
         async for chunk in stream:

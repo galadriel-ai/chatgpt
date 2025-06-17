@@ -67,7 +67,7 @@ async def execute(
 
     intent = await detect_intent_use_case.execute(chat_input.content, llm_repository)
     images = await get_images(chat_input.attachment_ids, file_repository)
-    model_id = (
+    model_type = (
         Model.THINK_MODEL
         if chat_input.think_model
         else Model.VLM_MODEL
@@ -75,12 +75,12 @@ async def execute(
         else Model.DEFAULT_MODEL
     )
     model = ModelSpec(
-        id=model_id,
+        type=model_type,
         config=ModelConfig(),
     )
-    if model.id.value not in SUPPORTED_MODELS:
+    if model.type.value not in SUPPORTED_MODELS:
         yield ErrorChunk(
-            error=f"Unsupported model type, supported model types are {', '.join(SUPPORTED_MODELS.keys())}. But got {model.id.value}"
+            error=f"Unsupported model type, supported model types are {', '.join(SUPPORTED_MODELS.keys())}. But got {model.type.value}"
         )
         return
     if rate_limit_error := await get_rate_limit_error_use_case.execute(
@@ -130,7 +130,7 @@ async def execute(
         chat_id=chat.id,
         role="assistant",
         content="",
-        model=model.id.value,
+        model=model.type.value,
         attachment_ids=[],
     )
 

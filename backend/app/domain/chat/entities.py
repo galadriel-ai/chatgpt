@@ -243,7 +243,7 @@ class ModelConfig:
 
 @dataclass
 class ModelSpec:
-    id: Model
+    type: Model
     config: ModelConfig
 
 

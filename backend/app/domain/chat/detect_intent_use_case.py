@@ -27,7 +27,7 @@ async def execute(
     intents = [intent.value for intent in Intent]
     prompt = PROMPT_TEMPLATE.format(intents="\n\t".join(intents), message=message)
     model = ModelSpec(
-        id=Model.DEFAULT_MODEL,
+        type=Model.DEFAULT_MODEL,
         config=ModelConfig(),
     )
     response = ""
