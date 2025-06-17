@@ -8,6 +8,7 @@ from io import BytesIO
 # Set environment variables before importing modules
 os.environ["SERPAPI_API_KEY"] = "dummy_serpapi_key"
 os.environ["LLM_API_KEY"] = "dummy_llm_key"
+os.environ["FALLBACK_LLM_API_KEY"] = "dummy_fallback_llm_key"
 
 from app.service.files import upload_file_service
 from app.domain.users.entities import User
