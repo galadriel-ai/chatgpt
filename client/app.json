@@ -15,9 +15,7 @@
       "infoPlist": {
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": [
-              "${GOOGLE_IOS_URL_SCHEME}"
-            ]
+            "CFBundleURLSchemes": ["${GOOGLE_IOS_URL_SCHEME}"]
           }
         ],
         "UIBackgroundModes": ["fetch", "remote-notification"]

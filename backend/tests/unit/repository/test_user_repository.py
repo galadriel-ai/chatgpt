@@ -5,6 +5,7 @@ from uuid import uuid4
 
 os.environ["SERPAPI_API_KEY"] = "dummy_serpapi_key"
 os.environ["LLM_API_KEY"] = "dummy_llm_key"
+os.environ["WAVESPEED_API_KEY"] = "dummy_wavespeed_key"
 
 from app.repository.user_repository import UserRepository
 from app.domain.users.entities import User

@@ -66,26 +66,26 @@ export default function ChatDrawerContent(props: DrawerContentComponentProps) {
             </Pressable>
           ))}
         </View>
-        </DrawerContentScrollView>
-        <View className="w-full p-4">
-          <ThemedView className="flex-row items-center gap-3">
-            {user?.profile_picture ? (
-              <Image
-                source={{ uri: user.profile_picture }}
-                className="h-10 w-10 rounded-full"
-                alt="Profile picture"
-              />
-            ) : (
-              // A default profile picture with the first letter of the user's name
-              <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
-                <ThemedText className="text-lg text-white">
-                  {user?.name?.[0]?.toUpperCase() ?? 'G'}
-                </ThemedText>
-              </ThemedView>
-            )}
-            <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
-          </ThemedView>
-        </View>
+      </DrawerContentScrollView>
+      <View className="w-full p-4">
+        <ThemedView className="flex-row items-center gap-3">
+          {user?.profile_picture ? (
+            <Image
+              source={{ uri: user.profile_picture }}
+              className="h-10 w-10 rounded-full"
+              alt="Profile picture"
+            />
+          ) : (
+            // A default profile picture with the first letter of the user's name
+            <ThemedView className="h-10 w-10 items-center justify-center rounded-full bg-blue-500">
+              <ThemedText className="text-lg text-white">
+                {user?.name?.[0]?.toUpperCase() ?? 'G'}
+              </ThemedText>
+            </ThemedView>
+          )}
+          <ThemedText>{user?.name ?? 'Guest User'}</ThemedText>
+        </ThemedView>
       </View>
+    </View>
   )
 }

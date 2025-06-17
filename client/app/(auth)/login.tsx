@@ -84,10 +84,10 @@ export default function LoginScreen() {
             refreshToken: authResponse.refresh_token,
           })
           posthog.capture(EVENTS.LOGIN_COMPLETED, {
-          method: 'google',
-          email: userInfo.user.email,
-        })
-        router.replace('/(main)')
+            method: 'google',
+            email: userInfo.user.email,
+          })
+          router.replace('/(main)')
         } else {
           Alert.alert(
             'Authentication Failed',
@@ -150,7 +150,7 @@ export default function LoginScreen() {
             method: 'apple',
             email: credential.email,
           })
-      router.replace('/(main)')
+          router.replace('/(main)')
         } else {
           Alert.alert(
             'Authentication Failed',

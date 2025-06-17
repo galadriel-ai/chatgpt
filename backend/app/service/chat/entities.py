@@ -30,6 +30,7 @@ class ChatMessage(BaseModel):
     content: str
     model: Optional[str]
     attachment_ids: List[str]
+    image_url: Optional[str] = None
 
 
 class ChatConfigurationRequest(BaseModel):
