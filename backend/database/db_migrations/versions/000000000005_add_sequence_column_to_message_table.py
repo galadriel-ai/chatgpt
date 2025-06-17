@@ -31,7 +31,8 @@ def upgrade() -> None:
         )
 
         # Update existing records with sequence numbers
-        op.execute("""
+        op.execute(
+            """
             WITH numbered_messages AS (
                 SELECT id, ROW_NUMBER() OVER (PARTITION BY chat_id ORDER BY created_at, id) as row_num 
                 FROM message
@@ -40,7 +41,8 @@ def upgrade() -> None:
             SET sequence_number = numbered_messages.row_num 
             FROM numbered_messages 
             WHERE message.id = numbered_messages.id
-        """)
+        """
+        )
 
         # Make column NOT NULL
         op.alter_column(
