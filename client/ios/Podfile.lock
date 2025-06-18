@@ -285,7 +285,7 @@ PODS:
     - ExpoModulesCore
   - ExpoAsset (11.1.5):
     - ExpoModulesCore
-  - ExpoBlur (14.1.4):
+  - ExpoBlur (14.1.5):
     - ExpoModulesCore
   - ExpoDevice (7.1.4):
     - ExpoModulesCore
@@ -2788,7 +2788,7 @@ SPEC CHECKSUMS:
   ExpoAdapterGoogleSignIn: 01c53528a20baf4c5ea036b154a70bc846dc6f32
   ExpoAppleAuthentication: 4d2e0c88a4463229760f1fbb9a937a810efb6863
   ExpoAsset: 3bc9adb7dbbf27ae82c18ca97eb988a3ae7e73b1
-  ExpoBlur: 7f9379db213e4a56aeceda82e94a7fea1b1d8c48
+  ExpoBlur: 3c8885b9bf9eef4309041ec87adec48b5f1986a9
   ExpoDevice: 7082f03af1c588333ef1417d5aa8287081d94b24
   ExpoDocumentPicker: 5487ce33530198f4ecf724e650d390b2abe84c15
   ExpoFileSystem: c36eb8155eb2381c83dda7dc210e3eec332368b6

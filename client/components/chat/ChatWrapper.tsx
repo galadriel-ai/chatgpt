@@ -1,24 +1,20 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
+  Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
-  Animated,
-  Image,
-  Modal,
   TouchableOpacity,
   View,
-  StyleSheet,
 } from 'react-native'
 import { ThemedView } from '@/components/theme/ThemedView'
 import { ThemedChatInput } from '@/components/theme/ThemedChatInput'
 import { DrawerActions, useNavigation } from '@react-navigation/native'
-import { NewChatIcon, RoleAssistantIcon, RoleUserIcon, SideBarIcon } from '@/components/icons/Icons'
+import { NewChatIcon, SideBarIcon } from '@/components/icons/Icons'
 import { useChat } from '@/context/ChatContext'
 import { ThemedText } from '@/components/theme/ThemedText'
-import { ThemedMarkdownText } from '@/components/theme/ThemedMarkdownText'
-import { useEffect, useRef, useState } from 'react'
 import { Chat, ChatConfiguration, Message } from '@/types/chat'
 import { api, ChatChunk } from '@/lib/api'
 import { AttachmentFile } from '@/hooks/useMediaAttachments'
@@ -28,10 +24,10 @@ import { EVENTS } from '@/lib/analytics/posthog'
 import * as MediaLibrary from 'expo-media-library'
 import * as FileSystem from 'expo-file-system'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useThemeColor } from '@/hooks/useThemeColor'
-import MaskedView from '@react-native-masked-view/masked-view'
-import { LinearGradient } from 'expo-linear-gradient'
-import { useColorScheme } from '@/hooks/useColorScheme'
+import { ChatMessage } from '@/components/chat/messages/ChatMessage'
+import { ErrorMessage } from '@/components/chat/messages/ChatErrorMessage'
+import { BackgroundProcessingMessage } from './messages/BackgroundProcessingMessage'
+import { NewChatModal } from '@/components/chat/NewChatModal'
 
 export function ChatWrapper() {
   const navigation = useNavigation()
@@ -46,19 +42,24 @@ export function ChatWrapper() {
     activeChat,
     setActiveChat,
     addChat,
-    isChatConfigurationEnabled,
-    chatConfiguration,
+    selectedChatConfiguration,
+    setSelectedChatConfiguration,
   } = useChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [backgroundProcessingMessage, setBackgroundProcessingMessage] = useState<string>('')
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null)
 
+  const [isNewChatModalOpen, setIsNewChatModalOpen] = useState<boolean>(false)
+
   useEffect(() => {
     if (selectedChat && !activeChat) {
       getChatDetails(selectedChat)
+      setIsNewChatModalOpen(false)
     } else if (!selectedChat && !activeChat) {
       setMessages([])
+      // TODO:?
+      if (selectedChatConfiguration === undefined) setIsNewChatModalOpen(true)
     }
   }, [selectedChat])
 
@@ -73,12 +74,18 @@ export function ChatWrapper() {
     }, 100)
   }
 
-  const onNewChat = () => {
+  const onConfigureNewChat = () => {
+    setIsNewChatModalOpen(true)
+  }
+
+  const onNewChat = (configuration: ChatConfiguration | null) => {
     posthog.capture(EVENTS.NEW_CHAT_STARTED)
+    setSelectedChatConfiguration(configuration)
     setSelectedChat(null)
     setActiveChat(null)
     setMessages([])
     setErrorMessage('')
+    setIsNewChatModalOpen(false)
     router.push('/')
   }
 
@@ -93,8 +100,8 @@ export function ChatWrapper() {
     }
   }
 
-  // Poll job status and update message with imageUrl when ready
   const pollJobStatus = async (generationId: string) => {
+    // Poll job status and update message with imageUrl when ready
     let interval: ReturnType<typeof setInterval> | null = null
     const poll = async () => {
       const status = await api.getJobStatus(generationId)
@@ -133,10 +140,7 @@ export function ChatWrapper() {
     // Extract file IDs from uploaded attachments
     const attachmentIds = attachments?.map(att => att.uploadedFileId!).filter(Boolean)
     // If new chat and configuration enabled, use it
-    const chatConfigurationId =
-      !activeChat && isChatConfigurationEnabled && chatConfiguration?.id
-        ? chatConfiguration.id
-        : null
+    const chatConfigurationId = selectedChatConfiguration ? selectedChatConfiguration.id : null
     const newMessages: Message[] = []
     const inputMessage: Message = {
       id: `${Date.now()}`,
@@ -156,7 +160,7 @@ export function ChatWrapper() {
 
     posthog.capture(EVENTS.MESSAGE_SENT, {
       think_mode_enabled: thinkModel || false,
-      character_enabled: false, // TODO: Add character mode support
+      character_enabled: !!activeChat?.configuration?.id,
       web_search_performed: false, // TODO: Add web search support
       generate_content_created: false, // TODO: Add content generation support
       hasAttachments: !!attachmentIds?.length,
@@ -184,7 +188,7 @@ export function ChatWrapper() {
           setActiveChat({
             ...newChat,
             messages: newMessages,
-            configuration: chatConfigurationId ? chatConfiguration : null,
+            configuration: chatConfigurationId ? selectedChatConfiguration || null : null,
           })
           addChat(newChat)
           isActiveChatSet = true
@@ -290,18 +294,19 @@ export function ChatWrapper() {
 
   return (
     <ThemedView className="flex-1 px-2">
-      <ThemedView className="flex w-full flex-row items-center justify-between px-2 pb-4 pt-8">
+      <NewChatModal isVisible={isNewChatModalOpen} onNewChat={onNewChat} />
+      <View className="absolute z-10 flex w-full flex-row items-center justify-between bg-transparent px-2 pb-4 pt-8">
         <SideBarIcon onClick={() => navigation.dispatch(DrawerActions.openDrawer())} />
-        <Pressable onPress={onNewChat}>
+        <Pressable onPress={onConfigureNewChat}>
           <NewChatIcon />
         </Pressable>
-      </ThemedView>
+      </View>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 50 : 10}
       >
-        <ThemedView className="flex-1">
+        <ThemedView className="flex-1 pt-14">
           <ScrollView
             ref={scrollViewRef}
             contentContainerStyle={{ padding: 16 }}
@@ -314,11 +319,7 @@ export function ChatWrapper() {
                 <ChatMessage
                   message={m}
                   configuration={
-                    activeChat
-                      ? activeChat.configuration
-                      : isChatConfigurationEnabled && chatConfiguration
-                        ? chatConfiguration
-                        : null
+                    activeChat ? activeChat.configuration : selectedChatConfiguration || null
                   }
                   setFullscreenImage={setFullscreenImage}
                 />
@@ -383,150 +384,6 @@ export function ChatWrapper() {
           )}
         </ThemedView>
       </Modal>
-    </ThemedView>
-  )
-}
-
-function ChatMessage({
-  message,
-  configuration,
-  setFullscreenImage,
-}: {
-  message: Message
-  configuration: ChatConfiguration | null
-  setFullscreenImage: (url: string) => void
-}) {
-  if (message.role === 'system') return null
-
-  if (message.role === 'assistant' && !message.content.trim() && !message.imageUrl) {
-    return null
-  }
-
-  const role =
-    message.role === 'user'
-      ? configuration
-        ? configuration.userName
-        : 'You'
-      : configuration
-        ? configuration.aiName
-        : 'Your Sidekik'
-
-  return (
-    <ThemedView className="flex flex-row gap-4 py-3">
-      <ThemedView className="flex w-8 flex-col items-center">
-        {message.role === 'user' ? <RoleUserIcon /> : <RoleAssistantIcon />}
-      </ThemedView>
-      <ThemedView className="flex flex-1 flex-col gap-1">
-        <ThemedText className="font-bold">{role}</ThemedText>
-        {message.content && <ThemedMarkdownText content={message.content} />}
-        {message.imageUrl && (
-          <TouchableOpacity onPress={() => setFullscreenImage(message.imageUrl!)}>
-            <Image
-              source={{ uri: message.imageUrl }}
-              style={{
-                width: '100%',
-                aspectRatio: 1,
-                maxHeight: 300,
-                borderRadius: 8,
-                marginTop: 8,
-                resizeMode: 'contain',
-              }}
-            />
-          </TouchableOpacity>
-        )}
-        {message.attachmentIds?.length ? (
-          <ThemedView className="mt-2">
-            <ThemedText className="text-sm opacity-70">
-              📎 {message.attachmentIds.length} attachment
-              {message.attachmentIds.length > 1 ? 's' : ''}
-            </ThemedText>
-          </ThemedView>
-        ) : null}
-      </ThemedView>
-    </ThemedView>
-  )
-}
-
-function ErrorMessage({ error }: { error: string }) {
-  return (
-    <ThemedView className="flex flex-row gap-4 py-3">
-      <ThemedView className="flex w-8 flex-col items-center">
-        <RoleAssistantIcon />
-      </ThemedView>
-      <ThemedView className="flex flex-1 flex-col gap-1">
-        <ThemedText className="font-bold">Your Sidekik</ThemedText>
-        <ThemedText lightColor={'#fc161a'} darkColor={'#fc161a'}>
-          Error: {error}
-        </ThemedText>
-      </ThemedView>
-    </ThemedView>
-  )
-}
-
-function BackgroundProcessingMessage({ message }: { message: string }) {
-  const shimmerValue = useRef(new Animated.Value(0)).current
-  const isDarkMode = useColorScheme() === 'dark'
-
-  const textColor = useThemeColor({ light: '#111', dark: '#fff' }, 'text')
-
-  const shimmerColors: [string, string, string] = isDarkMode
-    ? ['rgba(255,255,255,0)', 'rgba(255,255,255,0.85)', 'rgba(255,255,255,0)']
-    : ['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,0)']
-
-  useEffect(() => {
-    const shimmerAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmerValue, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(shimmerValue, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ])
-    )
-    shimmerAnimation.start()
-    return () => shimmerAnimation.stop()
-  }, [shimmerValue])
-
-  const shimmerTranslateX = shimmerValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-100, 200],
-  })
-
-  return (
-    <ThemedView className="flex flex-row gap-4 py-3">
-      <ThemedView className="flex w-8 flex-col items-center">
-        <RoleAssistantIcon />
-      </ThemedView>
-      <ThemedView className="flex flex-1 flex-col gap-1">
-        <ThemedText className="font-bold">Your Sidekik</ThemedText>
-        <MaskedView
-          maskElement={
-            <ThemedText style={{ opacity: 0.9, fontWeight: 'normal', color: textColor }}>
-              {message}
-            </ThemedText>
-          }
-        >
-          <Animated.View
-            style={{
-              width: 300,
-              height: 20,
-              transform: [{ translateX: shimmerTranslateX }],
-            }}
-          >
-            <LinearGradient
-              colors={shimmerColors}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={{ flex: 1 }}
-            />
-          </Animated.View>
-        </MaskedView>
-      </ThemedView>
     </ThemedView>
   )
 }
