@@ -93,6 +93,9 @@ export function ChatWrapper() {
     const chatDetails = await api.getChatDetails(chat.id)
     if (chatDetails) {
       setActiveChat(chatDetails)
+      if (chatDetails.configuration) {
+        setSelectedChatConfiguration(chatDetails.configuration)
+      }
       // Wait for the chat to be rendered before scrolling
       setTimeout(() => {
         scrollToBottom(false)
