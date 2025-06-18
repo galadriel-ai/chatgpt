@@ -25,8 +25,7 @@ export function ChatMessage({
   const role =
     message.role === 'user'
       ? configuration
-        ? configuration.userName
-        : 'You'
+        && configuration.userName || 'You'
       : configuration
         ? configuration.aiName
         : 'Your Sidekik'
