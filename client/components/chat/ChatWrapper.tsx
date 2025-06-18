@@ -214,6 +214,7 @@ export function ChatWrapper() {
         // Whatever other chunks we get
       }
 
+      console.log('Streaming chat configuration', chatConfigurationId)
       await api.streamChatResponse(
         {
           chatId: activeChat?.id || null,

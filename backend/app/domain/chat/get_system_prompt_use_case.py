@@ -1,6 +1,9 @@
 from app.domain.chat.entities import ChatInput
 from app.domain.users.entities import User
 from app.repository.chat_configuration_repository import ChatConfigurationRepository
+from app import api_logger
+
+logger = api_logger.get()
 
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
@@ -16,15 +19,14 @@ async def execute(
         chat_input.configuration_id, user.uid
     )
     if not configuration:
+        logger.debug("Use the default system prompt")
         return DEFAULT_SYSTEM_MESSAGE
     # TODO: Improve this
+    logger.debug(f"Use system prompt from the configuration: {configuration}")
     prompt = (
-        f'You are an AI named "{configuration.ai_name}".\n'
+        f'You are a helpful assistant named "{configuration.ai_name}".\n'
         f"You have the following character traits: {configuration.description}.\n"
-        f"In this conversation, your role is: {configuration.role}.\n"
-        f'You\'re speaking with a user named "{configuration.user_name}".\n'
-        f"Refer to them as '{configuration.user_name}', and refer to yourself as '{configuration.ai_name}' when appropriate.\n"
-        f"Be personable, stay in character, and align your responses with your role and purpose."
+        f'You\'re speaking to a user named "{configuration.user_name}".\n'
     )
     if configuration.summary:
         prompt += f"\n\nHere is a summary of the chats with the user: {configuration.summary}\n"

@@ -193,7 +193,7 @@ export function ChatConfigurationModal({ isVisible, setIsVisible }: Props) {
                         }
                       }, 100)
                     }}
-                    placeholder="coach, friend. teacher, therapist"
+                    placeholder="coach, friend, teacher, therapist"
                     className="p-3"
                   />
                 </ThemedView>

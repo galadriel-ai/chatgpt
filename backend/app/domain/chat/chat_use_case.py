@@ -175,6 +175,7 @@ async def execute(
                                 final_tool_calls[tool_call_id]["name"]
                                 == SEARCH_TOOL_DEFINITION["function"]["name"]
                             ):
+                                logger.info(f"Searching the web for: {args['query']}")
                                 # Create and persist the assistant's tool call message
                                 tool_call = ToolCall(
                                     id=tool_call_id,
