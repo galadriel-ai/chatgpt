@@ -23,7 +23,7 @@ export function ThemedText({
 
   // Define variant classes for NativeWind
   const variantClasses = {
-    heading: 'text-2xl font-bold',
+    heading: '',
     body: 'text-base',
     label: 'text-sm font-medium',
     caption: 'text-xs text-gray-500',
@@ -72,9 +72,9 @@ export const ThemedTextStyles = StyleSheet.create({
     fontWeight: '600',
   },
   title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    fontSize: 20,
+    fontWeight: 'semibold',
+    lineHeight: 20,
   },
   subtitle: {
     fontSize: 20,

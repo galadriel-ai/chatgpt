@@ -81,12 +81,16 @@ async def execute(
             )
             if not messages:
                 continue
+            logger.info(f"Summarizing messages for character: {character.id}")
             last_summarized_at = utils.utcnow()
             summary = await _get_summary(messages, llm_repository)
             if not summary:
                 continue
             await _update_summary(
                 character, summary, last_summarized_at, repository, llm_repository
+            )
+            logger.info(
+                f"Successfully summarized messages for character: {character.id}"
             )
         except Exception:
             logger.error(

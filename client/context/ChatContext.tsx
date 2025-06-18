@@ -2,7 +2,6 @@ import { createContext, ReactNode, useContext, useEffect, useState } from 'react
 import { Chat, ChatConfiguration, ChatDetails } from '@/types/chat'
 import { useAuth } from '@/context/AuthContext'
 import { api } from '@/lib/api'
-import { Storage } from 'expo-storage'
 
 type ChatProviderProps = {
   children: ReactNode
@@ -17,11 +16,9 @@ type ChatContextType = {
   addChat: (chat: Chat) => void
   chatConfiguration: ChatConfiguration | null
   setChatConfiguration: React.Dispatch<React.SetStateAction<ChatConfiguration | null>>
-  isChatConfigurationEnabled: boolean
-  setIsChatConfigurationEnabled: (value: boolean) => Promise<void>
+  selectedChatConfiguration: ChatConfiguration | null | undefined
+  setSelectedChatConfiguration: (configuration: ChatConfiguration | null) => void
 }
-
-const CONFIGURATION_TOGGLE_KEY = 'is_chat_configuration_enabled'
 
 const ChatContext = createContext<ChatContextType | null>(null)
 
@@ -31,13 +28,14 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   const [chats, setChats] = useState<Chat[]>([])
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
   const [activeChat, setActiveChat] = useState<ChatDetails | null>(null)
-  const [isChatConfigurationEnabled, _setIsChatConfigurationEnabled] = useState<boolean>(false)
   const [chatConfiguration, setChatConfiguration] = useState<ChatConfiguration | null>(null)
+  const [selectedChatConfiguration, _setSelectedChatConfiguration] = useState<
+    ChatConfiguration | null | undefined
+  >(undefined)
 
   useEffect(() => {
     if (!user) return
     getChats()
-    getIsChatConfigurationEnabled()
   }, [user])
 
   const getChats = async (): Promise<void> => {
@@ -55,23 +53,12 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     }
   }
 
-  const getIsChatConfigurationEnabled = async () => {
-    const stored = await Storage.getItem({ key: CONFIGURATION_TOGGLE_KEY })
-    if (stored !== null) {
-      _setIsChatConfigurationEnabled(stored === 'true')
-    }
-  }
-
-  const setIsChatConfigurationEnabled = async (value: boolean) => {
-    _setIsChatConfigurationEnabled(value)
-    await Storage.setItem({
-      key: CONFIGURATION_TOGGLE_KEY,
-      value: value.toString(),
-    })
-  }
-
   const addChat = (chat: Chat) => {
     setChats(prev => [chat, ...prev])
+  }
+
+  const setSelectedChatConfiguration = (configuration: ChatConfiguration | null) => {
+    _setSelectedChatConfiguration(configuration)
   }
 
   return (
@@ -85,8 +72,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
         addChat,
         chatConfiguration,
         setChatConfiguration,
-        isChatConfigurationEnabled,
-        setIsChatConfigurationEnabled,
+        selectedChatConfiguration,
+        setSelectedChatConfiguration,
       }}
     >
       {children}
